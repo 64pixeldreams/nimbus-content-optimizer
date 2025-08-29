@@ -20,6 +20,7 @@ program
   .option('--dest <path>', 'Destination folder for applied changes')
   .option('--pages <list>', 'Comma-separated list of page IDs')
   .option('--git', 'Create git commit after applying changes')
+  .option('--dry-run', 'Show what would be done without making changes')
   .parse(process.argv);
 
 const options = program.opts();
@@ -46,8 +47,8 @@ gulp.task('nimbus:scan:map', async () => {
 gulp.task('nimbus:plan', async () => {
   console.log(chalk.blue('📋 Starting Nimbus planning...'));
   
-  if (!options.folder || !options.batch) {
-    console.error(chalk.red('❌ Error: --folder and --batch options are required'));
+  if (!options.batch) {
+    console.error(chalk.red('❌ Error: --batch option is required'));
     process.exit(1);
   }
   

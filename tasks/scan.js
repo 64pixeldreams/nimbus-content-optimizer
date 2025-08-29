@@ -120,12 +120,22 @@ const scanTask = {
   
   generateRoute(filePath) {
     // Convert file path to route
-    // dist/local/watch-repairs-abbots-langley.html -> /branches/watch-repairs-abbots-langley
+    // ../dist/local/watch-repairs-abbots-langley.html -> /branches/watch-repairs-abbots-langley
     const normalizedPath = filePath.replace(/\\/g, '/');
-    const relativePath = path.posix.relative('dist', normalizedPath);
-    const routePath = relativePath.replace(/\.html$/, '');
     
-    if (routePath === 'index') {
+    // Find the dist part in the path
+    const distIndex = normalizedPath.indexOf('/dist/');
+    if (distIndex === -1) {
+      // Fallback: use basename
+      const basename = path.basename(filePath, '.html');
+      return basename === 'index' ? '/' : `/${basename}`;
+    }
+    
+    // Extract path after dist/
+    const afterDist = normalizedPath.substring(distIndex + 6); // +6 for '/dist/'
+    const routePath = afterDist.replace(/\.html$/, '');
+    
+    if (routePath === 'index' || routePath === '') {
       return '/';
     } else if (routePath.startsWith('local/')) {
       return `/branches/${routePath.replace('local/', '')}`;

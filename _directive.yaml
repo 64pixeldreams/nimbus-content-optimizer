@@ -1,0 +1,70 @@
+# Nimbus Page Directive Configuration
+# Defines page family rules for content optimization
+
+# Default rules applied to all pages
+default:
+  type: "local"                    # local|brand|service|info
+  tone: "professional"             # professional|friendly|urgent
+  cta_priority: "high"            # high|medium|low
+  schema_types: ["LocalBusiness", "BreadcrumbList"]
+  interlink_policy: "aggressive"  # aggressive|moderate|minimal
+  trust_signals: ["reviews", "guarantee", "phone"]
+
+# Page family overrides based on route patterns
+families:
+  # Local service pages (branches/locations)
+  local:
+    pattern: "branches/*"
+    type: "local"
+    tone: "friendly"
+    cta_priority: "high"
+    schema_types: ["LocalBusiness", "BreadcrumbList"]
+    interlink_policy: "aggressive"
+    trust_signals: ["reviews", "guarantee", "phone", "shipping"]
+    local_seo: true
+    geo_targeting: true
+    
+  # Brand-specific repair pages  
+  brand:
+    pattern: "brand/*"
+    type: "brand"
+    tone: "professional"
+    cta_priority: "high"
+    schema_types: ["Service", "BreadcrumbList"]
+    interlink_policy: "moderate"
+    trust_signals: ["reviews", "guarantee"]
+    brand_focus: true
+    expertise_emphasis: true
+    
+  # Homepage/landing page
+  home:
+    pattern: "index"
+    type: "landing"
+    tone: "urgent"
+    cta_priority: "high"
+    schema_types: ["Organization", "LocalBusiness", "BreadcrumbList"]
+    interlink_policy: "aggressive"
+    trust_signals: ["reviews", "guarantee", "phone", "shipping"]
+    conversion_focus: true
+    
+  # Service information pages
+  service:
+    pattern: "watch-repairs/*"
+    type: "service"
+    tone: "professional"
+    cta_priority: "medium"
+    schema_types: ["Service", "BreadcrumbList"]
+    interlink_policy: "moderate"
+    trust_signals: ["guarantee", "expertise"]
+    technical_detail: true
+    
+  # Information/FAQ pages
+  info:
+    pattern: "information/*"
+    type: "info"
+    tone: "helpful"
+    cta_priority: "low"
+    schema_types: ["FAQPage", "BreadcrumbList"]
+    interlink_policy: "minimal"
+    trust_signals: ["expertise"]
+    educational_focus: true
