@@ -23,6 +23,8 @@ program
   .option('--dry-run', 'Show what would be done without making changes')
   .option('--format <type>', 'Preview format: html|console', 'html')
   .option('--open', 'Open preview in browser')
+  .option('--mode <type>', 'Approval mode: interactive|auto|reject', 'interactive')
+  .option('--confidence <threshold>', 'Auto-approve confidence threshold (0.0-1.0)')
   .parse(process.argv);
 
 const options = program.opts();
@@ -103,8 +105,8 @@ gulp.task('nimbus:preview', async () => {
 gulp.task('nimbus:approve', async () => {
   console.log(chalk.blue('✅ Processing approvals...'));
   
-  if (!options.batch || !options.pages) {
-    console.error(chalk.red('❌ Error: --batch and --pages options are required'));
+  if (!options.batch) {
+    console.error(chalk.red('❌ Error: --batch option is required'));
     process.exit(1);
   }
   

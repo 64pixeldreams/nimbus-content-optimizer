@@ -26,6 +26,7 @@
     "commander": "^11.1.0",
     "fs-extra": "^11.2.0",
     "glob": "^10.3.10",
+    "inquirer": "^8.2.6",
     "node-fetch": "^3.3.2",
     "yaml": "^2.3.4"
   }
