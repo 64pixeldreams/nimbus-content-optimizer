@@ -433,9 +433,12 @@ TRUST SIGNALS: ${profile.review_count} reviews, ${profile.guarantee}
 TONE: ${directive.tone}
 PHONE: ${profile.phone}
 
-CURRENT CONTENT BLOCKS (preserve/improve word count):
+CURRENT CONTENT BLOCKS (preserve/improve word count + fix typos):
 ${blocksWithWordCounts.map((block, i) => 
-  `${i + 1}. [${block.type}] "${block.text}" (${block.word_count} words)`
+  `${i + 1}. [${block.type}] "${block.text}" (${block.word_count} words)${
+    block.text && (block.text.includes('braclet') || block.text.includes('acredited')) ? 
+    ' ⚠️ TYPOS DETECTED' : ''
+  }`
 ).join('\n')}
 
 WORD COUNT REQUIREMENTS:
@@ -514,8 +517,9 @@ You must respond with valid JSON in this exact format:
     }
   ],
   "technical_recommendations": {
-    "cls_improvements": ["width/height suggestions"],
-    "performance_optimizations": ["loading/decoding recommendations"]
+    "cls_improvements": ["width/height suggestions for ALL images"],
+    "performance_optimizations": ["loading/decoding recommendations for ALL images"],
+    "imagekit_optimizations": ["tr:w,h,q,f parameters for Core Web Vitals"]
   },
   "confidence": 0.96,
   "notes": ["image optimization decisions and accessibility improvements"]
@@ -554,6 +558,9 @@ OPTIMIZATION REQUIREMENTS:
 3. Describe actual image content and purpose, not just business name
 4. Add location context for local SEO value: "${location || 'area'}"
 5. Accessibility-first approach for screen readers
+6. CLS improvements: Recommend width/height for ALL images
+7. Performance optimization: loading/decoding attributes for Core Web Vitals
+8. ImageKit optimization: tr:w,h,q,f parameters for image delivery
 
 IMAGE CONTEXT ANALYSIS:
 - Hero/service images: Include location and primary service value
