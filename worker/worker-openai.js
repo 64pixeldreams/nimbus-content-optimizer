@@ -230,14 +230,26 @@ async function executeAIPrompt(systemPrompt, userPrompt, env, model = 'gpt-4-tur
 async function executeDeepLinksPrompt(profile, directive, contentMap, env, model) {
   const location = extractLocation(contentMap.route);
   
-  // For now, use a simplified available URLs structure
-  // In production, this would come from the URL discovery system
+  // Enhancement 2: Comprehensive URL pools for strategic linking
   const availableUrls = {
     money_pages: ['/start-repair.html', '/contact.html', '/how-it-works.html'],
-    brand_pages: ['/brands/audemars-piguet-watch-repair'],
-    local_pages: ['/branches/watch-repairs-abbots-langley'],
-    service_pages: ['/watch-repairs/battery-replacement', '/watch-repairs/glass-replacement'],
-    help_pages: ['/information/guarantee', '/faq']
+    brand_pages: [
+      '/brand/rolex-watch-repair', '/brand/omega-watch-repair', '/brand/tag-heuer-watch-repair',
+      '/brand/breitling-watch-repair', '/brand/movado-watch-repair', '/brand/hugo-boss-watch-repair',
+      '/brand/dkny-watch-repair', '/brands/audemars-piguet-watch-repair'
+    ],
+    local_pages: [
+      '/branches/watch-repairs-london', '/branches/watch-repairs-manchester', 
+      '/branches/watch-repairs-birmingham', '/branches/watch-repairs-watford',
+      '/branches/watch-repairs-st-albans', '/branches/watch-repairs-abbots-langley'
+    ],
+    service_pages: [
+      '/watch-repairs/battery-replacement', '/watch-repairs/glass-replacement',
+      '/watch-repairs/crown-replacement', '/watch-repairs/bezel-replacement',
+      '/watch-repairs/movement-repair', '/watch-repairs/strap-replacement',
+      '/vintage-watch-repairs'
+    ],
+    help_pages: ['/information/guarantee', '/faq', '/information/how-it-works']
   };
   
   // Analyze content for mentions
@@ -258,12 +270,13 @@ STRATEGIC APPROACH:
 - Geographic relevance and content mentions determine optimal link selection
 
 LINKING RULES:
-1. Achieve ≥3 internal links per page (money + service/brand + context)
-2. Use ONLY URLs from provided available_urls pools (never guess URLs)
-3. Prioritize content-relevant links (mentioned brands/services in page text)
-4. Fill empty trust links with provided trust_links
-5. Respect max_links_per_page limit (5 max)
-6. Upgrade existing anchors before creating new inline links
+1. UPGRADE EXISTING LINKS FIRST: Analyze all existing anchors for improvement opportunities
+2. Achieve ≥5 internal links per page (exceed minimum requirement)
+3. Use ONLY URLs from provided available_urls pools (never guess URLs)
+4. Prioritize content-relevant links (mentioned brands/services in page text)
+5. Fill empty trust links with provided trust_links
+6. Add strategic authority links: local→brand, service targeting
+7. Geographic context: Add sibling city links for local pages
 
 You must respond with valid JSON in this exact format:
 {
@@ -305,21 +318,31 @@ TRUST LINKS TO FILL:
 Trustpilot: ${profile.trust_links?.trustpilot || 'none'}
 Google: ${profile.trust_links?.google || 'none'}
 
+EXISTING LINKS TO ANALYZE FOR UPGRADES:
+${contentMap.blocks.filter(b => b.type === 'a').map(link => 
+  `- "${link.anchor}" → ${link.href} [${link.selector}]`
+).join('\n')}
+
 CONTENT ANALYSIS:
 Brand mentions found: ${JSON.stringify(brandMentions)}
 Service mentions found: ${JSON.stringify(serviceMentions)}
 Empty trust links detected: ${contentMap.flags?.emptyTrustLinks || []}
 
-CURRENT GAPS:
-- Need ≥3 internal links for SEO benefit
-- Empty trust links need filling
+STRATEGIC OPPORTUNITIES:
+- Upgrade existing brand links: ${brandMentions.length} brands mentioned
+- Add service links: ${serviceMentions.length} services mentioned  
+- Fill trust gaps: ${(contentMap.flags?.emptyTrustLinks || []).length} empty trust links
 - Authority flow: ${directive.type === 'local' ? 'local→brand boost needed' : 'brand→local distribution needed'}
+- Geographic context: Add sibling city links for local relevance
 
 STRATEGIC GOALS:
-1. Fill empty trust links (Trustpilot/Google)
-2. Add money page link (conversion focus)
-3. Add brand/service link (authority distribution)
-4. Ensure natural anchor text integration
+1. UPGRADE existing brand/service links with better anchor text
+2. Fill empty trust links (Trustpilot/Google)
+3. Add money page link (conversion focus)
+4. Add service links for mentioned services (battery, glass, etc.)
+5. Add brand authority links (Rolex, Omega, etc.)
+6. Add geographic context links (sibling cities)
+7. TARGET: ≥5 strategic links (exceed minimum requirement)
 
 Return strategic linking JSON using only available URLs.`;
 
