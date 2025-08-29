@@ -204,7 +204,7 @@ const scanTask = {
     let index = 0;
     
     // Find all content elements in reading order
-    const contentSelectors = 'h1, h2, h3, p, li, blockquote, a, img';
+    const contentSelectors = 'h1, h2, h3, p, li, blockquote, a, img, button, input[type="submit"], [class*="btn"], [class*="cta"]';
     
     mainElement.find(contentSelectors).each((i, elem) => {
       const $elem = $(elem);
@@ -247,6 +247,21 @@ const scanTask = {
             alt: $elem.attr('alt') || '',
             width: parseInt($elem.attr('width')) || null,
             height: parseInt($elem.attr('height')) || null,
+            selector: selector
+          });
+        }
+      } else if (tagName === 'button' || tagName === 'input' || $elem.attr('class')?.includes('btn') || $elem.attr('class')?.includes('cta')) {
+        // Handle buttons, submit inputs, and CTA elements
+        const buttonText = tagName === 'input' ? $elem.attr('value') || $elem.text().trim() : $elem.text().trim();
+        const buttonType = $elem.attr('type') || 'button';
+        
+        if (buttonText) {
+          blocks.push({
+            i: index++,
+            type: 'button',
+            text: buttonText,
+            button_type: buttonType,
+            classes: $elem.attr('class') || '',
             selector: selector
           });
         }
