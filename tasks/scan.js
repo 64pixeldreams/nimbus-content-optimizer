@@ -96,7 +96,7 @@ const scanTask = {
     }
     
     // Extract content blocks in reading order
-    const blocks = this.extractContentBlocks($, mainElement, mainSelector);
+    const { blocks, selectorMap } = this.extractContentBlocks($, mainElement, mainSelector);
     
     // Extract all links and images for reference
     const linksPresent = this.extractAllLinks($);
@@ -112,6 +112,7 @@ const scanTask = {
       main_selector: mainSelector,
       head: head,
       blocks: blocks,
+      selector_map: selectorMap, // V4.3: ID-to-selector mapping
       links_present: linksPresent,
       images_present: imagesPresent,
       flags: flags
@@ -201,6 +202,7 @@ const scanTask = {
   
   extractContentBlocks($, mainElement, mainSelector) {
     const blocks = [];
+    const selectorMap = {}; // V4.3: Map IDs to selectors for later application
     let index = 0;
     
     // Find all content elements in reading order
@@ -218,41 +220,56 @@ const scanTask = {
       
       const selector = this.generateUniqueSelector($, elem, mainSelector);
       
+      // V4.3: Generate unique ID for this element
+      const elementId = this.generateElementId(index, tagName);
+      selectorMap[elementId] = selector;
+      
       if (['h1', 'h2', 'h3', 'p', 'li', 'blockquote'].includes(tagName)) {
         blocks.push({
           i: index++,
+          id: elementId,
           type: tagName,
           text: text,
-          selector: selector
+          selector: selector // Keep for backward compatibility during transition
         });
       } else if (tagName === 'a') {
         const href = $elem.attr('href');
         const anchor = text;
         if (href && anchor) {
+          // V4.3: Generate unique ID for this element
+          const elementId = this.generateElementId(index, tagName);
+          selectorMap[elementId] = selector;
+          
           // Classify link type for business-aware optimization
           const linkType = this.classifyLinkType(href, anchor);
           
           blocks.push({
             i: index++,
+            id: elementId,
             type: 'a',
             anchor: anchor,
             href: href,
             link_type: linkType.type,
             conversion_priority: linkType.priority,
-            selector: selector
+            selector: selector // Keep for backward compatibility during transition
           });
         }
       } else if (tagName === 'img') {
         const src = $elem.attr('src');
         if (src) {
+          // V4.3: Generate unique ID for this element
+          const elementId = this.generateElementId(index, tagName);
+          selectorMap[elementId] = selector;
+          
           blocks.push({
             i: index++,
+            id: elementId,
             type: 'img',
             src: src,
             alt: $elem.attr('alt') || '',
             width: parseInt($elem.attr('width')) || null,
             height: parseInt($elem.attr('height')) || null,
-            selector: selector
+            selector: selector // Keep for backward compatibility during transition
           });
         }
       } else if (tagName === 'button' || tagName === 'input' || $elem.attr('class')?.includes('btn') || $elem.attr('class')?.includes('cta')) {
@@ -261,19 +278,24 @@ const scanTask = {
         const buttonType = $elem.attr('type') || 'button';
         
         if (buttonText) {
+          // V4.3: Generate unique ID for this element
+          const elementId = this.generateElementId(index, tagName);
+          selectorMap[elementId] = selector;
+          
           blocks.push({
             i: index++,
+            id: elementId,
             type: 'button',
             text: buttonText,
             button_type: buttonType,
             classes: $elem.attr('class') || '',
-            selector: selector
+            selector: selector // Keep for backward compatibility during transition
           });
         }
       }
     });
     
-    return blocks;
+    return { blocks, selectorMap };
   },
   
   generateUniqueSelector($, elem, mainSelector) {
@@ -402,6 +424,14 @@ const scanTask = {
     // dist/local/watch-repairs-abbots-langley.html -> watch-repairs-abbots-langley
     const basename = path.basename(filePath, '.html');
     return basename === 'index' ? 'home' : basename;
+  },
+
+  // V4.3: Generate unique element ID
+  generateElementId(index, type) {
+    // Create a unique ID using timestamp + index + type
+    const timestamp = Date.now().toString(36);
+    const indexStr = index.toString(36);
+    return `${timestamp}${indexStr}${type.charAt(0)}`;
   },
 
   // V4.1: Business-aware link classification
