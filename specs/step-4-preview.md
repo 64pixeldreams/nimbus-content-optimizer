@@ -293,3 +293,4 @@ Confidence: 85%
 After Step 4 is complete:
 - Step 5: Approval workflow (approve/reject changes)
 - Step 6: Apply changes to HTML files
+

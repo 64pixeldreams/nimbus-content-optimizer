@@ -139,11 +139,8 @@ const proposeTask = {
   },
   
   getDefaultWorkerUrl() {
-    // TODO: Replace with your actual deployed Cloudflare Worker URL
-    // return 'https://nimbus-content-optimizer.your-account.workers.dev';
-    
-    // For now, return MOCK mode - deploy the worker and update this URL
-    return 'MOCK'; // Use mock mode when no worker URL provided
+    // Production Cloudflare Worker with OpenAI GPT-4 integration
+    return 'https://nimbus-content-optimizer.martin-598.workers.dev';
   },
   
   async requestProposal(workerUrl, profile, directive, contentMap) {

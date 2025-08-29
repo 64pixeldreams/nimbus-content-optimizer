@@ -18,7 +18,8 @@
   "license": "MIT",
   "devDependencies": {
     "gulp": "^4.0.2",
-    "gulp-cli": "^2.3.0"
+    "gulp-cli": "^2.3.0",
+    "wrangler": "^4.33.1"
   },
   "dependencies": {
     "chalk": "^4.1.2",

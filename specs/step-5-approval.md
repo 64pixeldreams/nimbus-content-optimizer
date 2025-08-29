@@ -229,3 +229,4 @@ gulp nimbus:approve --batch test-batch --mode auto --confidence 0.9
 After Step 5 is complete:
 - Step 6: Apply approved changes to HTML files
 - Step 7: Validation and rollback capabilities
+
