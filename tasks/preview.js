@@ -221,9 +221,17 @@ const previewTask = {
     
     let content = `<div class="section"><h2>✏️ Content Changes (${blocks.length})</h2>`;
     
+    // Track occurrences of each selector type for proper matching
+    const selectorCounts = {};
+    
     blocks.forEach((block, i) => {
-      // Extract original text using the selector from the content map
-      const originalText = this.extractOriginalText(block.selector, contentMap) || '(not found in original)';
+      // Track which occurrence of this selector type we're on
+      const selectorType = block.selector;
+      selectorCounts[selectorType] = (selectorCounts[selectorType] || 0) + 1;
+      const occurrence = selectorCounts[selectorType];
+      
+      // Extract original text using the selector and occurrence number
+      const originalText = this.extractOriginalTextByOccurrence(selectorType, occurrence, contentMap) || '(not found in original)';
       
       content += `
         <h3>Change ${i + 1}</h3>
@@ -368,17 +376,41 @@ const previewTask = {
       .replace(/'/g, '&#39;');
   },
 
-  // Helper method to extract original text from HTML using selector
+  // Helper method to extract original text by occurrence (1st h2, 2nd h2, etc)
+  extractOriginalTextByOccurrence(selectorType, occurrence, contentMap) {
+    if (!contentMap || !contentMap.blocks) return null;
+    
+    // Find all blocks of this type
+    const matchingBlocks = contentMap.blocks.filter(block => {
+      // Handle simple type selectors (h1, h2, h3, p)
+      if (selectorType === 'h1' && block.type === 'h1') return true;
+      if (selectorType === 'h2' && block.type === 'h2') return true;
+      if (selectorType === 'h3' && block.type === 'h3') return true;
+      if (selectorType === 'p' && block.type === 'p') return true;
+      
+      return false;
+    });
+    
+    // Return the nth occurrence (1-based)
+    const targetBlock = matchingBlocks[occurrence - 1];
+    return targetBlock ? targetBlock.text : null;
+  },
+
+  // Helper method to extract original text from HTML using selector (legacy)
   extractOriginalText(selector, contentMap) {
     if (!contentMap || !contentMap.blocks) return null;
     
     // Find the block that matches this selector
     const matchingBlock = contentMap.blocks.find(block => {
-      // Handle different selector formats
+      // First try exact selector match
+      if (block.selector === selector) return true;
+      
+      // Handle simple type selectors (h1, h2, h3, p)
       if (selector === 'h1' && block.type === 'h1') return true;
       if (selector === 'h2' && block.type === 'h2') return true;
       if (selector === 'h3' && block.type === 'h3') return true;
-      if (selector.includes(block.type)) return true;
+      if (selector === 'p' && block.type === 'p') return true;
+      
       return false;
     });
     
