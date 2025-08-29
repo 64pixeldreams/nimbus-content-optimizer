@@ -362,14 +362,14 @@ Return strategic linking JSON using only available URLs.`;
 async function executeContentPrompt(profile, directive, contentMap, env, model) {
   const location = extractLocation(contentMap.route);
   
-  // V3 Enhancement 2: Complete Block Coverage (100%)
-  const allBlocks = contentMap.blocks || []; // All available blocks
+  // V2.5: Safer block increase (12 → 30-40 blocks)
+  const allBlocks = contentMap.blocks || [];
   const contentBlocks = [
     ...allBlocks.filter(b => ['h1', 'h2', 'h3'].includes(b.type)), // ALL headings
-    ...allBlocks.filter(b => b.type === 'p'),                       // ALL paragraphs
-    ...allBlocks.filter(b => b.type === 'li'),                      // ALL list items  
-    ...allBlocks.filter(b => b.type === 'blockquote')               // ALL quotes
-  ]; // Process ALL content blocks for comprehensive optimization
+    ...allBlocks.filter(b => b.type === 'p').slice(0, 20),         // 20 paragraphs (vs 15)
+    ...allBlocks.filter(b => b.type === 'li' && b.text && b.text.length > 20).slice(0, 15), // Substantial list items
+    ...allBlocks.filter(b => b.type === 'blockquote')              // ALL quotes
+  ]; // Gradual increase: 30-40 blocks vs previous 12
   
   // Calculate current word counts
   const blocksWithWordCounts = contentBlocks.map(block => ({

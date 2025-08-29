@@ -4,6 +4,7 @@
 const fs = require('fs-extra');
 const path = require('path');
 const chalk = require('chalk');
+const cheerio = require('cheerio');
 
 const previewTask = {
   async run(options) {
@@ -170,8 +171,8 @@ const previewTask = {
   </div>
   
   ${this.generateHeadSection(content_map.head, response.head)}
-  ${this.generateContentSection(response.blocks)}
-  ${this.generateLinksSection(response.links)}
+  ${this.generateContentSection(response.blocks, content_map)}
+  ${this.generateLinksSection(response.links, content_map)}
   ${this.generateImagesSection(response.alts)}
   ${this.generateSchemaSection(response.schema)}
   ${this.generateNotesSection(response.notes)}
@@ -215,17 +216,20 @@ const previewTask = {
     return content;
   },
   
-  generateContentSection(blocks) {
+  generateContentSection(blocks, contentMap) {
     if (!blocks || blocks.length === 0) return '';
     
     let content = `<div class="section"><h2>✏️ Content Changes (${blocks.length})</h2>`;
     
     blocks.forEach((block, i) => {
+      // Extract original text using the selector from the content map
+      const originalText = this.extractOriginalText(block.selector, contentMap) || '(not found in original)';
+      
       content += `
         <h3>Change ${i + 1}</h3>
         <p><strong>Selector:</strong> <code>${this.escapeHtml(block.selector)}</code></p>
         <div class="diff">
-          <div class="before"><strong>Before:</strong><br><em>Original content from page</em></div>
+          <div class="before"><strong>Before:</strong><br>${this.escapeHtml(originalText)}</div>
           <div class="after"><strong>After:</strong><br>${this.escapeHtml(block.new_text)}</div>
         </div>`;
     });
@@ -234,17 +238,20 @@ const previewTask = {
     return content;
   },
   
-  generateLinksSection(links) {
+  generateLinksSection(links, contentMap) {
     if (!links || links.length === 0) return '';
     
     let content = `<div class="section"><h2>🔗 Link Changes (${links.length})</h2>`;
     
     links.forEach((link, i) => {
+      // Extract original link text using the selector from the content map
+      const originalLinkText = this.extractOriginalLinkText(link.selector, contentMap) || '(not found in original)';
+      
       content += `
         <h3>Link ${i + 1}</h3>
         <p><strong>Selector:</strong> <code>${this.escapeHtml(link.selector)}</code></p>
         <div class="diff">
-          <div class="before"><strong>Before:</strong><br>Text: <em>Original link text</em><br>URL: ${this.escapeHtml(link.new_href || 'unchanged')}</div>
+          <div class="before"><strong>Before:</strong><br>Text: ${this.escapeHtml(originalLinkText)}<br>URL: ${this.escapeHtml(link.new_href || 'unchanged')}</div>
           <div class="after"><strong>After:</strong><br>Text: ${this.escapeHtml(link.new_anchor)}<br>URL: ${this.escapeHtml(link.new_href || 'unchanged')}</div>
         </div>`;
     });
@@ -359,6 +366,35 @@ const previewTask = {
       .replace(/>/g, '&gt;')
       .replace(/"/g, '&quot;')
       .replace(/'/g, '&#39;');
+  },
+
+  // Helper method to extract original text from HTML using selector
+  extractOriginalText(selector, contentMap) {
+    if (!contentMap || !contentMap.blocks) return null;
+    
+    // Find the block that matches this selector
+    const matchingBlock = contentMap.blocks.find(block => {
+      // Handle different selector formats
+      if (selector === 'h1' && block.type === 'h1') return true;
+      if (selector === 'h2' && block.type === 'h2') return true;
+      if (selector === 'h3' && block.type === 'h3') return true;
+      if (selector.includes(block.type)) return true;
+      return false;
+    });
+    
+    return matchingBlock ? matchingBlock.text : null;
+  },
+
+  // Helper method to extract original link text from content map
+  extractOriginalLinkText(selector, contentMap) {
+    if (!contentMap || !contentMap.blocks) return null;
+    
+    // Find the link block that matches this selector
+    const matchingBlock = contentMap.blocks.find(block => {
+      return block.type === 'a' && block.selector === selector;
+    });
+    
+    return matchingBlock ? matchingBlock.anchor : null;
   },
   
   async generateBatchSummary(previewDir, batchData, previewResults) {
