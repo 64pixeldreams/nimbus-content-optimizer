@@ -1,0 +1,38 @@
+name: "Repairs by Post"
+domain: "repairsbypost.com"
+services: [
+  "watch-repair",
+  "battery-replacement", 
+  "glass-replacement",
+  "crown-replacement",
+  "bezel-replacement",
+  "movement-repair",
+  "strap-replacement",
+  "vintage-watch-repair"
+]
+geo_scope: ["UK"]
+goal: "Maximise quote submissions and watch repair bookings"
+money_pages: [
+  "/start-repair.html",
+  "/contact.html",
+  "/how-it-works.html"
+]
+default_share_image: "https://www.repairsbypost.com/share.jpg"
+trust_links:
+  trustpilot: "https://uk.trustpilot.com/review/repairsbypost.com"
+  google: "https://g.page/RepairsByPost"
+phone: "0800 121 6030"
+hours: "9am-5pm GMT Mon-Fri"
+guarantee: "12-month guarantee"
+shipping: "Free UK shipping, fully tracked and insured up to £10,000 cover"
+review_count: "1.5K+"
+brands: [
+  "Rolex",
+  "Omega", 
+  "Breitling",
+  "TAG Heuer",
+  "Movado",
+  "Hugo Boss",
+  "DKNY",
+  "Seiko"
+]
