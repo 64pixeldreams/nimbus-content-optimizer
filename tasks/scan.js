@@ -218,6 +218,12 @@ const scanTask = {
         return;
       }
       
+      // V4.2: Check data-nimbus attributes for content control
+      const nimbusAttr = $elem.attr('data-nimbus');
+      if (nimbusAttr === 'ignore') {
+        return; // Skip elements marked for ignoring
+      }
+      
       const selector = this.generateUniqueSelector($, elem, mainSelector);
       
       // V4.3: Generate unique ID for this element
@@ -230,7 +236,8 @@ const scanTask = {
           id: elementId,
           type: tagName,
           text: text,
-          selector: selector // Keep for backward compatibility during transition
+          selector: selector, // Keep for backward compatibility during transition
+          nimbus_priority: nimbusAttr === 'priority' ? 'high' : nimbusAttr === 'ignore' ? 'skip' : 'normal' // V4.2: Content priority
         });
       } else if (tagName === 'a') {
         const href = $elem.attr('href');
@@ -251,7 +258,8 @@ const scanTask = {
             href: href,
             link_type: linkType.type,
             conversion_priority: linkType.priority,
-            selector: selector // Keep for backward compatibility during transition
+            selector: selector, // Keep for backward compatibility during transition
+            nimbus_priority: nimbusAttr === 'priority' ? 'high' : nimbusAttr === 'ignore' ? 'skip' : 'normal' // V4.2: Content priority
           });
         }
       } else if (tagName === 'img') {
@@ -269,7 +277,8 @@ const scanTask = {
             alt: $elem.attr('alt') || '',
             width: parseInt($elem.attr('width')) || null,
             height: parseInt($elem.attr('height')) || null,
-            selector: selector // Keep for backward compatibility during transition
+            selector: selector, // Keep for backward compatibility during transition
+            nimbus_priority: nimbusAttr === 'priority' ? 'high' : nimbusAttr === 'ignore' ? 'skip' : 'normal' // V4.2: Content priority
           });
         }
       } else if (tagName === 'button' || tagName === 'input' || $elem.attr('class')?.includes('btn') || $elem.attr('class')?.includes('cta')) {
@@ -289,7 +298,8 @@ const scanTask = {
             text: buttonText,
             button_type: buttonType,
             classes: $elem.attr('class') || '',
-            selector: selector // Keep for backward compatibility during transition
+            selector: selector, // Keep for backward compatibility during transition
+            nimbus_priority: nimbusAttr === 'priority' ? 'high' : nimbusAttr === 'ignore' ? 'skip' : 'normal' // V4.2: Content priority
           });
         }
       }
