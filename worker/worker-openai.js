@@ -362,14 +362,14 @@ Return strategic linking JSON using only available URLs.`;
 async function executeContentPrompt(profile, directive, contentMap, env, model) {
   const location = extractLocation(contentMap.route);
   
-  // Enhancement 1: Process ALL content blocks with intelligent batching
-  const allBlocks = contentMap.blocks; // All 80 blocks
+  // V3 Enhancement 2: Complete Block Coverage (100%)
+  const allBlocks = contentMap.blocks || []; // All available blocks
   const contentBlocks = [
-    ...allBlocks.filter(b => b.type === 'h1' || b.type === 'h2'), // All headings
-    ...allBlocks.filter(b => b.type === 'p').slice(0, 15),        // First 15 paragraphs  
-    ...allBlocks.filter(b => b.type === 'li').slice(0, 20),       // First 20 list items
-    ...allBlocks.filter(b => b.type === 'blockquote')             // All quotes
-  ];
+    ...allBlocks.filter(b => ['h1', 'h2', 'h3'].includes(b.type)), // ALL headings
+    ...allBlocks.filter(b => b.type === 'p'),                       // ALL paragraphs
+    ...allBlocks.filter(b => b.type === 'li'),                      // ALL list items  
+    ...allBlocks.filter(b => b.type === 'blockquote')               // ALL quotes
+  ]; // Process ALL content blocks for comprehensive optimization
   
   // Calculate current word counts
   const blocksWithWordCounts = contentBlocks.map(block => ({
@@ -417,12 +417,25 @@ You must respond with valid JSON in this exact format:
   "notes": ["content enhancement decisions and word count justifications"]
 }
 
+GEOGRAPHIC INTELLIGENCE (V3 Enhancement):
+Use your knowledge of ${location || 'the area'} including:
+- County and country context (e.g., County Down, Northern Ireland)
+- Nearby towns and cities within 10-20 miles
+- Postcode areas served (e.g., BT24, BT27 for Ballynahinch)
+- Major transport links and accessibility routes
+- Local landmarks, geographic features, and regional characteristics
+- Community context and local business positioning
+
+Create content that feels uniquely relevant to ${location || 'local'} residents and surrounding areas.
+
 OPTIMIZATION PRIORITIES:
-1. Location integration: Natural inclusion of ${location || 'area'} throughout
-2. Trust signal weaving: Reviews, guarantees, certifications  
-3. Word count preservation: Maintain or improve information density
-4. Benefit clarity: Clear value propositions with local context
-5. CTA enhancement: Urgent, specific language
+1. Geographic intelligence: Deep local knowledge integration beyond just town name
+2. Local authority building: Area-specific trust and expertise positioning
+3. Service area specification: County, postcodes, nearby areas coverage
+4. Community connection: Local business positioning and geographic relevance
+5. Content uniqueness: Avoid template language, make each location distinct
+6. Trust signal localization: Area-specific trust building and social proof
+7. Word count enhancement: Add local context while preserving information density
 
 Return only valid JSON with enhanced content that preserves or improves word count.`;
 
@@ -446,12 +459,14 @@ WORD COUNT REQUIREMENTS:
 - Target: Maintain or improve (never reduce unless clarity significantly benefits)
 - Enhancement goal: Add trust signals, local context, expertise
 
-OPTIMIZATION GOALS:
-1. Location targeting: Include "${location || 'local area'}" naturally
-2. Trust signal integration: ${profile.review_count}, ${profile.guarantee}
-3. Word count: Maintain or improve information density
-4. Benefit clarity: Clear value propositions with local context
-5. Expertise indicators: Professional qualifications, experience
+V3 LOCALIZATION GOALS:
+1. Geographic intelligence: Use your knowledge of ${location || 'the area'} including county, nearby towns, postcodes
+2. Local authority: Position as "${location || 'area'}'s leading/premier service" 
+3. Service area depth: Specify coverage including "${location || 'area'} and surrounding areas"
+4. Community connection: Local business positioning since 2014
+5. Content uniqueness: Make this location feel distinctly different from other locations
+6. Trust localization: "${profile.review_count} reviews from customers across ${location || 'the area'} and region"
+7. Word count enhancement: Add rich local context while improving information density
 
 ENHANCEMENT REQUIREMENTS:
 - H1: 45-65 chars with location and primary benefit
