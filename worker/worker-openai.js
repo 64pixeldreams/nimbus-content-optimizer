@@ -226,9 +226,113 @@ async function executeAIPrompt(systemPrompt, userPrompt, env, model = 'gpt-4-tur
   }
 }
 
+// Step 4: Deep Links Optimization Prompt Implementation
 async function executeDeepLinksPrompt(profile, directive, contentMap, env, model) {
-  // Step 4 implementation
-  return { prompt_type: 'deeplinks', error: 'Not implemented yet' };
+  const location = extractLocation(contentMap.route);
+  
+  // For now, use a simplified available URLs structure
+  // In production, this would come from the URL discovery system
+  const availableUrls = {
+    money_pages: ['/start-repair.html', '/contact.html', '/how-it-works.html'],
+    brand_pages: ['/brands/audemars-piguet-watch-repair'],
+    local_pages: ['/branches/watch-repairs-abbots-langley'],
+    service_pages: ['/watch-repairs/battery-replacement', '/watch-repairs/glass-replacement'],
+    help_pages: ['/information/guarantee', '/faq']
+  };
+  
+  // Analyze content for mentions
+  const contentText = contentMap.blocks.map(b => b.text || '').join(' ').toLowerCase();
+  const brandMentions = ['rolex', 'omega', 'tag heuer', 'audemars piguet'].filter(brand => 
+    contentText.includes(brand.toLowerCase()));
+  const serviceMentions = ['battery', 'glass', 'crown', 'bezel'].filter(service => 
+    contentText.includes(service));
+  
+  const systemPrompt = `You are a strategic internal linking specialist focused on SEO authority distribution and user experience.
+
+TASK: Create internal linking strategy using provided available URL pools for maximum SEO benefit.
+
+STRATEGIC APPROACH:
+- Local pages are "fishing nets" that distribute authority to high-value pages
+- Brand pages are "authority targets" that benefit from many local page links  
+- Service pages are "conversion funnels" that guide users to money pages
+- Geographic relevance and content mentions determine optimal link selection
+
+LINKING RULES:
+1. Achieve ≥3 internal links per page (money + service/brand + context)
+2. Use ONLY URLs from provided available_urls pools (never guess URLs)
+3. Prioritize content-relevant links (mentioned brands/services in page text)
+4. Fill empty trust links with provided trust_links
+5. Respect max_links_per_page limit (5 max)
+6. Upgrade existing anchors before creating new inline links
+
+You must respond with valid JSON in this exact format:
+{
+  "links": [
+    {
+      "selector": "css_selector_for_existing_element",
+      "action": "upgrade|create|fill",
+      "new_anchor": "natural_anchor_text", 
+      "new_href": "url_from_available_pools_only",
+      "link_type": "money|service|brand|local|trust",
+      "relevance_reason": "content_mention|geographic|authority_boost"
+    }
+  ],
+  "authority_strategy": {
+    "links_added": 4,
+    "authority_targets": ["specific_pages_receiving_authority"],
+    "link_juice_flow": "local_to_brand"
+  },
+  "confidence": 0.92,
+  "notes": ["strategic linking decisions"]
+}
+
+Return only valid JSON with strategic linking decisions using available URLs.`;
+
+  const userPrompt = `Create strategic deep linking for this page:
+
+CURRENT PAGE: ${contentMap.route}
+PAGE TYPE: ${directive.type} (${directive.tone} tone)
+LOCATION: ${location || 'General'}
+
+AVAILABLE URL POOLS (use ONLY these URLs):
+MONEY PAGES: ${JSON.stringify(availableUrls.money_pages)}
+BRAND PAGES: ${JSON.stringify(availableUrls.brand_pages)}
+LOCAL PAGES: ${JSON.stringify(availableUrls.local_pages)}
+SERVICE PAGES: ${JSON.stringify(availableUrls.service_pages)}
+HELP PAGES: ${JSON.stringify(availableUrls.help_pages)}
+
+TRUST LINKS TO FILL:
+Trustpilot: ${profile.trust_links?.trustpilot || 'none'}
+Google: ${profile.trust_links?.google || 'none'}
+
+CONTENT ANALYSIS:
+Brand mentions found: ${JSON.stringify(brandMentions)}
+Service mentions found: ${JSON.stringify(serviceMentions)}
+Empty trust links detected: ${contentMap.flags?.emptyTrustLinks || []}
+
+CURRENT GAPS:
+- Need ≥3 internal links for SEO benefit
+- Empty trust links need filling
+- Authority flow: ${directive.type === 'local' ? 'local→brand boost needed' : 'brand→local distribution needed'}
+
+STRATEGIC GOALS:
+1. Fill empty trust links (Trustpilot/Google)
+2. Add money page link (conversion focus)
+3. Add brand/service link (authority distribution)
+4. Ensure natural anchor text integration
+
+Return strategic linking JSON using only available URLs.`;
+
+  const promptResult = await executeAIPrompt(systemPrompt, userPrompt, env, model);
+  
+  return {
+    prompt_type: 'deeplinks',
+    success: promptResult.success,
+    result: promptResult.result,
+    processing_time_ms: promptResult.processing_time_ms,
+    tokens_used: promptResult.tokens_used,
+    error: promptResult.error
+  };
 }
 
 async function executeContentPrompt(profile, directive, contentMap, env, model) {
