@@ -139,8 +139,10 @@ const proposeTask = {
   },
   
   getDefaultWorkerUrl() {
-    // For now, return a mock URL since we don't have a deployed worker yet
-    // TODO: Replace with actual deployed Cloudflare Worker URL
+    // TODO: Replace with your actual deployed Cloudflare Worker URL
+    // return 'https://nimbus-content-optimizer.your-account.workers.dev';
+    
+    // For now, return MOCK mode - deploy the worker and update this URL
     return 'MOCK'; // Use mock mode when no worker URL provided
   },
   
