@@ -440,9 +440,108 @@ Return enhanced content with word count tracking and justifications.`;
   };
 }
 
+// Step 6: Image Optimization Prompt Implementation
 async function executeImagesPrompt(profile, directive, contentMap, env, model) {
-  // Step 6 implementation
-  return { prompt_type: 'images', error: 'Not implemented yet' };
+  const location = extractLocation(contentMap.route);
+  
+  // Get image blocks from content map
+  const imageBlocks = contentMap.blocks.filter(block => block.type === 'img').slice(0, 8);
+  
+  if (imageBlocks.length === 0) {
+    return {
+      prompt_type: 'images',
+      success: true,
+      result: {
+        alts: [],
+        confidence: 1.0,
+        notes: ['No images found to optimize']
+      }
+    };
+  }
+  
+  const systemPrompt = `You are an image optimization specialist focused on accessibility, SEO, and Core Web Vitals performance.
+
+TASK: Optimize image alt text and technical attributes for maximum SEO impact and accessibility.
+
+ALT TEXT RULES:
+- Descriptive and specific to actual image content (not just business name)
+- Include location for local businesses when relevant
+- Include brand names when showing branded content
+- 50-125 characters optimal length for SEO value
+- Natural keyword integration without stuffing
+- Accessibility-first approach for screen readers
+
+You must respond with valid JSON in this exact format:
+{
+  "alts": [
+    {
+      "selector": "css_selector",
+      "new_alt": "descriptive_alt_text_with_location",
+      "current_alt": "existing_alt_or_empty",
+      "image_context": "hero|service|brand|trust|general",
+      "optimization_reasoning": "location_added|brand_specified|service_context|accessibility_improved"
+    }
+  ],
+  "technical_recommendations": {
+    "cls_improvements": ["width/height suggestions"],
+    "performance_optimizations": ["loading/decoding recommendations"]
+  },
+  "confidence": 0.96,
+  "notes": ["image optimization decisions and accessibility improvements"]
+}
+
+OPTIMIZATION PRIORITIES:
+1. Accessibility: Screen reader friendly descriptions
+2. Location targeting: Include ${location || 'area'} in relevant images
+3. Brand specificity: Name brands shown in images
+4. Service context: Describe services depicted
+5. SEO value: Natural keyword integration
+
+Return only valid JSON with comprehensive image optimization.`;
+
+  const userPrompt = `Optimize images for this local business page:
+
+BUSINESS: ${profile.name} in ${location || 'UK'}
+SERVICES: ${profile.services?.join(', ') || 'watch repair services'}
+BRANDS: ${profile.brands?.join(', ') || 'luxury watch brands'}
+PAGE TYPE: ${directive.type}
+LOCATION: ${location || 'General'}
+
+IMAGE INVENTORY:
+${imageBlocks.map((img, i) => 
+  `${i + 1}. Selector: ${img.selector}
+     Source: ${img.src}
+     Current alt: "${img.alt || '(empty)'}"
+     Context: ${img.src.includes('brand') ? 'brand_showcase' : 
+               img.src.includes('repair') ? 'service_image' :
+               img.src.includes('google') ? 'trust_signal' : 'general_business'}`
+).join('\n\n')}
+
+OPTIMIZATION REQUIREMENTS:
+1. Descriptive alt text (50-125 chars) with location when relevant
+2. Include brand names for branded content images
+3. Describe actual image content and purpose, not just business name
+4. Add location context for local SEO value: "${location || 'area'}"
+5. Accessibility-first approach for screen readers
+
+IMAGE CONTEXT ANALYSIS:
+- Hero/service images: Include location and primary service value
+- Brand showcase images: Name specific brands shown
+- Trust/review images: Include location and social proof context
+- General business images: Location and service context
+
+Return comprehensive image optimization with location targeting.`;
+
+  const promptResult = await executeAIPrompt(systemPrompt, userPrompt, env, model);
+  
+  return {
+    prompt_type: 'images',
+    success: promptResult.success,
+    result: promptResult.result,
+    processing_time_ms: promptResult.processing_time_ms,
+    tokens_used: promptResult.tokens_used,
+    error: promptResult.error
+  };
 }
 
 async function executeSchemaPrompt(profile, directive, contentMap, env, model) {
