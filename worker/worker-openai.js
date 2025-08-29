@@ -1,5 +1,5 @@
-// Nimbus AI Content Optimization Worker with OpenAI Integration
-// Production-ready Cloudflare Worker with real AI API calls
+// Nimbus V2: Multi-Prompt AI Worker
+// Single Cloudflare Worker that handles 5 focused prompt types
 
 export default {
   async fetch(request, env, ctx) {
@@ -14,7 +14,6 @@ export default {
       });
     }
 
-    // Only allow POST requests
     if (request.method !== 'POST') {
       return new Response(JSON.stringify({ error: 'Method not allowed' }), {
         status: 405,
@@ -23,37 +22,53 @@ export default {
     }
 
     try {
-      // Parse request body
       const requestData = await request.json();
-      const { profile, directive, content_map } = requestData;
+      const { prompt_type, model = 'gpt-4-turbo-preview', profile, directive, content_map } = requestData;
 
       // Validate required fields
       if (!profile || !directive || !content_map) {
         return new Response(JSON.stringify({ 
           error: 'Missing required fields: profile, directive, content_map' 
-        }), {
-          status: 400,
-          headers: { 'Content-Type': 'application/json' }
-        });
+        }), { status: 400, headers: { 'Content-Type': 'application/json' } });
       }
 
       // Validate OpenAI API key
       if (!env.OPENAI_API_KEY) {
         return new Response(JSON.stringify({ 
           error: 'OpenAI API key not configured' 
-        }), {
-          status: 500,
-          headers: { 'Content-Type': 'application/json' }
-        });
+        }), { status: 500, headers: { 'Content-Type': 'application/json' } });
       }
 
-      console.log(`Processing optimization for: ${content_map.route}`);
+      console.log(`V2 Processing ${prompt_type} optimization for: ${content_map.route}`);
 
-      // Generate AI proposal using OpenAI
-      const proposal = await generateOptimizationProposal(profile, directive, content_map, env);
+      let result;
 
-      // Return successful response
-      return new Response(JSON.stringify(proposal), {
+      // Route to specific prompt handler
+      switch (prompt_type) {
+        case 'head':
+          result = await executeHeadPrompt(profile, directive, content_map, env, model);
+          break;
+        case 'deeplinks':
+          result = await executeDeepLinksPrompt(profile, directive, content_map, env, model);
+          break;
+        case 'content':
+          result = await executeContentPrompt(profile, directive, content_map, env, model);
+          break;
+        case 'images':
+          result = await executeImagesPrompt(profile, directive, content_map, env, model);
+          break;
+        case 'schema':
+          result = await executeSchemaPrompt(profile, directive, content_map, env, model);
+          break;
+        case 'multi':
+          // Execute all prompts in parallel
+          result = await executeAllPrompts(profile, directive, content_map, env, model);
+          break;
+        default:
+          throw new Error(`Unknown prompt_type: ${prompt_type}`);
+      }
+
+      return new Response(JSON.stringify(result), {
         headers: {
           'Content-Type': 'application/json',
           'Access-Control-Allow-Origin': '*'
@@ -61,7 +76,7 @@ export default {
       });
 
     } catch (error) {
-      console.error('Worker error:', error);
+      console.error('V2 Worker error:', error);
       
       return new Response(JSON.stringify({ 
         error: 'Internal server error',
@@ -74,15 +89,93 @@ export default {
   }
 };
 
-async function generateOptimizationProposal(profile, directive, contentMap, env) {
+// Step 3: Head Metadata Optimization Prompt Implementation
+async function executeHeadPrompt(profile, directive, contentMap, env, model) {
+  const location = extractLocation(contentMap.route);
+  
+  const systemPrompt = `You are a head metadata optimization specialist focused on local SEO and conversion optimization.
+
+TASK: Optimize page head metadata for maximum SEO impact and click-through rates.
+
+REQUIREMENTS:
+- Title: 50-60 characters, include location and key benefit
+- Meta description: 140-165 characters, include trust signals and benefits  
+- For local pages: Use pattern "Service in {{Location}} | Key Benefit & Trust Signal"
+- Include review count, guarantee, and unique selling points
+- UK spelling, conversion-focused language
+- Never exceed character limits
+
+You must respond with valid JSON in this exact format:
+{
+  "head": {
+    "title": "string (50-60 chars)",
+    "metaDescription": "string (140-165 chars)", 
+    "canonical": "string (absolute URL)"
+  },
+  "confidence": 0.95,
+  "notes": ["optimization details"]
+}
+
+OPTIMIZATION PRIORITIES:
+1. Location targeting for local SEO
+2. Trust signal integration (reviews, guarantees)
+3. Click-through rate optimization
+4. Character count compliance
+5. Benefit-focused messaging
+
+Return only valid JSON with the optimized metadata.`;
+
+  const userPrompt = `Optimize head metadata for this page:
+
+BUSINESS: ${profile.name} (${profile.domain})
+LOCATION: ${location || 'General'}
+PAGE TYPE: ${directive.type}
+TRUST SIGNALS: ${profile.review_count} reviews, ${profile.guarantee}
+PHONE: ${profile.phone}
+
+CURRENT HEAD:
+- Title: "${contentMap.head.title}" (${contentMap.head.title.length} chars)
+- Meta: "${contentMap.head.metaDescription}" (${contentMap.head.metaDescription.length} chars)
+- Canonical: "${contentMap.head.canonical}"
+
+TARGET IMPROVEMENTS:
+- Title: 50-60 chars with location and benefit
+- Meta: 140-165 chars with trust signals
+- Pattern: "Watch Repairs in ${location || 'UK'} | Free UK Postage & 12-Month Guarantee"
+
+TRUST ELEMENTS TO INCLUDE:
+- ${profile.review_count} reviews
+- ${profile.guarantee}
+- Free UK shipping/collection
+- Professional certification
+
+Return optimized head metadata meeting exact character requirements.`;
+
+  const promptResult = await executeAIPrompt(systemPrompt, userPrompt, env, model);
+  
+  return {
+    prompt_type: 'head',
+    success: promptResult.success,
+    result: promptResult.result,
+    processing_time_ms: promptResult.processing_time_ms,
+    tokens_used: promptResult.tokens_used,
+    error: promptResult.error
+  };
+}
+
+// Utility functions for V2
+function extractLocation(route) {
+  const match = route.match(/\/branches\/watch-repairs-(.+)/);
+  if (match) {
+    return match[1].replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+  }
+  return null;
+}
+
+async function executeAIPrompt(systemPrompt, userPrompt, env, model = 'gpt-4-turbo-preview') {
   const startTime = Date.now();
   
   try {
-    // Build the AI prompt
-    const systemPrompt = buildSystemPrompt();
-    const userPrompt = buildUserPrompt(profile, directive, contentMap);
-    
-    // Call OpenAI API
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -90,14 +183,14 @@ async function generateOptimizationProposal(profile, directive, contentMap, env)
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4-turbo-preview', // or 'gpt-3.5-turbo' for faster/cheaper
+        model: model,
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userPrompt }
         ],
-        temperature: 0.3, // Lower temperature for more consistent output
-        max_tokens: 4000,
-        response_format: { type: 'json_object' } // Ensure JSON response
+        temperature: 0.3,
+        max_tokens: 1500,
+        response_format: { type: 'json_object' }
       })
     });
 
@@ -113,233 +206,63 @@ async function generateOptimizationProposal(profile, directive, contentMap, env)
       throw new Error('No response from OpenAI');
     }
 
-    // Parse and validate AI response
-    let proposal;
-    try {
-      proposal = JSON.parse(aiResponse);
-    } catch (parseError) {
-      console.error('Failed to parse AI response:', aiResponse);
-      throw new Error('Invalid JSON response from AI');
-    }
-
-    // Validate response structure
-    validateProposalStructure(proposal);
-
-    // Add processing metadata
-    proposal.processing_time_ms = Date.now() - startTime;
-    proposal.model_used = 'gpt-4-turbo-preview';
-    proposal.timestamp = new Date().toISOString();
-
-    return proposal;
+    const result = JSON.parse(aiResponse);
+    
+    return {
+      success: true,
+      result,
+      processing_time_ms: Date.now() - startTime,
+      tokens_used: data.usage?.total_tokens || 0,
+      model_used: model
+    };
 
   } catch (error) {
-    console.error('AI generation error:', error);
-    
-    // Fallback to mock response if AI fails
-    console.log('Falling back to mock response due to AI error');
-    return generateFallbackProposal(profile, directive, contentMap, error.message);
+    return {
+      success: false,
+      error: error.message,
+      processing_time_ms: Date.now() - startTime,
+      tokens_used: 0
+    };
   }
 }
 
-function buildSystemPrompt() {
-  return `You are Nimbus, a conversion-focused SEO copy editor.
-
-INPUTS:
-- profile: facts about the business (domain, money_pages, trust links)
-- directive: page family rules (type=local|brand, tone, interlink policy, schema types)
-- content_map: the page's ordered blocks with stable CSS selectors, plus head meta
-
-OUTPUT:
-Return a single JSON object with the exact keys:
-{
-  "head": {...},             // optional replacements for title, metaDescription
-  "blocks": [...],           // text replacements with selector and new_text
-  "links": [...],            // href/anchor replacements with selector, new_anchor, new_href
-  "alts": [...],             // image alt replacements with selector and new_alt
-  "schema": {...},           // one JSON-LD graph object
-  "confidence": <0..1>,      // confidence score between 0 and 1
-  "notes": [...]             // short bullet points of what you changed or skipped
+async function executeDeepLinksPrompt(profile, directive, contentMap, env, model) {
+  // Step 4 implementation
+  return { prompt_type: 'deeplinks', error: 'Not implemented yet' };
 }
 
-HARD RULES (DO NOT BREAK):
-- Modify ONLY nodes identified by provided selectors. Do NOT add/remove/reorder DOM elements.
-- UK spelling. No prices, guarantees, review counts beyond those in profile.
-- Links limited to: profile.money_pages, /watch-repairs/*, /brand/*, /branches/*
-- Preserve existing href destinations unless explicitly improving them.
-- Generate schema.org markup appropriate to directive.schema_types.
-- Be conversion-focused: emphasize trust signals, local targeting, clear CTAs.
-
-OPTIMIZATION PRIORITIES:
-1. Local SEO (if type=local): Include location in title/H1, add LocalBusiness schema
-2. Trust signals: Incorporate guarantee, review count, certifications from profile
-3. CTA optimization: Make calls-to-action urgent and specific
-4. Image accessibility: Add descriptive alt text for SEO and accessibility
-5. Schema markup: Add structured data for better search visibility
-
-Respond with valid JSON only.`;
+async function executeContentPrompt(profile, directive, contentMap, env, model) {
+  // Step 5 implementation
+  return { prompt_type: 'content', error: 'Not implemented yet' };
 }
 
-function buildUserPrompt(profile, directive, contentMap) {
-  return JSON.stringify({
-    profile: {
-      name: profile.name,
-      domain: profile.domain,
-      services: profile.services,
-      geo_scope: profile.geo_scope,
-      goal: profile.goal,
-      money_pages: profile.money_pages,
-      trust_links: profile.trust_links,
-      phone: profile.phone,
-      guarantee: profile.guarantee,
-      review_count: profile.review_count,
-      brands: profile.brands
-    },
-    directive: {
-      type: directive.type,
-      tone: directive.tone,
-      cta_priority: directive.cta_priority,
-      schema_types: directive.schema_types,
-      trust_signals: directive.trust_signals
-    },
-    content_map: {
-      path: contentMap.path,
-      route: contentMap.route,
-      head: contentMap.head,
-      blocks: contentMap.blocks.filter(block => 
-        block.type === 'h1' || 
-        block.type === 'h2' || 
-        (block.type === 'p' && block.i < 5) ||
-        (block.type === 'a' && block.href && block.href.includes('start-repair'))
-      ).slice(0, 8), // Only send key content: headings, first few paragraphs, CTAs
-      flags: contentMap.flags
-    }
-  }, null, 2);
+async function executeImagesPrompt(profile, directive, contentMap, env, model) {
+  // Step 6 implementation
+  return { prompt_type: 'images', error: 'Not implemented yet' };
 }
 
-function validateProposalStructure(proposal) {
-  const requiredKeys = ['head', 'blocks', 'links', 'alts', 'schema', 'confidence', 'notes'];
+async function executeSchemaPrompt(profile, directive, contentMap, env, model) {
+  // Step 7 implementation
+  return { prompt_type: 'schema', error: 'Not implemented yet' };
+}
+
+async function executeAllPrompts(profile, directive, contentMap, env, model) {
+  // Step 8 implementation - parallel execution
+  const startTime = Date.now();
   
-  for (const key of requiredKeys) {
-    if (!(key in proposal)) {
-      throw new Error(`Missing required key in proposal: ${key}`);
-    }
-  }
-
-  // Validate confidence is a number between 0 and 1
-  if (typeof proposal.confidence !== 'number' || proposal.confidence < 0 || proposal.confidence > 1) {
-    throw new Error('Confidence must be a number between 0 and 1');
-  }
-
-  // Validate arrays
-  if (!Array.isArray(proposal.blocks)) throw new Error('blocks must be an array');
-  if (!Array.isArray(proposal.links)) throw new Error('links must be an array');
-  if (!Array.isArray(proposal.alts)) throw new Error('alts must be an array');
-  if (!Array.isArray(proposal.notes)) throw new Error('notes must be an array');
-
-  // Validate block structure
-  proposal.blocks.forEach((block, i) => {
-    if (!block.selector || !block.new_text) {
-      throw new Error(`Block ${i} missing selector or new_text`);
-    }
-  });
-
-  // Validate link structure
-  proposal.links.forEach((link, i) => {
-    if (!link.selector) {
-      throw new Error(`Link ${i} missing selector`);
-    }
-  });
-
-  // Validate alt structure
-  proposal.alts.forEach((alt, i) => {
-    if (!alt.selector || !alt.new_alt) {
-      throw new Error(`Alt ${i} missing selector or new_alt`);
-    }
-  });
-}
-
-function generateFallbackProposal(profile, directive, contentMap, errorMessage) {
-  const location = extractLocation(contentMap.route);
+  const promptResults = await Promise.allSettled([
+    executeHeadPrompt(profile, directive, contentMap, env, model),
+    executeDeepLinksPrompt(profile, directive, contentMap, env, model),
+    executeContentPrompt(profile, directive, contentMap, env, model),
+    executeImagesPrompt(profile, directive, contentMap, env, model),
+    executeSchemaPrompt(profile, directive, contentMap, env, model)
+  ]);
   
+  // Merge results (Step 8 implementation)
   return {
-    head: {
-      title: directive.type === 'local' && location ? 
-        `Professional Watch Repairs in ${location} | ${profile.guarantee}` :
-        `${profile.name} - Professional Watch Repair Service`,
-      metaDescription: `Expert watch repair service${location ? ` in ${location}` : ''}. ${profile.guarantee}, ${profile.review_count} reviews.`
-    },
-    blocks: [
-      {
-        selector: 'main h1',
-        new_text: directive.type === 'local' && location ? 
-          `Professional Watch Repairs in ${location}` :
-          'Professional Watch Repair Service'
-      }
-    ],
-    links: [
-      {
-        selector: 'main a[href*="start-repair"]',
-        new_anchor: 'GET FREE QUOTE (2 MINS)',
-        new_href: '/start-repair.html'
-      }
-    ],
-    alts: [
-      {
-        selector: 'main img:first-of-type',
-        new_alt: `Professional watch repair service${location ? ` in ${location}` : ''} - certified technicians`
-      }
-    ],
-    schema: generateBasicSchema(profile, directive, location, contentMap.route),
-    confidence: 0.6, // Lower confidence for fallback
-    notes: [
-      `Fallback proposal generated due to AI error: ${errorMessage}`,
-      'Basic optimizations applied for SEO and conversion',
-      location ? `Added location targeting for ${location}` : 'General service optimization',
-      'Schema markup added for search visibility'
-    ]
+    prompt_type: 'multi',
+    results: promptResults,
+    processing_time_ms: Date.now() - startTime,
+    message: 'Multi-prompt execution ready for Step 8 implementation'
   };
-}
-
-function generateBasicSchema(profile, directive, location, route) {
-  const schema = {
-    '@context': 'https://schema.org',
-    '@graph': []
-  };
-
-  if (directive.schema_types?.includes('LocalBusiness') && location) {
-    schema['@graph'].push({
-      '@type': 'LocalBusiness',
-      '@id': `https://${profile.domain}${route}#business`,
-      'name': `${profile.name} - ${location}`,
-      'description': `Professional watch repair service in ${location}`,
-      'telephone': profile.phone,
-      'address': {
-        '@type': 'PostalAddress',
-        'addressLocality': location,
-        'addressCountry': 'GB'
-      }
-    });
-  }
-
-  if (directive.schema_types?.includes('Service')) {
-    schema['@graph'].push({
-      '@type': 'Service',
-      '@id': `https://${profile.domain}${route}#service`,
-      'name': 'Watch Repair Service',
-      'provider': {
-        '@type': 'Organization',
-        'name': profile.name
-      }
-    });
-  }
-
-  return schema;
-}
-
-function extractLocation(route) {
-  const match = route.match(/\/branches\/watch-repairs-(.+)/);
-  if (match) {
-    return match[1].replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-  }
-  return null;
 }
