@@ -7,24 +7,47 @@ Building on V3's localization success, V4 focuses on **performance optimization*
 
 ## 📋 **V4 Enhancement Tasks**
 
-### **🔧 V4.1: Fix Button/CTA Detection**
+### **🔧 V4.1: Business-Aware CTA Detection**
 **Priority: HIGH** - Critical for conversion optimization
 
 **Current Issue:**
-- Scanner only detects `a`, `h1`, `h2`, `img`, `p` elements
-- Missing `button`, `input[type="submit"]`, `.btn`, `.cta` elements
-- No CTA optimization in results
+- CTAs detected by CSS classes (generic approach)
+- No business context for link importance
+- Same AI treatment for money pages vs regular links
+
+**Business-Aware Solution:**
+```yaml
+# profile.yaml - Define money pages and CTA patterns
+money_pages:
+  - "/start-repair.html"
+  - "/contact.html"
+  - "/shop/*"           # Wildcard support
+  - "/checkout"
+
+cta_patterns:
+  - "tel:*"             # Phone CTAs
+  - "mailto:*"          # Email CTAs
+  - "/quote*"           # Quote pages
+```
 
 **Implementation:**
-1. Update `gulp/tasks/scan.js` to detect button elements
-2. Add button selector patterns: `button`, `input[type="submit"]`, `[class*="btn"]`, `[class*="cta"]`
-3. Extract button text and enhance in AI prompts
-4. Test with sample buttons
+1. Add `classifyLinkType()` method to scanner
+2. Mark links as `cta-money`, `cta-contact`, or `link-regular`
+3. Update AI prompts with separate CTA vs regular link optimization
+4. Test with money page configuration
 
 **Expected Result:**
-- Button text optimization: "Submit" → "Get Free Quote (2 Mins)"
-- CTA enhancement with urgency and value props
-- Improved conversion rates
+```json
+{
+  "anchor": "SUBMIT REPAIR (2 mins)",
+  "href": "/start-repair.html",
+  "link_type": "cta-money",
+  "conversion_priority": "high"
+}
+```
+- **Money page CTAs**: Urgency, value props, conversion focus
+- **Regular links**: SEO optimization, user experience
+- **Business intelligence**: AI knows which links drive revenue
 
 ---
 
