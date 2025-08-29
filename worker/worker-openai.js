@@ -205,7 +205,12 @@ function buildUserPrompt(profile, directive, contentMap) {
       path: contentMap.path,
       route: contentMap.route,
       head: contentMap.head,
-      blocks: contentMap.blocks.slice(0, 20), // Limit blocks to avoid token limits
+      blocks: contentMap.blocks.filter(block => 
+        block.type === 'h1' || 
+        block.type === 'h2' || 
+        (block.type === 'p' && block.i < 5) ||
+        (block.type === 'a' && block.href && block.href.includes('start-repair'))
+      ).slice(0, 8), // Only send key content: headings, first few paragraphs, CTAs
       flags: contentMap.flags
     }
   }, null, 2);
