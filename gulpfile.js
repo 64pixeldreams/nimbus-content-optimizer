@@ -21,6 +21,8 @@ program
   .option('--pages <list>', 'Comma-separated list of page IDs')
   .option('--git', 'Create git commit after applying changes')
   .option('--dry-run', 'Show what would be done without making changes')
+  .option('--format <type>', 'Preview format: html|console', 'html')
+  .option('--open', 'Open preview in browser')
   .parse(process.argv);
 
 const options = program.opts();
