@@ -25,6 +25,7 @@ program
   .option('--open', 'Open preview in browser')
   .option('--mode <type>', 'Approval mode: interactive|auto|reject', 'interactive')
   .option('--confidence <threshold>', 'Auto-approve confidence threshold (0.0-1.0)')
+  .option('--backup', 'Create backup files before modification', true)
   .parse(process.argv);
 
 const options = program.opts();
@@ -123,8 +124,8 @@ gulp.task('nimbus:approve', async () => {
 gulp.task('nimbus:apply', async () => {
   console.log(chalk.blue('🚀 Applying approved changes...'));
   
-  if (!options.batch || !options.dest) {
-    console.error(chalk.red('❌ Error: --batch and --dest options are required'));
+  if (!options.batch) {
+    console.error(chalk.red('❌ Error: --batch option is required'));
     process.exit(1);
   }
   
