@@ -584,10 +584,17 @@ async function executeSchemaPrompt(profile, directive, contentMap, env, model) {
 TASK: Generate comprehensive Schema.org markup for maximum search engine understanding and rich snippet eligibility.
 
 SCHEMA REQUIREMENTS:
-- LocalBusiness: Complete with address, contact, reviews, services, area served
+- LocalBusiness: Complete with address, contact, reviews, services, area served, opening hours
 - BreadcrumbList: Logical navigation hierarchy for user experience
+- FAQPage: Detect and add if actual Q&A content exists on page
+- Service catalog: hasOfferCatalog with all available services listed
 - Valid structure: Proper @context, @graph, and @id references
 - Local optimization: Address and geographic data derived from page context
+
+FAQ DETECTION:
+- Look for FAQ sections, Q&A content, or help sections in page content
+- Add FAQPage schema only if actual questions and answers exist
+- Include mainEntity with Question/Answer pairs from content
 
 You must respond with valid JSON in this exact format:
 {
@@ -608,6 +615,14 @@ You must respond with valid JSON in this exact format:
           "addressCountry": "GB"
         },
         "areaServed": [{"@type": "City", "name": "city"}],
+        "openingHours": ["Mo-Fr 09:00-17:00"],
+        "hasOfferCatalog": {
+          "@type": "OfferCatalog",
+          "name": "Services",
+          "itemListElement": [
+            {"@type": "Offer", "itemOffered": {"@type": "Service", "name": "service_name"}}
+          ]
+        },
         "aggregateRating": {
           "@type": "AggregateRating",
           "ratingValue": "4.8",
@@ -622,6 +637,13 @@ You must respond with valid JSON in this exact format:
           {"@type": "ListItem", "position": 1, "name": "Home", "item": "home_url"},
           {"@type": "ListItem", "position": 2, "name": "section", "item": "section_url"},
           {"@type": "ListItem", "position": 3, "name": "current_page", "item": "current_url"}
+        ]
+      },
+      {
+        "@type": "FAQPage",
+        "@id": "page_url#faq",
+        "mainEntity": [
+          {"@type": "Question", "name": "question", "acceptedAnswer": {"@type": "Answer", "text": "answer"}}
         ]
       }
     ]
@@ -660,11 +682,22 @@ PAGE ANALYSIS:
 - Location context: ${location ? `Local service page for ${location}` : 'General service page'}
 
 SCHEMA REQUIREMENTS:
-1. LocalBusiness with complete address and contact details for ${location || 'UK'}
+1. LocalBusiness with complete address, contact, opening hours, and service catalog
 2. BreadcrumbList for navigation hierarchy
-3. AggregateRating with review count (${profile.review_count}) and trust signals
-4. Geographic targeting with area served for ${location || 'UK'}
-5. Service details specific to watch repair industry
+3. FAQPage if Q&A content detected (look for FAQ sections in content)
+4. Service catalog (hasOfferCatalog) with all ${profile.services?.length || 8} services
+5. AggregateRating with review count (${profile.review_count}) and trust signals
+6. Geographic targeting with area served for ${location || 'UK'}
+
+FAQ CONTENT ANALYSIS:
+${(contentMap.blocks || []).filter(b => 
+  (b.text && (b.text.toLowerCase().includes('faq') || 
+              b.text.toLowerCase().includes('question') || 
+              b.text.includes('?')))
+).map(b => `- "${b.text.substring(0, 100)}..."`).join('\n') || 'No FAQ content detected'}
+
+SERVICES TO INCLUDE IN CATALOG:
+${profile.services?.join(', ') || 'all available services'}
 
 LOCATION CONTEXT:
 - Address locality: ${location || 'UK'}
