@@ -335,9 +335,109 @@ Return strategic linking JSON using only available URLs.`;
   };
 }
 
+// Step 5: Content Enhancement Prompt Implementation
 async function executeContentPrompt(profile, directive, contentMap, env, model) {
-  // Step 5 implementation
-  return { prompt_type: 'content', error: 'Not implemented yet' };
+  const location = extractLocation(contentMap.route);
+  
+  // Get key content blocks (H1, H2, first few paragraphs)
+  const contentBlocks = contentMap.blocks.filter(block => 
+    block.type === 'h1' || 
+    block.type === 'h2' || 
+    (block.type === 'p' && block.i < 5)
+  ).slice(0, 6);
+  
+  // Calculate current word counts
+  const blocksWithWordCounts = contentBlocks.map(block => ({
+    ...block,
+    word_count: (block.text || '').split(' ').length
+  }));
+  
+  const totalWords = blocksWithWordCounts.reduce((sum, block) => sum + block.word_count, 0);
+  
+  const systemPrompt = `You are a content enhancement specialist focused on local SEO and conversion optimization while preserving information density.
+
+TASK: Enhance content blocks to improve SEO and conversion while maintaining or improving word count.
+
+WORD COUNT POLICY - CRITICAL:
+- NEVER reduce content length unless it significantly improves clarity
+- ADD valuable information when possible (trust signals, benefits, expertise)
+- Maintain information density and value for users
+- Prefer enhancement over reduction
+- Track word count changes and justify any reductions
+
+You must respond with valid JSON in this exact format:
+{
+  "blocks": [
+    {
+      "selector": "css_selector",
+      "new_text": "enhanced_content_text",
+      "word_count_before": 45,
+      "word_count_after": 52,
+      "optimization_type": "trust_signals_added|location_targeting|clarity_improvement"
+    }
+  ],
+  "content_summary": {
+    "total_word_count_before": 150,
+    "total_word_count_after": 168,
+    "word_count_change": "+18",
+    "enhancement_ratio": 1.12
+  },
+  "confidence": 0.94,
+  "notes": ["content enhancement decisions and word count justifications"]
+}
+
+OPTIMIZATION PRIORITIES:
+1. Location integration: Natural inclusion of ${location || 'area'} throughout
+2. Trust signal weaving: Reviews, guarantees, certifications  
+3. Word count preservation: Maintain or improve information density
+4. Benefit clarity: Clear value propositions with local context
+5. CTA enhancement: Urgent, specific language
+
+Return only valid JSON with enhanced content that preserves or improves word count.`;
+
+  const userPrompt = `Enhance content for this local business page while preserving word count:
+
+BUSINESS: ${profile.name} in ${location || 'UK'}
+TRUST SIGNALS: ${profile.review_count} reviews, ${profile.guarantee}
+TONE: ${directive.tone}
+PHONE: ${profile.phone}
+
+CURRENT CONTENT BLOCKS (preserve/improve word count):
+${blocksWithWordCounts.map((block, i) => 
+  `${i + 1}. [${block.type}] "${block.text}" (${block.word_count} words)`
+).join('\n')}
+
+WORD COUNT REQUIREMENTS:
+- Current total: ${totalWords} words
+- Target: Maintain or improve (never reduce unless clarity significantly benefits)
+- Enhancement goal: Add trust signals, local context, expertise
+
+OPTIMIZATION GOALS:
+1. Location targeting: Include "${location || 'local area'}" naturally
+2. Trust signal integration: ${profile.review_count}, ${profile.guarantee}
+3. Word count: Maintain or improve information density
+4. Benefit clarity: Clear value propositions with local context
+5. Expertise indicators: Professional qualifications, experience
+
+ENHANCEMENT REQUIREMENTS:
+- H1: 45-65 chars with location and primary benefit
+- H2: Benefit statements with trust signals
+- Paragraphs: Enhanced with local context, trust signals, expertise
+- Natural flow: Content must read naturally with enhancements
+- Information value: Every added word must provide user value
+
+Return enhanced content with word count tracking and justifications.`;
+
+  const promptResult = await executeAIPrompt(systemPrompt, userPrompt, env, model);
+  
+  return {
+    prompt_type: 'content',
+    success: promptResult.success,
+    result: promptResult.result,
+    processing_time_ms: promptResult.processing_time_ms,
+    tokens_used: promptResult.tokens_used,
+    error: promptResult.error
+  };
 }
 
 async function executeImagesPrompt(profile, directive, contentMap, env, model) {
