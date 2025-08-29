@@ -17,10 +17,10 @@ name = "nimbus-content-optimizer-staging"
 #   "nimbus-ai.yourdomain.com/*"
 # ]
 
-# Optional: KV storage for caching
-# kv_namespaces = [
-#   { binding = "CACHE", id = "your-kv-namespace-id" }
-# ]
+# V4.5: KV storage for AI result caching
+kv_namespaces = [
+  { binding = "NIMBUS_CACHE", id = "your-kv-namespace-id" }
+]
 
 # Optional: Rate limiting
 # [limits]

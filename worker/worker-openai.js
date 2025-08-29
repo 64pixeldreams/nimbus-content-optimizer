@@ -1,5 +1,53 @@
 // Nimbus V2: Multi-Prompt AI Worker
 // Single Cloudflare Worker that handles 5 focused prompt types
+// V4.5: Enhanced with KV caching for performance and cost optimization
+
+// V4.5: KV Cache Utilities
+const CACHE_VERSION = 'v4.5';
+const CACHE_TTL = 86400 * 7; // 7 days
+
+async function generateCacheKey(payload) {
+  // Create a stable hash of the request payload
+  const cacheInput = {
+    content: payload.contentMap?.blocks || [],
+    profile: payload.profile,
+    directive: payload.directive,
+    version: CACHE_VERSION,
+    model: 'gpt-4-turbo'
+  };
+  
+  const encoder = new TextEncoder();
+  const data = encoder.encode(JSON.stringify(cacheInput));
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+  
+  return `ai-result-${hashHex}`;
+}
+
+async function getCachedResult(cacheKey, env) {
+  if (!env.NIMBUS_CACHE) return null;
+  
+  try {
+    const cached = await env.NIMBUS_CACHE.get(cacheKey);
+    return cached ? JSON.parse(cached) : null;
+  } catch (error) {
+    console.error('Cache read error:', error);
+    return null;
+  }
+}
+
+async function setCachedResult(cacheKey, result, env) {
+  if (!env.NIMBUS_CACHE) return;
+  
+  try {
+    await env.NIMBUS_CACHE.put(cacheKey, JSON.stringify(result), {
+      expirationTtl: CACHE_TTL
+    });
+  } catch (error) {
+    console.error('Cache write error:', error);
+  }
+}
 
 export default {
   async fetch(request, env, ctx) {
@@ -12,6 +60,40 @@ export default {
           'Access-Control-Allow-Headers': 'Content-Type, Authorization',
         },
       });
+    }
+
+    // V4.5: Cache stats endpoint
+    if (request.method === 'GET' && new URL(request.url).pathname === '/cache-stats') {
+      if (!env.NIMBUS_CACHE) {
+        return new Response(JSON.stringify({ error: 'KV cache not configured' }), {
+          status: 500,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
+      
+      try {
+        const hits = await env.NIMBUS_CACHE.get('cache-hits') || '0';
+        const misses = await env.NIMBUS_CACHE.get('cache-misses') || '0';
+        const hitRate = parseInt(hits) / (parseInt(hits) + parseInt(misses)) * 100;
+        
+        return new Response(JSON.stringify({
+          cache_hits: parseInt(hits),
+          cache_misses: parseInt(misses),
+          hit_rate: `${hitRate.toFixed(1)}%`,
+          version: CACHE_VERSION,
+          ttl_days: CACHE_TTL / 86400
+        }), {
+          headers: {
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': '*'
+          }
+        });
+      } catch (error) {
+        return new Response(JSON.stringify({ error: 'Failed to get cache stats' }), {
+          status: 500,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
     }
 
     if (request.method !== 'POST') {
@@ -41,6 +123,42 @@ export default {
 
       console.log(`V2 Processing ${prompt_type} optimization for: ${content_map.route}`);
 
+      // V4.5: Check cache first
+      const cacheKey = await generateCacheKey(requestData);
+      const cachedResult = await getCachedResult(cacheKey, env);
+      
+      if (cachedResult) {
+        console.log(`Cache HIT for ${prompt_type}: ${content_map.route}`);
+        
+        // Track cache hit
+        if (env.NIMBUS_CACHE) {
+          try {
+            const hits = parseInt(await env.NIMBUS_CACHE.get('cache-hits') || '0') + 1;
+            await env.NIMBUS_CACHE.put('cache-hits', hits.toString(), { expirationTtl: CACHE_TTL * 10 });
+          } catch (e) { /* ignore */ }
+        }
+        
+        return new Response(JSON.stringify({
+          ...cachedResult,
+          cached: true,
+          cache_key: cacheKey.substring(0, 12) // First 12 chars for debugging
+        }), {
+          headers: {
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': '*'
+          }
+        });
+      }
+      
+      console.log(`Cache MISS for ${prompt_type}: ${content_map.route}`);
+      
+      // Track cache miss
+      if (env.NIMBUS_CACHE) {
+        try {
+          const misses = parseInt(await env.NIMBUS_CACHE.get('cache-misses') || '0') + 1;
+          await env.NIMBUS_CACHE.put('cache-misses', misses.toString(), { expirationTtl: CACHE_TTL * 10 });
+        } catch (e) { /* ignore */ }
+      }
       let result;
 
       // Route to specific prompt handler
@@ -67,6 +185,10 @@ export default {
         default:
           throw new Error(`Unknown prompt_type: ${prompt_type}`);
       }
+
+      // V4.5: Cache the result for future requests
+      await setCachedResult(cacheKey, result, env);
+      console.log(`Cached result for ${prompt_type}: ${content_map.route}`);
 
       return new Response(JSON.stringify(result), {
         headers: {
