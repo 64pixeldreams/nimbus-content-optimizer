@@ -1,21 +1,377 @@
 // Step 1: Content scanning and mapping task
-// This will be implemented according to specs/step-1-scanning.md
+// Implemented according to specs/step-1-scanning.md
+
+const fs = require('fs-extra');
+const path = require('path');
+const glob = require('glob');
+const cheerio = require('cheerio');
+const chalk = require('chalk');
 
 const scanTask = {
   async run(options) {
-    console.log('🔍 Scan task placeholder - to be implemented in Step 1');
-    console.log('Options:', options);
+    console.log(chalk.blue('🔍 Starting content scanning and mapping...'));
     
-    // TODO: Implement according to step-1-scanning.md specification
-    // - File discovery
-    // - HTML parsing with cheerio
-    // - Main content detection
-    // - Content block extraction
-    // - CSS selector generation
-    // - Content map creation
-    // - Issue detection
+    const { folder, limit = 10, batch = 'new', main: customMainSelector } = options;
     
-    throw new Error('Scan task not yet implemented. See specs/step-1-scanning.md for implementation details.');
+    // Validate required options
+    if (!folder) {
+      throw new Error('--folder option is required');
+    }
+    
+    // Ensure .nimbus directories exist
+    await fs.ensureDir('.nimbus/maps');
+    await fs.ensureDir('.nimbus/work');
+    
+    // Discover HTML files
+    const htmlFiles = await this.discoverFiles(folder, parseInt(limit));
+    console.log(chalk.green(`📁 Found ${htmlFiles.length} HTML files to scan`));
+    
+    const contentMaps = [];
+    
+    // Process each HTML file
+    for (let i = 0; i < htmlFiles.length; i++) {
+      const filePath = htmlFiles[i];
+      console.log(chalk.blue(`📄 Processing ${i + 1}/${htmlFiles.length}: ${path.basename(filePath)}`));
+      
+      try {
+        const contentMap = await this.processHtmlFile(filePath, customMainSelector);
+        contentMaps.push(contentMap);
+        
+        // Save individual content map
+        const mapFileName = this.generateMapFileName(filePath);
+        await fs.writeJson(`.nimbus/maps/${mapFileName}`, contentMap, { spaces: 2 });
+        
+        console.log(chalk.green(`✅ Generated content map: ${mapFileName}`));
+      } catch (error) {
+        console.error(chalk.red(`❌ Error processing ${filePath}:`), error.message);
+      }
+    }
+    
+    // Create index file
+    const indexData = {
+      batch_id: batch,
+      created: new Date().toISOString(),
+      total_pages: contentMaps.length,
+      pages: contentMaps.map(map => ({
+        id: this.generatePageId(map.path),
+        path: map.path,
+        route: map.route,
+        title: map.head.title
+      }))
+    };
+    
+    await fs.writeJson('.nimbus/maps/index.json', indexData, { spaces: 2 });
+    
+    console.log(chalk.green(`🎉 Content scanning complete! Generated ${contentMaps.length} content maps`));
+    
+    return {
+      success: true,
+      maps_generated: contentMaps.length,
+      batch_id: batch
+    };
+  },
+  
+  async discoverFiles(folder, limit) {
+    const pattern = path.join(folder, '**/*.html').replace(/\\/g, '/');
+    const files = glob.sync(pattern);
+    return files.slice(0, limit);
+  },
+  
+  async processHtmlFile(filePath, customMainSelector) {
+    const htmlContent = await fs.readFile(filePath, 'utf8');
+    const $ = cheerio.load(htmlContent);
+    
+    // Generate route from file path
+    const route = this.generateRoute(filePath);
+    
+    // Extract head metadata
+    const head = this.extractHeadMetadata($);
+    
+    // Find main content container
+    const mainSelector = this.findMainContent($, customMainSelector);
+    const mainElement = $(mainSelector);
+    
+    if (mainElement.length === 0) {
+      throw new Error(`No main content found with selector: ${mainSelector}`);
+    }
+    
+    // Extract content blocks in reading order
+    const blocks = this.extractContentBlocks($, mainElement, mainSelector);
+    
+    // Extract all links and images for reference
+    const linksPresent = this.extractAllLinks($);
+    const imagesPresent = this.extractAllImages($);
+    
+    // Detect issues
+    const flags = this.detectIssues($, blocks, linksPresent, imagesPresent);
+    
+    return {
+      path: filePath,
+      route: route,
+      engine: 'html',
+      main_selector: mainSelector,
+      head: head,
+      blocks: blocks,
+      links_present: linksPresent,
+      images_present: imagesPresent,
+      flags: flags
+    };
+  },
+  
+  generateRoute(filePath) {
+    // Convert file path to route
+    // dist/local/watch-repairs-abbots-langley.html -> /branches/watch-repairs-abbots-langley
+    const normalizedPath = filePath.replace(/\\/g, '/');
+    const relativePath = path.posix.relative('dist', normalizedPath);
+    const routePath = relativePath.replace(/\.html$/, '');
+    
+    if (routePath === 'index') {
+      return '/';
+    } else if (routePath.startsWith('local/')) {
+      return `/branches/${routePath.replace('local/', '')}`;
+    } else if (routePath.startsWith('brands/')) {
+      return `/brands/${routePath.replace('brands/', '')}`;
+    } else {
+      return `/${routePath}`;
+    }
+  },
+  
+  extractHeadMetadata($) {
+    return {
+      title: $('title').text().trim() || '',
+      metaDescription: $('meta[name="description"]').attr('content') || '',
+      canonical: $('link[rel="canonical"]').attr('href') || '',
+      ogImage: $('meta[property="og:image"]').attr('content') || '',
+      twitterImage: $('meta[name="twitter:image"]').attr('content') || ''
+    };
+  },
+  
+  findMainContent($, customSelector) {
+    if (customSelector) {
+      return customSelector;
+    }
+    
+    // Priority order for finding main content
+    const selectors = [
+      'main',
+      '[role="main"]',
+      'article',
+      '#content',
+      '.content'
+    ];
+    
+    for (const selector of selectors) {
+      if ($(selector).length > 0) {
+        return selector;
+      }
+    }
+    
+    // Heuristic fallback: find container with highest text density
+    let bestSelector = 'body';
+    let maxTextLength = 0;
+    
+    $('body > *').each((i, elem) => {
+      const $elem = $(elem);
+      const tagName = elem.tagName.toLowerCase();
+      
+      // Skip navigation, header, footer, aside
+      if (['header', 'nav', 'footer', 'aside', 'script', 'style', 'link'].includes(tagName)) {
+        return;
+      }
+      
+      const textLength = $elem.text().trim().length;
+      if (textLength > maxTextLength) {
+        maxTextLength = textLength;
+        bestSelector = this.generateSelector($, elem);
+      }
+    });
+    
+    return bestSelector;
+  },
+  
+  extractContentBlocks($, mainElement, mainSelector) {
+    const blocks = [];
+    let index = 0;
+    
+    // Find all content elements in reading order
+    const contentSelectors = 'h1, h2, h3, p, li, blockquote, a, img';
+    
+    mainElement.find(contentSelectors).each((i, elem) => {
+      const $elem = $(elem);
+      const tagName = elem.tagName.toLowerCase();
+      
+      // Skip empty elements
+      const text = $elem.text().trim();
+      if (['h1', 'h2', 'h3', 'p', 'li', 'blockquote'].includes(tagName) && !text) {
+        return;
+      }
+      
+      const selector = this.generateUniqueSelector($, elem, mainSelector);
+      
+      if (['h1', 'h2', 'h3', 'p', 'li', 'blockquote'].includes(tagName)) {
+        blocks.push({
+          i: index++,
+          type: tagName,
+          text: text,
+          selector: selector
+        });
+      } else if (tagName === 'a') {
+        const href = $elem.attr('href');
+        const anchor = text;
+        if (href && anchor) {
+          blocks.push({
+            i: index++,
+            type: 'a',
+            anchor: anchor,
+            href: href,
+            selector: selector
+          });
+        }
+      } else if (tagName === 'img') {
+        const src = $elem.attr('src');
+        if (src) {
+          blocks.push({
+            i: index++,
+            type: 'img',
+            src: src,
+            alt: $elem.attr('alt') || '',
+            width: parseInt($elem.attr('width')) || null,
+            height: parseInt($elem.attr('height')) || null,
+            selector: selector
+          });
+        }
+      }
+    });
+    
+    return blocks;
+  },
+  
+  generateUniqueSelector($, elem, mainSelector) {
+    const $elem = $(elem);
+    const tagName = elem.tagName.toLowerCase();
+    
+    // Get classes
+    const className = $elem.attr('class');
+    let selector = mainSelector + ' ' + tagName;
+    
+    if (className) {
+      const firstClass = className.split(' ')[0];
+      selector += '.' + firstClass;
+      
+      // Check if this selector is unique
+      if ($(selector).length === 1) {
+        return selector;
+      }
+    }
+    
+    // Use nth-of-type for repeated elements
+    const siblings = $elem.siblings(tagName).addBack();
+    const index = siblings.index($elem) + 1;
+    
+    if (className) {
+      return `${mainSelector} ${tagName}.${className.split(' ')[0]}:nth-of-type(${index})`;
+    } else {
+      return `${mainSelector} ${tagName}:nth-of-type(${index})`;
+    }
+  },
+  
+  generateSelector($, elem) {
+    const $elem = $(elem);
+    const tagName = elem.tagName.toLowerCase();
+    const id = $elem.attr('id');
+    const className = $elem.attr('class');
+    
+    if (id) {
+      return `#${id}`;
+    } else if (className) {
+      return `${tagName}.${className.split(' ')[0]}`;
+    } else {
+      return tagName;
+    }
+  },
+  
+  extractAllLinks($) {
+    const links = [];
+    $('a[href]').each((i, elem) => {
+      const $elem = $(elem);
+      const href = $elem.attr('href');
+      const anchor = $elem.text().trim();
+      if (anchor) {
+        links.push({ anchor, href });
+      }
+    });
+    return links;
+  },
+  
+  extractAllImages($) {
+    const images = [];
+    $('img[src]').each((i, elem) => {
+      const $elem = $(elem);
+      images.push({
+        src: $elem.attr('src'),
+        alt: $elem.attr('alt') || ''
+      });
+    });
+    return images;
+  },
+  
+  detectIssues($, blocks, links, images) {
+    const flags = {
+      usedHeuristicMain: false,
+      typosFound: [],
+      emptyTrustLinks: [],
+      missingAltText: [],
+      missingImageDimensions: []
+    };
+    
+    // Check for empty trust links
+    links.forEach(link => {
+      if ((link.anchor.toLowerCase().includes('trustpilot') || 
+           link.anchor.toLowerCase().includes('google')) && 
+          !link.href) {
+        flags.emptyTrustLinks.push(link.anchor);
+      }
+    });
+    
+    // Check for missing alt text
+    images.forEach(img => {
+      if (!img.alt) {
+        flags.missingAltText.push(img.src);
+      }
+    });
+    
+    // Check for missing image dimensions in blocks
+    blocks.forEach(block => {
+      if (block.type === 'img' && (!block.width || !block.height)) {
+        flags.missingImageDimensions.push(block.src);
+      }
+    });
+    
+    // Basic typo detection (simple examples)
+    const commonTypos = ['braclet', 'acredited', 'recieve', 'seperate'];
+    blocks.forEach(block => {
+      if (block.text) {
+        commonTypos.forEach(typo => {
+          if (block.text.toLowerCase().includes(typo)) {
+            flags.typosFound.push(typo);
+          }
+        });
+      }
+    });
+    
+    return flags;
+  },
+  
+  generateMapFileName(filePath) {
+    const pageId = this.generatePageId(filePath);
+    return `${pageId}.json`;
+  },
+  
+  generatePageId(filePath) {
+    // Convert file path to page ID
+    // dist/local/watch-repairs-abbots-langley.html -> watch-repairs-abbots-langley
+    const basename = path.basename(filePath, '.html');
+    return basename === 'index' ? 'home' : basename;
   }
 };
 
