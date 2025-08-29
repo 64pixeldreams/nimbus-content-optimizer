@@ -25,42 +25,52 @@ async function generateCacheKey(payload) {
   return `ai-result-${hashHex}`;
 }
 
-async function getCachedResult(cacheKey, env) {
-  if (!env.NIMBUS_CACHE) {
-    console.log('KV binding not available');
-    return null;
-  }
+async function getCachedResult(cacheKey, env, debugLogs) {
+  debugLogs.push(`Available env keys: ${Object.keys(env).join(', ')}`);
+  debugLogs.push(`NIMBUS_CACHE type: ${typeof env.NIMBUS_CACHE}`);
   
   try {
-    console.log(`Checking cache for key: ${cacheKey.substring(0, 12)}...`);
+    debugLogs.push(`Attempting to access NIMBUS_CACHE directly...`);
+    debugLogs.push(`Checking cache for key: ${cacheKey.substring(0, 12)}...`);
     const cached = await env.NIMBUS_CACHE.get(cacheKey);
-    console.log(`Cache lookup result: ${cached ? 'FOUND' : 'NOT FOUND'}`);
+    debugLogs.push(`Cache lookup result: ${cached ? 'FOUND' : 'NOT FOUND'}`);
     return cached ? JSON.parse(cached) : null;
   } catch (error) {
-    console.error('Cache read error:', error);
+    debugLogs.push(`Cache read error: ${error.message}`);
+    debugLogs.push(`Error type: ${error.constructor.name}`);
     return null;
   }
 }
 
-async function setCachedResult(cacheKey, result, env) {
-  if (!env.NIMBUS_CACHE) {
-    console.log('KV binding not available for caching');
-    return;
-  }
-  
+async function setCachedResult(cacheKey, result, env, debugLogs) {
   try {
-    console.log(`Storing result in cache with key: ${cacheKey.substring(0, 12)}...`);
-    await env.NIMBUS_CACHE.put(cacheKey, JSON.stringify(result), {
+    debugLogs.push(`Attempting to store in cache with key: ${cacheKey.substring(0, 12)}...`);
+    debugLogs.push(`Result type: ${typeof result}`);
+    debugLogs.push(`Result keys: ${Object.keys(result || {}).join(', ')}`);
+    
+    // Create a clean copy of result for caching (remove any non-serializable properties)
+    const cleanResult = JSON.parse(JSON.stringify(result));
+    
+    await env.NIMBUS_CACHE.put(cacheKey, JSON.stringify(cleanResult), {
       expirationTtl: CACHE_TTL
     });
-    console.log('Result cached successfully');
+    debugLogs.push('Result cached successfully');
+    
+    // Verify the write by reading it back
+    const verification = await env.NIMBUS_CACHE.get(cacheKey);
+    debugLogs.push(`Cache verification: ${verification ? 'SUCCESS' : 'FAILED'}`);
   } catch (error) {
-    console.error('Cache write error:', error);
+    debugLogs.push(`Cache write error: ${error.message}`);
+    debugLogs.push(`Error type: ${error.constructor.name}`);
+    debugLogs.push(`Error stack: ${error.stack?.substring(0, 200)}`);
   }
 }
 
 export default {
   async fetch(request, env, ctx) {
+    // V4.5: Debug log array for troubleshooting
+    const debugLogs = [];
+    
     // Handle CORS preflight
     if (request.method === 'OPTIONS') {
       return new Response(null, {
@@ -135,7 +145,8 @@ export default {
 
       // V4.5: Check cache first
       const cacheKey = await generateCacheKey(requestData);
-      const cachedResult = await getCachedResult(cacheKey, env);
+      debugLogs.push(`Generated cache key: ${cacheKey.substring(0, 12)}...`);
+      const cachedResult = await getCachedResult(cacheKey, env, debugLogs);
       
       if (cachedResult) {
         console.log(`Cache HIT for ${prompt_type}: ${content_map.route}`);
@@ -151,7 +162,8 @@ export default {
         return new Response(JSON.stringify({
           ...cachedResult,
           cached: true,
-          cache_key: cacheKey.substring(0, 12) // First 12 chars for debugging
+          cache_key: cacheKey.substring(0, 12), // First 12 chars for debugging
+          debug_logs: debugLogs // Include debug info
         }), {
           headers: {
             'Content-Type': 'application/json',
@@ -197,13 +209,14 @@ export default {
       }
 
       // V4.5: Cache the result for future requests
-      await setCachedResult(cacheKey, result, env);
+      await setCachedResult(cacheKey, result, env, debugLogs);
       console.log(`Cached result for ${prompt_type}: ${content_map.route}`);
 
       return new Response(JSON.stringify({
         ...result,
         cached: false,
-        cache_key: cacheKey.substring(0, 12) // First 12 chars for debugging
+        cache_key: cacheKey.substring(0, 12), // First 12 chars for debugging
+        debug_logs: debugLogs // Include debug info
       }), {
         headers: {
           'Content-Type': 'application/json',
