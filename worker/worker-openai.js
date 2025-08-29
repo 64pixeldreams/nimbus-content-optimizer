@@ -26,10 +26,15 @@ async function generateCacheKey(payload) {
 }
 
 async function getCachedResult(cacheKey, env) {
-  if (!env.NIMBUS_CACHE) return null;
+  if (!env.NIMBUS_CACHE) {
+    console.log('KV binding not available');
+    return null;
+  }
   
   try {
+    console.log(`Checking cache for key: ${cacheKey.substring(0, 12)}...`);
     const cached = await env.NIMBUS_CACHE.get(cacheKey);
+    console.log(`Cache lookup result: ${cached ? 'FOUND' : 'NOT FOUND'}`);
     return cached ? JSON.parse(cached) : null;
   } catch (error) {
     console.error('Cache read error:', error);
@@ -38,12 +43,17 @@ async function getCachedResult(cacheKey, env) {
 }
 
 async function setCachedResult(cacheKey, result, env) {
-  if (!env.NIMBUS_CACHE) return;
+  if (!env.NIMBUS_CACHE) {
+    console.log('KV binding not available for caching');
+    return;
+  }
   
   try {
+    console.log(`Storing result in cache with key: ${cacheKey.substring(0, 12)}...`);
     await env.NIMBUS_CACHE.put(cacheKey, JSON.stringify(result), {
       expirationTtl: CACHE_TTL
     });
+    console.log('Result cached successfully');
   } catch (error) {
     console.error('Cache write error:', error);
   }
@@ -190,7 +200,11 @@ export default {
       await setCachedResult(cacheKey, result, env);
       console.log(`Cached result for ${prompt_type}: ${content_map.route}`);
 
-      return new Response(JSON.stringify(result), {
+      return new Response(JSON.stringify({
+        ...result,
+        cached: false,
+        cache_key: cacheKey.substring(0, 12) // First 12 chars for debugging
+      }), {
         headers: {
           'Content-Type': 'application/json',
           'Access-Control-Allow-Origin': '*'
