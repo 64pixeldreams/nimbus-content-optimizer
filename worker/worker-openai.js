@@ -544,9 +544,115 @@ Return comprehensive image optimization with location targeting.`;
   };
 }
 
+// Step 7: Schema Generation Prompt Implementation
 async function executeSchemaPrompt(profile, directive, contentMap, env, model) {
-  // Step 7 implementation
-  return { prompt_type: 'schema', error: 'Not implemented yet' };
+  const location = extractLocation(contentMap.route);
+  
+  const systemPrompt = `You are a Schema.org markup specialist focused on local business optimization and search engine visibility.
+
+TASK: Generate comprehensive Schema.org markup for maximum search engine understanding and rich snippet eligibility.
+
+SCHEMA REQUIREMENTS:
+- LocalBusiness: Complete with address, contact, reviews, services, area served
+- BreadcrumbList: Logical navigation hierarchy for user experience
+- Valid structure: Proper @context, @graph, and @id references
+- Local optimization: Address and geographic data derived from page context
+
+You must respond with valid JSON in this exact format:
+{
+  "schema": {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "LocalBusiness",
+        "@id": "business_url#business",
+        "name": "business_name_with_location",
+        "description": "service_description_with_location",
+        "url": "canonical_page_url",
+        "telephone": "phone_number",
+        "address": {
+          "@type": "PostalAddress",
+          "addressLocality": "city",
+          "addressRegion": "region", 
+          "addressCountry": "GB"
+        },
+        "areaServed": [{"@type": "City", "name": "city"}],
+        "aggregateRating": {
+          "@type": "AggregateRating",
+          "ratingValue": "4.8",
+          "reviewCount": "review_count"
+        },
+        "sameAs": ["trust_links"]
+      },
+      {
+        "@type": "BreadcrumbList", 
+        "@id": "page_url#breadcrumbs",
+        "itemListElement": [
+          {"@type": "ListItem", "position": 1, "name": "Home", "item": "home_url"},
+          {"@type": "ListItem", "position": 2, "name": "section", "item": "section_url"},
+          {"@type": "ListItem", "position": 3, "name": "current_page", "item": "current_url"}
+        ]
+      }
+    ]
+  },
+  "confidence": 0.94,
+  "notes": ["schema generation decisions and local SEO optimizations"]
+}
+
+OPTIMIZATION PRIORITIES:
+1. Local search visibility: Complete address and geographic data
+2. Trust signal integration: Reviews, ratings, trust links
+3. Service specificity: Watch repair service details
+4. Navigation structure: Clear breadcrumb hierarchy
+5. Rich snippet eligibility: Complete business information
+
+Return only valid JSON with comprehensive Schema.org markup.`;
+
+  const userPrompt = `Generate comprehensive Schema.org markup for this local business page:
+
+BUSINESS: ${profile.name}
+DOMAIN: ${profile.domain}
+LOCATION: ${location || 'UK'}
+ROUTE: ${contentMap.route}
+
+BUSINESS DETAILS:
+- Phone: ${profile.phone}
+- Services: ${profile.services?.join(', ') || 'watch repair services'}
+- Review count: ${profile.review_count}
+- Trust links: Trustpilot: ${profile.trust_links?.trustpilot}, Google: ${profile.trust_links?.google}
+- Geographic scope: ${profile.geo_scope?.join(', ') || 'UK'}
+- Guarantee: ${profile.guarantee}
+
+PAGE ANALYSIS:
+- Type: ${directive.type}
+- Schema types required: ${directive.schema_types?.join(', ') || 'LocalBusiness, BreadcrumbList'}
+- Location context: ${location ? `Local service page for ${location}` : 'General service page'}
+
+SCHEMA REQUIREMENTS:
+1. LocalBusiness with complete address and contact details for ${location || 'UK'}
+2. BreadcrumbList for navigation hierarchy
+3. AggregateRating with review count (${profile.review_count}) and trust signals
+4. Geographic targeting with area served for ${location || 'UK'}
+5. Service details specific to watch repair industry
+
+LOCATION CONTEXT:
+- Address locality: ${location || 'UK'}
+- Address region: ${location ? 'Derive UK county/region' : 'UK'}
+- Area served: ${location || 'UK'} and surrounding areas
+- Trust integration: ${profile.review_count} reviews, ${profile.guarantee}
+
+Return comprehensive Schema.org markup optimized for local search visibility.`;
+
+  const promptResult = await executeAIPrompt(systemPrompt, userPrompt, env, model);
+  
+  return {
+    prompt_type: 'schema',
+    success: promptResult.success,
+    result: promptResult.result,
+    processing_time_ms: promptResult.processing_time_ms,
+    tokens_used: promptResult.tokens_used,
+    error: promptResult.error
+  };
 }
 
 async function executeAllPrompts(profile, directive, contentMap, env, model) {
