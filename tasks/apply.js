@@ -118,6 +118,15 @@ const applyTask = {
     const summary = this.generateApplicationSummary(applicationResults, totalTime, dryRun);
     this.displayApplicationSummary(summary);
     
+    // Show clickable URLs to optimized files
+    if (!dryRun && summary.files_modified > 0) {
+      console.log(chalk.blue('\n🌐 OPTIMIZED FILES (click to open):'));
+      applicationResults.filter(r => r.status === 'success').forEach(result => {
+        const absolutePath = path.resolve(result.file_path);
+        console.log(chalk.cyan(`📄 ${result.page_id}: file:///${absolutePath.replace(/\\/g, '/')}`));
+      });
+    }
+    
     // Create git commit if requested and not dry run
     if (git && !dryRun && summary.files_modified > 0) {
       await this.createGitCommit(batch);

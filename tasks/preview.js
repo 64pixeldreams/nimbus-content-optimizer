@@ -88,6 +88,16 @@ const previewTask = {
       const summaryPath = await this.generateBatchSummary(previewDir, batchData, previewResults);
       console.log(chalk.green(`📋 Generated batch summary: ${path.basename(summaryPath)}`));
       
+      // Show clickable URLs
+      const absoluteSummaryPath = path.resolve(summaryPath);
+      console.log(chalk.blue('\n🌐 PREVIEW URLS (click to open):'));
+      console.log(chalk.cyan(`📊 Batch Summary: file:///${absoluteSummaryPath.replace(/\\/g, '/')}`));
+      
+      previewResults.filter(r => !r.error).forEach(result => {
+        const absolutePreviewPath = path.resolve(result.preview_path);
+        console.log(chalk.cyan(`📄 ${result.page_id}: file:///${absolutePreviewPath.replace(/\\/g, '/')}`));
+      });
+      
       // Open in browser if requested
       if (openInBrowser) {
         await this.openInBrowser(summaryPath);
