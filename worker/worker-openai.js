@@ -339,12 +339,14 @@ Return strategic linking JSON using only available URLs.`;
 async function executeContentPrompt(profile, directive, contentMap, env, model) {
   const location = extractLocation(contentMap.route);
   
-  // Get key content blocks (H1, H2, first few paragraphs)
-  const contentBlocks = contentMap.blocks.filter(block => 
-    block.type === 'h1' || 
-    block.type === 'h2' || 
-    (block.type === 'p' && block.i < 5)
-  ).slice(0, 6);
+  // Enhancement 1: Process ALL content blocks with intelligent batching
+  const allBlocks = contentMap.blocks; // All 80 blocks
+  const contentBlocks = [
+    ...allBlocks.filter(b => b.type === 'h1' || b.type === 'h2'), // All headings
+    ...allBlocks.filter(b => b.type === 'p').slice(0, 15),        // First 15 paragraphs  
+    ...allBlocks.filter(b => b.type === 'li').slice(0, 20),       // First 20 list items
+    ...allBlocks.filter(b => b.type === 'blockquote')             // All quotes
+  ];
   
   // Calculate current word counts
   const blocksWithWordCounts = contentBlocks.map(block => ({
@@ -364,6 +366,12 @@ WORD COUNT POLICY - CRITICAL:
 - Maintain information density and value for users
 - Prefer enhancement over reduction
 - Track word count changes and justify any reductions
+
+TYPO DETECTION AND CORRECTION:
+- Fix common typos: "braclet"→"bracelet", "acredited"→"accredited"
+- Correct grammar issues and awkward phrasing
+- Ensure professional, polished content throughout
+- Maintain meaning while improving readability
 
 You must respond with valid JSON in this exact format:
 {
@@ -444,8 +452,8 @@ Return enhanced content with word count tracking and justifications.`;
 async function executeImagesPrompt(profile, directive, contentMap, env, model) {
   const location = extractLocation(contentMap.route);
   
-  // Get image blocks from content map
-  const imageBlocks = contentMap.blocks.filter(block => block.type === 'img').slice(0, 8);
+  // Enhancement 3: Process ALL images on the page (not just first 2)
+  const imageBlocks = contentMap.blocks.filter(block => block.type === 'img'); // ALL images
   
   if (imageBlocks.length === 0) {
     return {
