@@ -11,6 +11,7 @@ const approveTask = require('./tasks/approve');
 const applyTask = require('./tasks/apply');
 const checkTask = require('./tasks/check');
 const urlDiscoveryTask = require('./tasks/discover-urls');
+const proposeV2Task = require('./tasks/propose-v2');
 
 // Parse command line arguments
 program
@@ -170,9 +171,28 @@ gulp.task('default', () => {
   console.log('  gulp nimbus:apply --batch <id> --dest <folder> [--git]');
   console.log('  gulp nimbus:check --batch <id>');
   console.log('  gulp nimbus:discover:urls');
+  console.log('  gulp nimbus:propose:v2 --batch <id> [--limit N]');
   console.log('');
   console.log(chalk.yellow('Example:'));
   console.log('  gulp nimbus:scan:map --folder dist/local --limit 5 --batch new');
+});
+
+// Task: nimbus:propose:v2
+gulp.task('nimbus:propose:v2', async () => {
+  console.log(chalk.blue('🚀 Starting V2 Multi-Prompt AI proposals...'));
+  
+  if (!options.batch) {
+    console.error(chalk.red('❌ Error: --batch option is required'));
+    process.exit(1);
+  }
+  
+  try {
+    await proposeV2Task.run(options);
+    console.log(chalk.green('✅ V2 Multi-prompt proposals completed successfully'));
+  } catch (error) {
+    console.error(chalk.red('❌ V2 Multi-prompt proposals failed:'), error.message);
+    process.exit(1);
+  }
 });
 
 // Task: nimbus:discover:urls
