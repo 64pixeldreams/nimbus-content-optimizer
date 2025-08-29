@@ -16,7 +16,7 @@ families:
   local:
     pattern: "branches/*"
     type: "local"
-    tone: "friendly"
+    tone: "local-shop"        # V4.4: Use advanced tone profile
     cta_priority: "high"
     schema_types: ["LocalBusiness", "BreadcrumbList"]
     interlink_policy: "aggressive"
@@ -28,7 +28,7 @@ families:
   brand:
     pattern: "brand/*"
     type: "brand"
-    tone: "professional"
+    tone: "corporate"         # V4.4: Use advanced tone profile
     cta_priority: "high"
     schema_types: ["Service", "BreadcrumbList"]
     interlink_policy: "moderate"
@@ -40,7 +40,7 @@ families:
   home:
     pattern: "index"
     type: "landing"
-    tone: "urgent"
+    tone: "startup"           # V4.4: Use advanced tone profile
     cta_priority: "high"
     schema_types: ["Organization", "LocalBusiness", "BreadcrumbList"]
     interlink_policy: "aggressive"

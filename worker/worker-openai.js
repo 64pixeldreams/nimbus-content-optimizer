@@ -6,6 +6,46 @@
 const CACHE_VERSION = 'v4.5';
 const CACHE_TTL = 86400 * 7; // 7 days
 
+// V4.4: Tone Profile System
+const TONE_PROFILES = {
+  friendly: {
+    personality: "Friendly, professional, approachable",
+    language: "We're experts, reliable service, trusted choice",
+    cta_style: "Get started today, Contact us now",
+    formality: "casual-professional"
+  },
+  startup: {
+    personality: "Dynamic, innovative, growth-focused", 
+    language: "We're disrupting, game-changing, next-level, cutting-edge",
+    cta_style: "Join the revolution, Get started now, Transform your business",
+    formality: "casual-dynamic"
+  },
+  corporate: {
+    personality: "Professional, trustworthy, established",
+    language: "Industry-leading, proven expertise, reliable solutions, comprehensive", 
+    cta_style: "Contact our team, Schedule consultation, Discover our services",
+    formality: "formal-professional"
+  },
+  "local-shop": {
+    personality: "Friendly, personal, community-focused",
+    language: "Your local experts, family business, personal service, neighborhood",
+    cta_style: "Pop in today, Give us a call, Visit our shop", 
+    formality: "casual-friendly"
+  },
+  "premium-brand": {
+    personality: "Luxury, exclusive, sophisticated",
+    language: "Bespoke service, uncompromising quality, elite, prestigious",
+    cta_style: "Experience excellence, Discover more, Arrange consultation",
+    formality: "formal-luxury"
+  },
+  "modern-tech": {
+    personality: "Efficient, transparent, user-focused",
+    language: "Simple, straightforward, hassle-free, transparent pricing",
+    cta_style: "Try it now, See how it works, Get instant quote",
+    formality: "casual-modern"
+  }
+};
+
 async function generateCacheKey(payload) {
   // Create a stable hash of the request payload
   const cacheInput = {
@@ -528,9 +568,24 @@ async function executeContentPrompt(profile, directive, contentMap, env, model) 
   
   const totalWords = blocksWithWordCounts.reduce((sum, block) => sum + block.word_count, 0);
   
+  // V4.4: Get tone profile for business personality
+  const toneProfile = TONE_PROFILES[directive.tone] || TONE_PROFILES.friendly;
+  
   const systemPrompt = `You are a content enhancement specialist focused on local SEO and conversion optimization while preserving information density.
 
 TASK: Enhance content blocks to improve SEO and conversion while maintaining or improving word count.
+
+V4.4 TONE PROFILE - ${directive.tone.toUpperCase()}:
+- PERSONALITY: ${toneProfile.personality}
+- LANGUAGE STYLE: ${toneProfile.language}
+- CTA APPROACH: ${toneProfile.cta_style}
+- FORMALITY: ${toneProfile.formality}
+
+TONE APPLICATION:
+- Use the personality and language style throughout all content
+- Apply the CTA approach to any call-to-action elements
+- Match the formality level in all copy
+- Ensure consistent brand voice across all optimizations
 
 WORD COUNT POLICY - CRITICAL:
 - NEVER reduce content length unless it significantly improves clarity

@@ -1,0 +1,44 @@
+# V4.4: Advanced Tone Control System
+# Configure business personality and copy style
+
+# Default tone (current system)
+friendly:
+  personality: "Friendly, professional, approachable"
+  language: "We're experts, reliable service, trusted choice"
+  cta_style: "Get started today, Contact us now"
+  formality: "casual-professional"
+
+# Modern startup feel  
+startup:
+  personality: "Dynamic, innovative, growth-focused"
+  language: "We're disrupting, game-changing, next-level, cutting-edge"
+  cta_style: "Join the revolution, Get started now, Transform your business"
+  formality: "casual-dynamic"
+
+# Big corporate feel
+corporate:
+  personality: "Professional, trustworthy, established"
+  language: "Industry-leading, proven expertise, reliable solutions, comprehensive"
+  cta_style: "Contact our team, Schedule consultation, Discover our services"
+  formality: "formal-professional"
+
+# Local business feel
+local-shop:
+  personality: "Friendly, personal, community-focused"
+  language: "Your local experts, family business, personal service, neighborhood"
+  cta_style: "Pop in today, Give us a call, Visit our shop"
+  formality: "casual-friendly"
+
+# Premium/luxury feel
+premium-brand:
+  personality: "Luxury, exclusive, sophisticated"
+  language: "Bespoke service, uncompromising quality, elite, prestigious"
+  cta_style: "Experience excellence, Discover more, Arrange consultation"
+  formality: "formal-luxury"
+
+# Modern tech feel (like Glasses Direct)
+modern-tech:
+  personality: "Efficient, transparent, user-focused"
+  language: "Simple, straightforward, hassle-free, transparent pricing"
+  cta_style: "Try it now, See how it works, Get instant quote"
+  formality: "casual-modern"
