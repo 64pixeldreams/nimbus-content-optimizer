@@ -229,11 +229,16 @@ const scanTask = {
         const href = $elem.attr('href');
         const anchor = text;
         if (href && anchor) {
+          // Classify link type for business-aware optimization
+          const linkType = this.classifyLinkType(href, anchor);
+          
           blocks.push({
             i: index++,
             type: 'a',
             anchor: anchor,
             href: href,
+            link_type: linkType.type,
+            conversion_priority: linkType.priority,
             selector: selector
           });
         }
@@ -397,6 +402,59 @@ const scanTask = {
     // dist/local/watch-repairs-abbots-langley.html -> watch-repairs-abbots-langley
     const basename = path.basename(filePath, '.html');
     return basename === 'index' ? 'home' : basename;
+  },
+
+  // V4.1: Business-aware link classification
+  classifyLinkType(href, anchor) {
+    // Default money pages - will be overridden by profile config
+    const defaultMoneyPages = [
+      '/start-repair.html',
+      '/contact.html',
+      '/how-it-works.html',
+      '/quote',
+      '/checkout',
+      '/shop',
+      '/buy'
+    ];
+    
+    const defaultCtaPatterns = [
+      'tel:',
+      'mailto:',
+      '/quote',
+      '/contact',
+      '/start-'
+    ];
+    
+    // Check for money pages (exact match)
+    if (defaultMoneyPages.some(page => href === page || href.includes(page))) {
+      return {
+        type: 'cta-money',
+        priority: 'high'
+      };
+    }
+    
+    // Check for CTA patterns
+    if (defaultCtaPatterns.some(pattern => href.startsWith(pattern))) {
+      return {
+        type: 'cta-contact',
+        priority: 'high'
+      };
+    }
+    
+    // Check anchor text for CTA keywords
+    const ctaKeywords = ['quote', 'contact', 'buy', 'order', 'submit', 'start', 'get started', 'book', 'call'];
+    const anchorLower = anchor.toLowerCase();
+    if (ctaKeywords.some(keyword => anchorLower.includes(keyword))) {
+      return {
+        type: 'cta-intent',
+        priority: 'medium'
+      };
+    }
+    
+    return {
+      type: 'link-regular',
+      priority: 'low'
+    };
   }
 };
 
