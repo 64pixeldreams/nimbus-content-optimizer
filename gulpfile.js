@@ -10,6 +10,7 @@ const previewTask = require('./tasks/preview');
 const approveTask = require('./tasks/approve');
 const applyTask = require('./tasks/apply');
 const checkTask = require('./tasks/check');
+const urlDiscoveryTask = require('./tasks/discover-urls');
 
 // Parse command line arguments
 program
@@ -168,7 +169,21 @@ gulp.task('default', () => {
   console.log('  gulp nimbus:approve --batch <id> --pages all|<pageId1,pageId2>');
   console.log('  gulp nimbus:apply --batch <id> --dest <folder> [--git]');
   console.log('  gulp nimbus:check --batch <id>');
+  console.log('  gulp nimbus:discover:urls');
   console.log('');
   console.log(chalk.yellow('Example:'));
   console.log('  gulp nimbus:scan:map --folder dist/local --limit 5 --batch new');
+});
+
+// Task: nimbus:discover:urls
+gulp.task('nimbus:discover:urls', async () => {
+  console.log(chalk.blue('🔍 Discovering URLs for strategic linking...'));
+  
+  try {
+    await urlDiscoveryTask.run(options);
+    console.log(chalk.green('✅ URL discovery completed successfully'));
+  } catch (error) {
+    console.error(chalk.red('❌ URL discovery failed:'), error.message);
+    process.exit(1);
+  }
 });

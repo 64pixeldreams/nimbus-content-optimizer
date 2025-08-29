@@ -1,0 +1,88 @@
+# Nimbus Link Strategy Configuration
+# Defines URL pools and strategic linking rules for SEO authority distribution
+
+# URL Discovery - Folders containing linkable pages
+link_pools:
+  # High-value pages (authority targets) - these benefit from many incoming links
+  high_value_folders: 
+    - 'dist/brands/'      # Brand pages (e.g., audemars-piguet-watch-repair.html)
+  
+  # Local pages (authority sources) - these distribute authority via outbound links  
+  local_folders:
+    - 'dist/local/'       # Local branch pages (e.g., watch-repairs-abbots-langley.html)
+    
+  # Money pages (conversion targets) - primary business goals
+  money_pages:
+    - '/start-repair.html'
+    - '/contact.html'
+    - '/how-it-works.html'
+    
+  # Help/trust pages (trust building)
+  help_folders:
+    - 'dist/information/' # FAQ, guides, trust content
+    - 'dist/faq/'
+
+# Strategic Linking Rules (SEO authority distribution)
+link_strategy:
+  # Authority distribution matrix
+  local_to_brands: 2      # Each local page links to 2 brand pages (3000 → 150 = massive authority boost)
+  local_to_services: 1    # Each local page links to 1 service page
+  brands_to_local: 3      # Each brand page links to 3 local pages (authority back-flow)
+  services_to_brands: 2   # Service pages link to relevant brands
+  
+  # Link limits (prevent over-optimization)
+  max_links_per_page: 5   # Total internal links per page
+  min_links_per_page: 3   # Minimum for SEO benefit
+  
+  # Priority rules for link selection
+  priority_rules:
+    content_mentions: 'high'        # Link brands/services mentioned in page content
+    geographic_proximity: 'medium'  # Link nearby local pages for context
+    authority_value: 'high'         # Prioritize high-authority target pages
+    user_relevance: 'high'          # Links must make sense to users
+
+# Content Analysis Rules (what to look for when selecting links)
+content_analysis:
+  # Brand mentions to look for in content
+  brand_keywords:
+    - 'rolex'
+    - 'omega' 
+    - 'tag heuer'
+    - 'breitling'
+    - 'cartier'
+    
+  # Service mentions to look for in content  
+  service_keywords:
+    - 'battery replacement'
+    - 'glass replacement'
+    - 'crown repair'
+    - 'bezel replacement'
+    - 'vintage restoration'
+    - 'movement service'
+    
+  # Geographic proximity (for local context links)
+  geographic_keywords:
+    - 'hertfordshire'
+    - 'london'
+    - 'watford'
+    - 'st albans'
+
+# Trust Link Configuration
+trust_links:
+  # These will fill empty trust link hrefs
+  trustpilot: "https://uk.trustpilot.com/review/repairsbypost.com"
+  google: "https://g.page/RepairsByPost"
+  
+  # Detect empty trust links by anchor text
+  trust_anchor_patterns:
+    - 'trustpilot'
+    - 'google places'
+    - 'google reviews'
+    - 'reviews'
+
+# Project-Specific Customization
+project_context:
+  business_type: 'local_service'    # local_service|e_commerce|saas|content
+  primary_geo: 'UK'                 # Geographic focus
+  main_services: ['watch-repair', 'battery-replacement', 'glass-replacement']
+  target_audience: 'local_customers'

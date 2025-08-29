@@ -1,25 +1,131 @@
-# Step 4: Deep Linking Strategy Prompt
+# Step 4: Deep Linking Strategy Prompt (Hybrid Approach)
 
 ## Objective
-Create focused AI prompt for deep linking optimization (≥3 links per page requirement).
+Create focused AI prompt for strategic deep linking using discovered URL pools and content analysis.
+
+## Strategic Link Juice Approach
+**"Fishing Net" Strategy**: Local/brand pages are great fishing nets for distributing link authority:
+- **3000 local pages** → **150 brand pages** = Massive authority boost for brands
+- **150 brand pages** → **3000 local pages** = Authority distribution back to locals
+- **Content relevance** = AI selects most contextual links from available pools
 
 ## Requirements from Technical Spec
 - ✅ **Deep linking quota**: ≥3 per page (CRITICAL MISSING IN V1)
-- ✅ **Money link**: /start-repair.html (conversion focus)
-- ✅ **Service link**: /watch-repairs/<service> (battery, glass, crown, bezel, vintage, movement, strap)
-- ✅ **Context link**: Brand or sibling city when relevant
-- ✅ **Trust links**: Fill empty Trustpilot/Google hrefs from profile.trust_links
-- ✅ **Upgrade existing**: Prefer upgrading anchors before creating new ones
+- ✅ **Money link**: Primary conversion page
+- ✅ **Service link**: Relevant service from available pool
+- ✅ **Context link**: Brand or sibling city from available pool
+- ✅ **Trust links**: Fill empty Trustpilot/Google hrefs
+- ✅ **Strategic authority**: Links that boost overall site SEO
 
-## Current V1 Issues
-- ❌ **0/3 deep links**: Completely missing service and context links
-- ❌ **Empty trust links**: Trustpilot/Google hrefs not filled
-- ❌ **No service targeting**: Missing battery, glass, crown links
-- ❌ **No sibling cities**: Missing context links
+## URL Discovery System (Step 4A)
+**Before AI prompt, discover available URLs from project:**
 
-## Deep Linking Prompt Specification
+### 4A.1 Configuration-Driven Link Pools
+```yaml
+# _link-config.yaml (project-specific)
+link_pools:
+  high_value_folders: 
+    - 'dist/brands/'      # 150 brand pages (high authority targets)
+    - 'dist/services/'    # Service category pages
+  
+  local_folders:
+    - 'dist/branches/'    # 3000 local pages (authority sources)
+    - 'dist/locations/'   # Geographic variations
+    
+  money_pages:
+    - '/start-repair.html'
+    - '/contact.html'
+    - '/how-it-works.html'
+    
+  help_pages:
+    - 'dist/information/' # FAQ, guides, trust content
+    - 'dist/faq/'
 
-### System Prompt
+link_strategy:
+  local_to_brands: 2      # Each local page → 2 brand pages
+  local_to_services: 1    # Each local page → 1 service page
+  brands_to_local: 3      # Each brand page → 3 local pages
+  max_links_per_page: 5   # Don't over-optimize
+  
+priority_rules:
+  content_mentions: 'high'    # Link brands/services mentioned in content
+  geographic_proximity: 'medium'  # Link nearby local pages
+  authority_value: 'high'     # Prioritize high-value targets
+```
+
+### 4A.2 URL Discovery Implementation
+```javascript
+async function discoverAvailableUrls(linkConfig) {
+  const availableUrls = {
+    money_pages: linkConfig.money_pages,
+    service_pages: await scanFolder(linkConfig.link_pools.service_folders),
+    brand_pages: await scanFolder(linkConfig.link_pools.high_value_folders),
+    local_pages: await scanFolder(linkConfig.link_pools.local_folders),
+    help_pages: await scanFolder(linkConfig.link_pools.help_pages)
+  };
+  
+  return availableUrls;
+}
+```
+
+## Current V1 Issues (Fixed by URL Discovery)
+- ❌ **0/3 deep links**: AI guessing non-existent URLs
+- ❌ **Empty trust links**: Not using profile.trust_links  
+- ❌ **No strategic linking**: Random instead of authority-focused
+- ❌ **No content relevance**: Links not based on page content
+
+## Enhanced Deep Linking Prompt Specification
+
+### System Prompt (AI gets actual available URLs)
+```
+You are a strategic internal linking specialist focused on SEO authority distribution and user experience.
+
+TASK: Create internal linking strategy using provided URL pools for maximum SEO benefit.
+
+INPUT: Available URL pools, content analysis, and linking strategy rules.
+
+STRATEGIC APPROACH:
+- Local pages are "fishing nets" that distribute authority to high-value pages
+- Brand pages are "authority targets" that benefit from many local page links
+- Service pages are "conversion funnels" that guide users to money pages
+- Geographic relevance and content mentions determine link selection
+
+LINKING RULES:
+1. ≥3 internal links per page (money + service + context)
+2. Use ONLY URLs from provided available_urls pools
+3. Prioritize content-relevant links (mentioned brands/services)
+4. Fill empty trust links with provided trust_links
+5. Respect max_links_per_page limit
+6. Upgrade existing anchors before creating new ones
+
+You must respond with valid JSON in this exact format:
+{
+  "links": [
+    {
+      "selector": "css_selector",
+      "action": "upgrade|create|fill",
+      "new_anchor": "anchor_text", 
+      "new_href": "url_from_available_pools",
+      "link_type": "money|service|brand|local|trust",
+      "relevance_reason": "content_mention|geographic|authority"
+    }
+  ],
+  "authority_strategy": {
+    "links_added": 4,
+    "authority_targets": ["brand_page_1", "service_page_1"],
+    "link_juice_flow": "local_to_brand"
+  },
+  "confidence": 0.92,
+  "notes": ["strategic linking decisions"]
+}
+
+AUTHORITY OPTIMIZATION:
+- Maximize link juice flow to high-value pages
+- Ensure geographic and content relevance
+- Balance user experience with SEO benefit
+- Create natural anchor text that fits content context
+
+Return only valid JSON with strategic linking decisions.
 ```
 You are a deep linking specialist focused on internal link optimization and trust signal enhancement.
 
