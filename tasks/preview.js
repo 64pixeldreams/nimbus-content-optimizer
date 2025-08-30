@@ -428,6 +428,33 @@ const previewTask = {
     
     return matchingBlock ? matchingBlock.anchor : null;
   },
+
+  // V4.5: Get header image for Google-style preview
+  getHeaderImage(result, profile) {
+    // Extract brand name from page ID
+    const brandMatch = result.page_id.match(/(.+)-watch-repair/);
+    const brand = brandMatch ? brandMatch[1] : null;
+    
+    // Brand-specific placeholder images (would be configurable in profile)
+    const brandImages = {
+      'hublot': 'https://via.placeholder.com/80x80/000000/FFFFFF?text=H',
+      'hamilton': 'https://via.placeholder.com/80x80/2C5F2D/FFFFFF?text=HAM',
+      'gucci': 'https://via.placeholder.com/80x80/8B0000/FFFFFF?text=G',
+      'rolex': 'https://via.placeholder.com/80x80/006400/FFFFFF?text=R',
+      'omega': 'https://via.placeholder.com/80x80/000080/FFFFFF?text=Ω',
+      'fossil': 'https://via.placeholder.com/80x80/8B4513/FFFFFF?text=F'
+    };
+    
+    // For local pages, use location placeholder
+    if (result.page_id.includes('watch-repairs-')) {
+      const location = result.page_id.replace('watch-repairs-', '').replace(/-/g, ' ');
+      const firstLetter = location.charAt(0).toUpperCase();
+      return `https://via.placeholder.com/80x80/1a73e8/FFFFFF?text=${firstLetter}`;
+    }
+    
+    // Return brand image or default
+    return brandImages[brand] || profile.default_share_image || 'https://via.placeholder.com/80x80/70757a/FFFFFF?text=?';
+  },
   
   async generateBatchSummary(previewDir, batchData, previewResults) {
     const { batch_id, profile, proposal_summary } = batchData;
@@ -547,21 +574,31 @@ const previewTask = {
       
       return `
         <div class="search-result">
-          <a href="${result.page_id}.html" class="result-title">
-            ${this.escapeHtml(titleTruncated)}
-            <span class="char-count ${titleLength > 60 ? 'char-over' : 'char-good'}">${titleLength}/60</span>
-          </a>
-          <div class="result-url">
-            ${profile.domain}${result.route || '/' + result.page_id}
-          </div>
-          <p class="result-description">
-            ${this.escapeHtml(descTruncated)}
-            <span class="char-count ${descLength > 160 ? 'char-over' : 'char-good'}">${descLength}/160</span>
-          </p>
-          <div class="result-meta">
-            <span class="${confidenceClass}">${Math.round(result.confidence * 100)}% confidence</span>
-            <span>${result.changes} changes</span>
-            <span>${result.type}/${result.tone}</span>
+          <div style="display: flex; gap: 15px; align-items: flex-start;">
+            <div class="result-image" style="flex-shrink: 0;">
+              <img src="${this.getHeaderImage(result, profile)}" 
+                   alt="${result.page_id} header" 
+                   style="width: 80px; height: 80px; object-fit: cover; border-radius: 8px; border: 1px solid #dadce0;"
+                   onerror="this.style.display='none'">
+            </div>
+            <div class="result-content" style="flex: 1; min-width: 0;">
+              <a href="${result.page_id}.html" class="result-title">
+                ${this.escapeHtml(titleTruncated)}
+                <span class="char-count ${titleLength > 60 ? 'char-over' : 'char-good'}">${titleLength}/60</span>
+              </a>
+              <div class="result-url">
+                ${profile.domain}${result.route || '/' + result.page_id}
+              </div>
+              <p class="result-description">
+                ${this.escapeHtml(descTruncated)}
+                <span class="char-count ${descLength > 160 ? 'char-over' : 'char-good'}">${descLength}/160</span>
+              </p>
+              <div class="result-meta">
+                <span class="${confidenceClass}">${Math.round(result.confidence * 100)}% confidence</span>
+                <span>${result.changes} changes</span>
+                <span>${result.type}/${result.tone}</span>
+              </div>
+            </div>
           </div>
         </div>
       `;
