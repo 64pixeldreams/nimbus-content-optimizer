@@ -12,6 +12,9 @@ const applyTask = require('./tasks/apply');
 const checkTask = require('./tasks/check');
 const urlDiscoveryTask = require('./tasks/discover-urls');
 const proposeV2Task = require('./tasks/propose-v2');
+const ctaJumboTestTask = require('./tasks/cta-jumbo-test');
+const jumbotronOptimizerTask = require('./tasks/jumbotron-optimizer');
+const progressiveOptimizerTask = require('./tasks/progressive-optimizer');
 
 // Parse command line arguments
 program
@@ -173,6 +176,13 @@ gulp.task('default', () => {
   console.log('  gulp nimbus:check --batch <id>');
   console.log('  gulp nimbus:discover:urls');
   console.log('  gulp nimbus:propose:v2 --batch <id> [--limit N]');
+  console.log('  gulp nimbus:cta:jumbo --batch <id> [--limit N] [--pages <list>]');
+  console.log('  gulp nimbus:jumbotron --batch <id> [--limit N] [--tone <profile>]');
+  console.log('');
+  console.log(chalk.yellow('3-Tier Progressive Optimization:'));
+  console.log('  gulp nimbus:meta --batch <id> [--pages <list>] [--tone <profile>]        # Tier 1: Meta-only (1-2s)');
+  console.log('  gulp nimbus:above-fold --batch <id> [--pages <list>] [--tone <profile>]  # Tier 2: Above-fold (3-5s)');  
+  console.log('  gulp nimbus:full-page --batch <id> [--pages <list>] [--tone <profile>]   # Tier 3: Full page (15-30s)');
   console.log('');
   console.log(chalk.yellow('Example:'));
   console.log('  gulp nimbus:scan:map --folder dist/local --limit 5 --batch new');
@@ -216,6 +226,60 @@ gulp.task('nimbus:propose:head', async () => {
   }
 });
 
+// Task: nimbus:meta (Tier 1: Meta-Only Optimization)
+gulp.task('nimbus:meta', async () => {
+  console.log(chalk.blue('⚡ Starting Tier 1: Meta-Only Optimization...'));
+  
+  if (!options.batch) {
+    console.error(chalk.red('❌ Error: --batch option is required'));
+    process.exit(1);
+  }
+  
+  try {
+    const result = await progressiveOptimizerTask.runMetaOnly(options);
+    console.log(chalk.green('✅ Tier 1: Meta-Only optimization completed successfully'));
+  } catch (error) {
+    console.error(chalk.red('❌ Tier 1 optimization failed:'), error.message);
+    process.exit(1);
+  }
+});
+
+// Task: nimbus:above-fold (Tier 2: Above-Fold Optimization)
+gulp.task('nimbus:above-fold', async () => {
+  console.log(chalk.blue('🎯 Starting Tier 2: Above-Fold Optimization...'));
+  
+  if (!options.batch) {
+    console.error(chalk.red('❌ Error: --batch option is required'));
+    process.exit(1);
+  }
+  
+  try {
+    const result = await progressiveOptimizerTask.runAboveFold(options);
+    console.log(chalk.green('✅ Tier 2: Above-Fold optimization completed successfully'));
+  } catch (error) {
+    console.error(chalk.red('❌ Tier 2 optimization failed:'), error.message);
+    process.exit(1);
+  }
+});
+
+// Task: nimbus:full-page (Tier 3: Full Page Optimization) 
+gulp.task('nimbus:full-page', async () => {
+  console.log(chalk.blue('🏆 Starting Tier 3: Full Page Optimization...'));
+  
+  if (!options.batch) {
+    console.error(chalk.red('❌ Error: --batch option is required'));
+    process.exit(1);
+  }
+  
+  try {
+    const result = await progressiveOptimizerTask.runFullPage(options);
+    console.log(chalk.green('✅ Tier 3: Full Page optimization completed successfully'));
+  } catch (error) {
+    console.error(chalk.red('❌ Tier 3 optimization failed:'), error.message);
+    process.exit(1);
+  }
+});
+
 // Task: nimbus:discover:urls
 gulp.task('nimbus:discover:urls', async () => {
   console.log(chalk.blue('🔍 Discovering URLs for strategic linking...'));
@@ -225,6 +289,51 @@ gulp.task('nimbus:discover:urls', async () => {
     console.log(chalk.green('✅ URL discovery completed successfully'));
   } catch (error) {
     console.error(chalk.red('❌ URL discovery failed:'), error.message);
+    process.exit(1);
+  }
+});
+
+// Task: nimbus:cta:jumbo
+gulp.task('nimbus:cta:jumbo', async () => {
+  console.log(chalk.blue('🚀 Starting CTA Jumbo Test - Ultra-Fast Above-the-Fold Testing...'));
+  
+  if (!options.batch) {
+    console.error(chalk.red('❌ Error: --batch option is required'));
+    process.exit(1);
+  }
+  
+  try {
+    const result = await ctaJumboTestTask.run(options);
+    
+    if (result.ultra_fast_achieved) {
+      console.log(chalk.green(`🏆 ULTRA-FAST GOAL ACHIEVED! (${result.test_time_ms}ms)`));
+    } else {
+      console.log(chalk.yellow(`⚡ Fast completion: ${result.test_time_ms}ms`));
+    }
+    
+    console.log(chalk.green('✅ CTA Jumbo Test completed successfully'));
+  } catch (error) {
+    console.error(chalk.red('❌ CTA Jumbo Test failed:'), error.message);
+    process.exit(1);
+  }
+});
+
+// Task: nimbus:jumbotron
+gulp.task('nimbus:jumbotron', async () => {
+  console.log(chalk.blue('🚀 Starting Jumbotron AI Optimizer - Above-the-Fold Testing...'));
+  
+  if (!options.batch) {
+    console.error(chalk.red('❌ Error: --batch option is required'));
+    process.exit(1);
+  }
+  
+  try {
+    const result = await jumbotronOptimizerTask.run(options);
+    
+    console.log(chalk.green(`🎯 Optimized ${result.successful_tests} pages in ${result.test_time_ms}ms`));
+    console.log(chalk.green('✅ Jumbotron AI Optimization completed successfully'));
+  } catch (error) {
+    console.error(chalk.red('❌ Jumbotron AI Optimization failed:'), error.message);
     process.exit(1);
   }
 });
