@@ -398,6 +398,46 @@ function extractBrand(route) {
   return null;
 }
 
+// V4.5: Brand classification for luxury vs fashion differentiation
+function classifyBrand(brandName) {
+  if (!brandName) return { tier: 'unknown', category: 'unknown' };
+  
+  const brandLower = brandName.toLowerCase();
+  
+  const brandClassification = {
+    // Ultra Luxury Swiss
+    'patek philippe': { tier: 'ultra-luxury', category: 'swiss-haute-horlogerie', price_range: '£20K+' },
+    'audemars piguet': { tier: 'ultra-luxury', category: 'swiss-sports-luxury', price_range: '£15K+' },
+    'vacheron constantin': { tier: 'ultra-luxury', category: 'swiss-haute-horlogerie', price_range: '£15K+' },
+    
+    // Luxury Swiss
+    'rolex': { tier: 'luxury', category: 'swiss-prestige', price_range: '£3K-£50K' },
+    'omega': { tier: 'luxury', category: 'swiss-professional', price_range: '£1K-£10K' },
+    'breitling': { tier: 'luxury', category: 'swiss-aviation', price_range: '£2K-£8K' },
+    'tag heuer': { tier: 'luxury', category: 'swiss-sports', price_range: '£800-£5K' },
+    'hublot': { tier: 'luxury', category: 'swiss-modern', price_range: '£3K-£15K' },
+    'chopard': { tier: 'luxury', category: 'swiss-jewelry', price_range: '£2K-£20K' },
+    
+    // Premium Brands
+    'cartier': { tier: 'premium', category: 'jewelry-luxury', price_range: '£1K-£10K' },
+    'iwc': { tier: 'premium', category: 'swiss-pilot', price_range: '£2K-£8K' },
+    'tudor': { tier: 'premium', category: 'swiss-heritage', price_range: '£1K-£4K' },
+    
+    // Fashion Luxury
+    'gucci': { tier: 'fashion-luxury', category: 'italian-fashion', price_range: '£300-£2K' },
+    'christian dior': { tier: 'fashion-luxury', category: 'french-fashion', price_range: '£200-£1K' },
+    'emporio armani': { tier: 'fashion-luxury', category: 'italian-fashion', price_range: '£150-£800' },
+    
+    // Fashion Accessible
+    'michael kors': { tier: 'fashion', category: 'american-accessible', price_range: '£100-£400' },
+    'dkny': { tier: 'fashion', category: 'american-fashion', price_range: '£80-£300' },
+    'fossil': { tier: 'fashion', category: 'american-casual', price_range: '£50-£250' },
+    'guess': { tier: 'fashion', category: 'american-fashion', price_range: '£60-£200' }
+  };
+  
+  return brandClassification[brandLower] || { tier: 'premium', category: 'swiss-traditional', price_range: '£200-£1K' };
+}
+
 // V4.5: JSON validation and repair utility
 function repairMalformedJSON(jsonString) {
   try {
@@ -632,6 +672,8 @@ Return strategic linking JSON using only available URLs.`;
 // Step 5: Content Enhancement Prompt Implementation
 async function executeContentPrompt(profile, directive, contentMap, env, model) {
   const location = extractLocation(contentMap.route);
+  const brand = extractBrand(contentMap.route);
+  const brandInfo = brand ? classifyBrand(brand) : null;
   
   // V2.5: Safer block increase (12 → 30-40 blocks)
   const allBlocks = contentMap.blocks || [];
@@ -663,11 +705,28 @@ V4.4 TONE PROFILE - ${directive.tone.toUpperCase()}:
 - CTA APPROACH: ${toneProfile.cta_style}
 - FORMALITY: ${toneProfile.formality}
 
+BRAND CONTEXT (if applicable):
+${brandInfo ? `
+- Brand: ${brand}
+- Tier: ${brandInfo.tier} (${brandInfo.category})
+- Price Range: ${brandInfo.price_range}
+- Heritage: ${brandInfo.category.includes('swiss') ? 'Swiss craftsmanship and precision' : brandInfo.category.includes('fashion') ? 'Fashion-forward design and style' : 'Traditional watchmaking excellence'}
+` : '- No brand context (local/service page)'}
+
 TONE APPLICATION:
 - Use the personality and language style throughout all content
 - Apply the CTA approach to any call-to-action elements
 - Match the formality level in all copy
 - Ensure consistent brand voice across all optimizations
+- For luxury brands: Emphasize heritage, craftsmanship, investment value
+- For fashion brands: Emphasize style, trends, accessibility
+
+CONTENT RELEVANCE POLICY - CRITICAL:
+- ONLY enhance existing content, NEVER replace with unrelated content
+- Maintain the original meaning and purpose of each content block
+- If content is about "battery replacement", enhance battery replacement content
+- If content is about "how it works", enhance the process explanation
+- NEVER change topic or subject matter of existing content
 
 WORD COUNT POLICY - CRITICAL:
 - NEVER reduce content length unless it significantly improves clarity
