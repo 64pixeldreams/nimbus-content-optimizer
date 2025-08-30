@@ -14,7 +14,7 @@ const TONE_PROFILES = {
     cta_style: "Get started today, Contact us now",
     formality: "casual-professional"
   },
-  startup: {
+  "startup-old": {
     personality: "Dynamic, innovative, growth-focused", 
     language: "Revolutionary, game-changing, next-level, cutting-edge, innovative solutions",
     cta_style: "Join the revolution, Get started now, Transform your experience",
@@ -53,14 +53,14 @@ const TONE_PROFILES = {
     formality: "casual-confident"
   },
 
-  premium: {
+  "premium-new": {
     personality: "Polished, formal, reassuring",
     language: "Distinguished service, refined quality, prestigious care, exceptional standards",
     cta_style: "Experience excellence, Discover premium service, Arrange consultation",
     formality: "formal-luxury"
   },
 
-  startup: {
+  "startup-new": {
     personality: "Punchy, modern, clever",
     language: "Revolutionary solutions, innovative approach, next-level service, game-changing results",
     cta_style: "Get started instantly, Try it free, Join thousands",
@@ -344,6 +344,7 @@ export default {
 async function executeHeadPrompt(profile, directive, contentMap, env, model) {
   const location = extractLocation(contentMap.route);
   const brand = extractBrand(contentMap.route);
+  const toneProfile = TONE_PROFILES[directive.tone] || TONE_PROFILES.friendly;
   
   const systemPrompt = `You are a head metadata optimization specialist focused on local SEO and conversion optimization.
 
@@ -371,10 +372,16 @@ REQUIREMENTS:
 - UK spelling, conversion-focused language
 - NEVER exceed limits but USE FULL CHARACTER ALLOWANCE
 
-TITLE EXAMPLES (55-60 characters):
-- Brand: "Hublot Watch Repair | 12-Mo Guarantee, 1.5K Reviews, Free UK"
-- Local: "Watch Repair in London | 12-Mo Guarantee, 1.5K Reviews, Free"
-- Always include: Brand/Location + "Watch Repair" + Benefits + Trust
+MANDATORY TONE-SPECIFIC LANGUAGE (${directive.tone.toUpperCase()}):
+${toneProfile.language ? `USE THESE WORDS: ${toneProfile.language}` : ''}
+FORBIDDEN WORDS: Expert, Professional, Quality (overused - use tone-specific alternatives)
+
+TONE-SPECIFIC TITLE EXAMPLES (55-60 characters):
+- Mom-n-pop: "Family-Run Fossil Watch Care | Personal Touch, 1.5K Reviews"
+- Startup: "Revolutionary Guess Watch Solutions | Game-Changing Results"  
+- Clinical: "Precise Fossil Watch Methodology | Systematic Approach"
+- Classic-retail: "Fantastic Fossil Watch Value | Unbeatable Service"
+- Always include: Brand + Tone-Specific Language + Benefits + Trust
 
 You must respond with valid JSON in this exact format:
 {
