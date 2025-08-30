@@ -305,13 +305,19 @@ PAGE CONTEXT:
 - Brand: ${brand || 'N/A'}
 
 REQUIREMENTS:
-- Title: 50-60 characters, include ${brand ? 'brand name' : 'location'} and key benefit
-- Meta description: 140-165 characters, include trust signals and benefits  
-- For local pages: Use pattern "${profile.services[0]} in {{Location}} | Key Benefit & Trust Signal"
-- For brand pages: Use pattern "{{Brand}} ${profile.services[0]} | Key Benefit & Trust Signal"
-- Include ${profile.review_count} reviews, ${profile.guarantee}, and unique selling points
+- Title: MUST USE 55-60 characters (never shorter than 55), include ${brand ? 'brand name' : 'location'} + specific services + benefits + trust signals
+- Meta description: TARGET 150-160 characters (maximize SERP space), include trust signals and benefits  
+- For local pages: Use pattern "${profile.services[0]} in {{Location}} | Benefits + ${profile.guarantee} + Reviews"
+- For brand pages: Use pattern "{{Brand}} Watch Repair | Benefits + ${profile.guarantee} + Reviews + Expertise"
+- MAXIMIZE character usage with: ${profile.review_count} reviews, ${profile.guarantee}, specific benefits, expertise claims
+- Include specific service benefits: "Battery, Glass, Crown Repair" vs generic "Service"
 - UK spelling, conversion-focused language
-- Never exceed character limits
+- NEVER exceed limits but USE FULL CHARACTER ALLOWANCE
+
+TITLE EXAMPLES (55-60 characters):
+- Brand: "Hublot Watch Repair | 12-Mo Guarantee, 1.5K Reviews, Free UK"
+- Local: "Watch Repair in London | 12-Mo Guarantee, 1.5K Reviews, Free"
+- Always include: Brand/Location + "Watch Repair" + Benefits + Trust
 
 You must respond with valid JSON in this exact format:
 {
