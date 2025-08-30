@@ -36,16 +36,26 @@ const previewTask = {
     const previewDir = `.nimbus/work/${batch}/previews`;
     await fs.ensureDir(previewDir);
     
-    // Generate previews for each page
+    // V4.5: Discover all proposal files (including tone variations)
+    const proposalsDir = `.nimbus/work/${batch}/proposals`;
+    const proposalFiles = await fs.readdir(proposalsDir);
+    const proposalIds = proposalFiles
+      .filter(f => f.endsWith('.json'))
+      .map(f => f.replace('.json', ''));
+    
+    // Generate previews for each proposal file
     const previewResults = [];
     
-    console.log(chalk.blue(`\n🔍 GENERATING PREVIEWS (${pagesToPreview.length}):`));
+    console.log(chalk.blue(`\n🔍 GENERATING PREVIEWS (${proposalIds.length}):`));
     
-    for (let i = 0; i < pagesToPreview.length; i++) {
-      const page = pagesToPreview[i];
-      const { page_id, directive } = page;
+    for (let i = 0; i < proposalIds.length; i++) {
+      const page_id = proposalIds[i];
       
-      console.log(chalk.yellow(`⏳ ${i + 1}/${pagesToPreview.length}: ${page_id} [${directive.type}/${directive.tone}]`));
+      // Get directive info from original page or proposal
+      const originalPage = pagesToPreview.find(p => p.page_id === page_id || page_id.startsWith(p.page_id));
+      const directive = originalPage?.directive || { type: 'unknown', tone: 'unknown' };
+      
+      console.log(chalk.yellow(`⏳ ${i + 1}/${proposalIds.length}: ${page_id} [${directive.type}/${directive.tone}]`));
       
       try {
         // Load proposal for this page
@@ -54,9 +64,12 @@ const previewTask = {
         // Generate preview based on format
         let previewPath;
         if (format === 'html') {
-          previewPath = await this.generateHtmlPreview(previewDir, page, proposal);
+          // Create page object for compatibility
+          const pageObj = { page_id, directive, content_map: proposal.request.content_map };
+          previewPath = await this.generateHtmlPreview(previewDir, pageObj, proposal);
         } else if (format === 'console') {
-          this.displayConsolePreview(page, proposal);
+          const pageObj = { page_id, directive, content_map: proposal.request.content_map };
+          this.displayConsolePreview(pageObj, proposal);
           continue; // Skip file creation for console format
         } else {
           throw new Error(`Unsupported format: ${format}`);
@@ -429,13 +442,27 @@ const previewTask = {
     return matchingBlock ? matchingBlock.anchor : null;
   },
 
-  // V4.5: Get header image for Google-style preview
-  getHeaderImage(result, profile) {
-    // Extract brand name from page ID
+  // V4.5: Get header image for Google-style preview from actual page content
+  getHeaderImage(result, profile, contentMap) {
+    // First try to get image from content map
+    if (contentMap && contentMap.blocks) {
+      // Look for the first image in the content
+      const imageBlock = contentMap.blocks.find(block => block.type === 'img' && block.src);
+      if (imageBlock) {
+        return imageBlock.src;
+      }
+    }
+    
+    // Fallback to profile default image
+    if (profile.default_share_image) {
+      return profile.default_share_image;
+    }
+    
+    // Extract brand name for branded placeholder as last resort
     const brandMatch = result.page_id.match(/(.+)-watch-repair/);
     const brand = brandMatch ? brandMatch[1] : null;
     
-    // Brand-specific placeholder images (would be configurable in profile)
+    // Brand-specific placeholder images as final fallback
     const brandImages = {
       'hublot': 'https://via.placeholder.com/80x80/000000/FFFFFF?text=H',
       'hamilton': 'https://via.placeholder.com/80x80/2C5F2D/FFFFFF?text=HAM',
@@ -452,8 +479,8 @@ const previewTask = {
       return `https://via.placeholder.com/80x80/1a73e8/FFFFFF?text=${firstLetter}`;
     }
     
-    // Return brand image or default
-    return brandImages[brand] || profile.default_share_image || 'https://via.placeholder.com/80x80/70757a/FFFFFF?text=?';
+    // Return brand image or final fallback
+    return brandImages[brand] || 'https://via.placeholder.com/80x80/70757a/FFFFFF?text=?';
   },
   
   async generateBatchSummary(previewDir, batchData, previewResults) {
@@ -466,16 +493,19 @@ const previewTask = {
         const proposalPath = path.join(path.dirname(previewDir), 'proposals', `${result.page_id}.json`);
         const proposalData = JSON.parse(await fs.readFile(proposalPath, 'utf8'));
         const head = proposalData.response?.head || {};
+        const contentMap = proposalData.request?.content_map;
         
-        // Get type and tone from batch data
-        const pageData = batchData.pages?.find(p => p.page_id === result.page_id);
+        // Get type and tone from batch data or proposal
+        const pageData = batchData.pages?.find(p => p.page_id === result.page_id || result.page_id.startsWith(p.page_id));
+        const toneFromProposal = proposalData.tone_tested || proposalData.request?.directive?.tone;
         
         return {
           ...result,
           title: head.title || 'No title generated',
           description: head.metaDescription || 'No description generated',
           type: pageData?.directive?.type || 'unknown',
-          tone: pageData?.directive?.tone || 'unknown'
+          tone: toneFromProposal || pageData?.directive?.tone || 'unknown',
+          contentMap: contentMap
         };
       } catch (error) {
         return {
@@ -495,7 +525,7 @@ const previewTask = {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Nimbus Batch Preview: ${batch_id}</title>
   <style>
-    body { font-family: arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; background: #fff; }
+    body { font-family: arial, sans-serif; max-width: 1000px; margin: 0 auto; padding: 20px; background: #fff; }
     .header { padding: 20px 0; border-bottom: 1px solid #ddd; margin-bottom: 30px; }
     .stats { display: flex; gap: 30px; margin: 20px 0; }
     .stat { text-align: center; }
@@ -576,7 +606,7 @@ const previewTask = {
         <div class="search-result">
           <div style="display: flex; gap: 15px; align-items: flex-start;">
             <div class="result-image" style="flex-shrink: 0;">
-              <img src="${this.getHeaderImage(result, profile)}" 
+              <img src="${this.getHeaderImage(result, profile, result.contentMap)}" 
                    alt="${result.page_id} header" 
                    style="width: 80px; height: 80px; object-fit: cover; border-radius: 8px; border: 1px solid #dadce0;"
                    onerror="this.style.display='none'">
