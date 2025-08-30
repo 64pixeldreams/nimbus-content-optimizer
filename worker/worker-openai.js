@@ -51,7 +51,8 @@ async function generateCacheKey(payload) {
   // Any change in content, route, profile, directive = different cache key
   const cacheInput = {
     ...payload, // Include EVERYTHING from the request
-    version: CACHE_VERSION // Add version for cache invalidation
+    version: CACHE_VERSION, // Add version for cache invalidation
+    cache_bust: payload.cache_bust || null // V4.5: Optional cache busting
   };
   
   const encoder = new TextEncoder();

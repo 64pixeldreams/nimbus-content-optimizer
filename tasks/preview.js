@@ -440,16 +440,23 @@ const previewTask = {
         const proposalData = JSON.parse(await fs.readFile(proposalPath, 'utf8'));
         const head = proposalData.response?.head || {};
         
+        // Get type and tone from batch data
+        const pageData = batchData.pages?.find(p => p.page_id === result.page_id);
+        
         return {
           ...result,
           title: head.title || 'No title generated',
-          description: head.metaDescription || 'No description generated'
+          description: head.metaDescription || 'No description generated',
+          type: pageData?.directive?.type || 'unknown',
+          tone: pageData?.directive?.tone || 'unknown'
         };
       } catch (error) {
         return {
           ...result,
           title: 'Error loading title',
-          description: 'Error loading description'
+          description: 'Error loading description',
+          type: 'error',
+          tone: 'error'
         };
       }
     }));

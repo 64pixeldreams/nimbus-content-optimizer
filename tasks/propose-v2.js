@@ -136,7 +136,8 @@ const proposeV2Task = {
       model: 'gpt-4-turbo-preview',
       profile,
       directive,
-      content_map: contentMap
+      content_map: contentMap,
+      cache_bust: Date.now() // V4.5: Force cache miss for fresh content
     };
     
     const response = await fetch(workerUrl, {
