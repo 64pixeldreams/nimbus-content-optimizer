@@ -14,9 +14,10 @@ let fetch;
 
 const proposeV2Task = {
   async run(options) {
-    console.log(chalk.blue('🤖 Starting Nimbus V2 Multi-Prompt AI generation...'));
+    const modeText = options.headOnly ? 'Head-Only AI optimization' : 'V2 Multi-Prompt AI generation';
+    console.log(chalk.blue(`🤖 Starting Nimbus ${modeText}...`));
     
-    const { batch, pages, workerUrl, dryRun } = options;
+    const { batch, pages, workerUrl, dryRun, tone, headOnly } = options;
     
     if (!batch) {
       throw new Error('--batch option is required');
@@ -49,9 +50,17 @@ const proposeV2Task = {
     
     for (let i = 0; i < pagesToProcess.length; i++) {
       const page = pagesToProcess[i];
-      const { page_id, content_map, directive } = page;
+      const { page_id, content_map } = page;
       
-      console.log(chalk.yellow(`⏳ ${i + 1}/${pagesToProcess.length}: ${page_id} [${directive.type}/${directive.tone}]`));
+      // V4.5: Apply tone override if specified
+      let directive = { ...page.directive };
+      if (tone) {
+        directive.tone = tone;
+        console.log(chalk.cyan(`   🎭 Tone override: ${tone}`));
+      }
+      
+      const displayMode = headOnly ? 'HEAD-ONLY' : directive.type;
+      console.log(chalk.yellow(`⏳ ${i + 1}/${pagesToProcess.length}: ${page_id} [${displayMode}/${directive.tone}]`));
       
       try {
         let proposal;
@@ -60,8 +69,8 @@ const proposeV2Task = {
           proposal = this.generateMockV2Proposal(workBatch.profile, directive, content_map);
           console.log(chalk.gray(`   🔍 Dry run - V2 mock proposal generated`));
         } else {
-          // Send V2 multi-prompt request
-          proposal = await this.requestV2Proposal(finalWorkerUrl, workBatch.profile, directive, content_map);
+          // Send V2 multi-prompt request (or head-only)
+          proposal = await this.requestV2Proposal(finalWorkerUrl, workBatch.profile, directive, content_map, headOnly);
         }
         
         const changeCount = this.countChanges(proposal);
@@ -125,14 +134,14 @@ const proposeV2Task = {
     };
   },
   
-  async requestV2Proposal(workerUrl, profile, directive, contentMap) {
+  async requestV2Proposal(workerUrl, profile, directive, contentMap, headOnly = false) {
     if (!fetch) {
       const { default: nodeFetch } = await import('node-fetch');
       fetch = nodeFetch;
     }
     
     const requestBody = {
-      prompt_type: 'multi', // Use V2 multi-prompt execution
+      prompt_type: headOnly ? 'head' : 'multi', // V4.5: Head-only mode for rapid testing
       model: 'gpt-4-turbo-preview',
       profile,
       directive,

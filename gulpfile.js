@@ -28,6 +28,7 @@ program
   .option('--mode <type>', 'Approval mode: interactive|auto|reject', 'interactive')
   .option('--confidence <threshold>', 'Auto-approve confidence threshold (0.0-1.0)')
   .option('--backup', 'Create backup files before modification', true)
+  .option('--tone <profile>', 'Override tone profile (local-expert, premium, startup, etc.)')
   .parse(process.argv);
 
 const options = program.opts();
@@ -191,6 +192,26 @@ gulp.task('nimbus:propose:v2', async () => {
     console.log(chalk.green('✅ V2 Multi-prompt proposals completed successfully'));
   } catch (error) {
     console.error(chalk.red('❌ V2 Multi-prompt proposals failed:'), error.message);
+    process.exit(1);
+  }
+});
+
+// Task: nimbus:propose:head (head-only optimization for rapid tone testing)
+gulp.task('nimbus:propose:head', async () => {
+  console.log(chalk.blue('⚡ Starting Head-Only AI optimization...'));
+  
+  if (!options.batch) {
+    console.error(chalk.red('❌ Error: --batch option is required'));
+    process.exit(1);
+  }
+  
+  try {
+    // Use head-only mode for rapid testing
+    const headOptions = { ...options, headOnly: true };
+    await proposeV2Task.run(headOptions);
+    console.log(chalk.green('✅ Head-only optimization completed successfully'));
+  } catch (error) {
+    console.error(chalk.red('❌ Head-only optimization failed:'), error.message);
     process.exit(1);
   }
 });
