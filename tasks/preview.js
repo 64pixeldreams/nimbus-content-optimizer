@@ -492,7 +492,7 @@ const previewTask = {
       try {
         const proposalPath = path.join(path.dirname(previewDir), 'proposals', `${result.page_id}.json`);
         const proposalData = JSON.parse(await fs.readFile(proposalPath, 'utf8'));
-        const head = proposalData.response?.head || {};
+        const head = proposalData.response?.result?.head || proposalData.response?.head || {};
         const contentMap = proposalData.request?.content_map;
         
         // Get type and tone from batch data or proposal
@@ -605,12 +605,6 @@ const previewTask = {
       return `
         <div class="search-result">
           <div style="display: flex; gap: 15px; align-items: flex-start;">
-            <div class="result-image" style="flex-shrink: 0;">
-              <img src="${this.getHeaderImage(result, profile, result.contentMap)}" 
-                   alt="${result.page_id} header" 
-                   style="width: 80px; height: 80px; object-fit: cover; border-radius: 8px; border: 1px solid #dadce0;"
-                   onerror="this.style.display='none'">
-            </div>
             <div class="result-content" style="flex: 1; min-width: 0;">
               <a href="${result.page_id}.html" class="result-title">
                 ${this.escapeHtml(titleTruncated)}
@@ -628,6 +622,12 @@ const previewTask = {
                 <span>${result.changes} changes</span>
                 <span>${result.type}/${result.tone}</span>
               </div>
+            </div>
+            <div class="result-image" style="flex-shrink: 0;">
+              <img src="${this.getHeaderImage(result, profile, result.contentMap)}" 
+                   alt="${result.page_id} header" 
+                   style="width: 80px; height: 80px; object-fit: cover; border-radius: 8px; border: 1px solid #dadce0;"
+                   onerror="this.style.display='none'">
             </div>
           </div>
         </div>
