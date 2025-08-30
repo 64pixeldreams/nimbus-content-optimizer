@@ -182,10 +182,16 @@ export default {
 
       console.log(`V2 Processing ${prompt_type} optimization for: ${content_map.route}`);
 
-      // V4.5: Check cache first
+      // V4.5: Check cache first (unless no_cache mode)
       const cacheKey = await generateCacheKey(requestData);
       debugLogs.push(`Generated cache key: ${cacheKey.substring(0, 12)}...`);
-      const cachedResult = await getCachedResult(cacheKey, env, debugLogs);
+      
+      let cachedResult = null;
+      if (!requestData.no_cache) {
+        cachedResult = await getCachedResult(cacheKey, env, debugLogs);
+      } else {
+        debugLogs.push('Cache bypassed - no_cache mode enabled');
+      }
       
       if (cachedResult) {
         console.log(`Cache HIT for ${prompt_type}: ${content_map.route}`);

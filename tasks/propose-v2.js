@@ -137,7 +137,8 @@ const proposeV2Task = {
       profile,
       directive,
       content_map: contentMap,
-      cache_bust: Date.now() // V4.5: Force cache miss for fresh content
+      cache_bust: Date.now(), // V4.5: Force cache miss for fresh content
+      no_cache: true // V4.5: Always get fresh results for testing
     };
     
     const response = await fetch(workerUrl, {
