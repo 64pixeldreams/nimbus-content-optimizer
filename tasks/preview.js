@@ -186,6 +186,7 @@ const previewTask = {
   ${this.generateHeadSection(content_map.head, response.head)}
   ${this.generateContentSection(response.blocks, content_map)}
   ${this.generateLinksSection(response.links, content_map)}
+  ${this.generateCtaSection(response.ctas, content_map)}
   ${this.generateImagesSection(response.alts)}
   ${this.generateSchemaSection(response.schema)}
   ${this.generateNotesSection(response.notes)}
@@ -279,8 +280,31 @@ const previewTask = {
     
     content += '</div>';
     return content;
+    },
+
+  generateCtaSection(ctas, contentMap) {
+    if (!ctas || ctas.length === 0) return '';
+    
+    let content = `<div class="section"><h2>🔘 CTA Changes (${ctas.length})</h2>`;
+    
+    ctas.forEach((cta, i) => {
+      // Extract original CTA text using the selector from the content map
+      const originalCtaText = this.extractOriginalLinkText(cta.selector, contentMap) || '(not found in original)';
+      
+      content += `
+        <h3>CTA ${i + 1}</h3>
+        <p><strong>Selector:</strong> <code>${this.escapeHtml(cta.selector)}</code></p>
+        <p><strong>Type:</strong> <span class="badge">${cta.cta_type || 'primary'}</span> | <strong>Strategy:</strong> ${cta.conversion_strategy || 'conversion'}</p>
+        <div class="diff">
+          <div class="before"><strong>Before:</strong><br>Text: ${this.escapeHtml(originalCtaText)}<br>URL: ${this.escapeHtml(cta.new_href || 'unchanged')}</div>
+          <div class="after"><strong>After:</strong><br>Text: ${this.escapeHtml(cta.new_anchor)}<br>URL: ${this.escapeHtml(cta.new_href || 'unchanged')}</div>
+        </div>`;
+    });
+    
+    content += '</div>';
+    return content;
   },
-  
+
   generateImagesSection(alts) {
     if (!alts || alts.length === 0) return '';
     

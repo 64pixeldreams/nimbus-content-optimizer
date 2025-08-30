@@ -532,13 +532,24 @@ You must respond with valid JSON in this exact format:
       "relevance_reason": "content_mention|geographic|authority_boost"
     }
   ],
+  "ctas": [
+    {
+      "selector": "css_selector_for_cta_element",
+      "action": "upgrade|create",
+      "new_anchor": "conversion_focused_cta_text",
+      "new_href": "money_page_url",
+      "cta_type": "primary|secondary|contact",
+      "conversion_strategy": "urgency|value_prop|trust_signal"
+    }
+  ],
   "authority_strategy": {
     "links_added": 4,
+    "ctas_optimized": 2,
     "authority_targets": ["specific_pages_receiving_authority"],
     "link_juice_flow": "local_to_brand"
   },
   "confidence": 0.92,
-  "notes": ["strategic linking decisions"]
+  "notes": ["strategic linking and CTA optimization decisions"]
 }
 
 Return only valid JSON with strategic linking decisions using available URLs.`;
@@ -548,6 +559,13 @@ Return only valid JSON with strategic linking decisions using available URLs.`;
 CURRENT PAGE: ${contentMap.route}
 PAGE TYPE: ${directive.type} (${directive.tone} tone)
 LOCATION: ${location || 'General'}
+
+CTA OPTIMIZATION PRIORITIES:
+- Identify money page CTAs (${profile.money_pages.join(', ')}) for conversion optimization
+- Use urgency, value props, and trust signals in CTA text
+- Primary CTAs: Main conversion actions (quotes, contact, start repair)
+- Secondary CTAs: Supporting actions (how it works, learn more)
+- Contact CTAs: Phone numbers, email, contact forms
 
 AVAILABLE URL POOLS (use ONLY these URLs):
 MONEY PAGES: ${JSON.stringify(availableUrls.money_pages)}
@@ -562,8 +580,13 @@ Google: ${profile.trust_links?.google || 'none'}
 
 EXISTING LINKS TO ANALYZE FOR UPGRADES:
 ${contentMap.blocks.filter(b => b.type === 'a').map(link => 
-  `- "${link.anchor}" → ${link.href} [${link.selector}]`
+  `- "${link.anchor}" → ${link.href} [${link.selector}] (${link.link_type || 'regular'})`
 ).join('\n')}
+
+HIGH-PRIORITY CTAS DETECTED (optimize for conversion):
+${contentMap.blocks.filter(b => b.type === 'a' && (b.link_type === 'cta-money' || b.link_type === 'cta-contact')).map(cta => 
+  `- CTA: "${cta.anchor}" → ${cta.href} [${cta.link_type}]`
+).join('\n') || '- No CTAs detected'}
 
 CONTENT ANALYSIS:
 Brand mentions found: ${JSON.stringify(brandMentions)}
