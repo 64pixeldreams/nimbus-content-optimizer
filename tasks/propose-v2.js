@@ -52,75 +52,90 @@ const proposeV2Task = {
       const page = pagesToProcess[i];
       const { page_id, content_map } = page;
       
-      // V4.5: Apply tone override if specified
-      let directive = { ...page.directive };
-      let tonesToTest = [directive.tone]; // Default: use original tone
+      // V4.5: Determine tones to test for this page
+      let tonesToTest = [page.directive.tone]; // Default: use original tone
       
       if (tone === 'roll-tone') {
         // Roll-tone: Use different tone per page
         const tonePresets = ['local-expert', 'premium', 'startup', 'helpful-calm', 'classic-retail', 'mom-n-pop', 'clinical', 'govtech'];
-        directive.tone = tonePresets[i % tonePresets.length];
-        console.log(chalk.cyan(`   🎭 Roll-tone mode: ${directive.tone} (page ${i + 1})`));
+        tonesToTest = [tonePresets[i % tonePresets.length]];
+        console.log(chalk.cyan(`   🎭 Roll-tone mode: ${tonesToTest[0]} (page ${i + 1})`));
       } else if (tone === 'all-tone') {
         // All-tone: Test same page with all tones
         tonesToTest = ['local-expert', 'premium', 'startup', 'helpful-calm', 'classic-retail', 'mom-n-pop', 'clinical', 'govtech'];
         console.log(chalk.cyan(`   🎭 All-tone mode: Testing ${tonesToTest.length} tones for ${page_id}`));
       } else if (tone) {
         // Single tone override
-        directive.tone = tone;
+        tonesToTest = [tone];
         console.log(chalk.cyan(`   🎭 Tone override: ${tone}`));
       }
       
-      const displayMode = headOnly ? 'HEAD-ONLY' : directive.type;
-      console.log(chalk.yellow(`⏳ ${i + 1}/${pagesToProcess.length}: ${page_id} [${displayMode}/${directive.tone}]`));
+      // Process each tone for this page
+      for (let toneIndex = 0; toneIndex < tonesToTest.length; toneIndex++) {
+        const currentTone = tonesToTest[toneIndex];
+        const directive = { ...page.directive, tone: currentTone };
+        
+        // Create unique page_id for multiple tones
+        const effectivePageId = tonesToTest.length > 1 ? `${page_id}-${currentTone}` : page_id;
+        
+        const displayMode = headOnly ? 'HEAD-ONLY' : directive.type;
+        const pageProgress = tonesToTest.length > 1 ? `${toneIndex + 1}/${tonesToTest.length}` : `${i + 1}/${pagesToProcess.length}`;
+        console.log(chalk.yellow(`⏳ ${pageProgress}: ${effectivePageId} [${displayMode}/${currentTone}]`));
       
-      try {
-        let proposal;
-        
-        if (dryRun) {
-          proposal = this.generateMockV2Proposal(workBatch.profile, directive, content_map);
-          console.log(chalk.gray(`   🔍 Dry run - V2 mock proposal generated`));
-        } else {
-          // Send V2 multi-prompt request (or head-only)
-          proposal = await this.requestV2Proposal(finalWorkerUrl, workBatch.profile, directive, content_map, headOnly);
+        try {
+          let proposal;
+          
+          if (dryRun) {
+            proposal = this.generateMockV2Proposal(workBatch.profile, directive, content_map);
+            console.log(chalk.gray(`   🔍 Dry run - V2 mock proposal generated`));
+          } else {
+            // Send V2 multi-prompt request (or head-only)
+            proposal = await this.requestV2Proposal(finalWorkerUrl, workBatch.profile, directive, content_map, headOnly);
+          }
+          
+          const changeCount = this.countChanges(proposal);
+          console.log(chalk.green(`   ✅ ${changeCount} changes (confidence: ${(proposal.confidence || 0).toFixed(2)})`));
+          
+          // Show V2 metadata if available
+          if (proposal.v2_metadata) {
+            const meta = proposal.v2_metadata;
+            console.log(chalk.gray(`   🔧 V2: ${meta.successful_prompts}/5 prompts, ${(meta.total_processing_time / 1000).toFixed(1)}s, ${meta.total_tokens} tokens`));
+          }
+          
+          // Save proposal with unique filename for tone testing
+          if (!dryRun) {
+            await this.saveProposal(batch, effectivePageId, {
+              profile: workBatch.profile,
+              directive,
+              content_map,
+              tone_tested: currentTone,
+              original_page_id: page_id
+            }, proposal);
+          }
+          
+          results.push({
+            page_id: effectivePageId,
+            original_page_id: page_id,
+            tone_tested: currentTone,
+            status: 'completed',
+            changes: changeCount,
+            confidence: proposal.confidence || 0,
+            v2_metadata: proposal.v2_metadata
+          });
+          
+        } catch (error) {
+          console.log(chalk.red(`   ❌ Failed: ${error.message}`));
+          
+          results.push({
+            page_id: effectivePageId,
+            original_page_id: page_id,
+            tone_tested: currentTone,
+            status: 'failed',
+            error: error.message,
+            changes: 0,
+            confidence: 0
+          });
         }
-        
-        const changeCount = this.countChanges(proposal);
-        console.log(chalk.green(`   ✅ ${changeCount} changes (confidence: ${(proposal.confidence || 0).toFixed(2)})`));
-        
-        // Show V2 metadata if available
-        if (proposal.v2_metadata) {
-          const meta = proposal.v2_metadata;
-          console.log(chalk.gray(`   🔧 V2: ${meta.successful_prompts}/5 prompts, ${(meta.total_processing_time / 1000).toFixed(1)}s, ${meta.total_tokens} tokens`));
-        }
-        
-        // Save proposal
-        if (!dryRun) {
-          await this.saveProposal(batch, page_id, {
-            profile: workBatch.profile,
-            directive,
-            content_map
-          }, proposal);
-        }
-        
-        results.push({
-          page_id,
-          status: 'completed',
-          changes: changeCount,
-          confidence: proposal.confidence || 0,
-          v2_metadata: proposal.v2_metadata
-        });
-        
-      } catch (error) {
-        console.log(chalk.red(`   ❌ Failed: ${error.message}`));
-        
-        results.push({
-          page_id,
-          status: 'failed',
-          error: error.message,
-          changes: 0,
-          confidence: 0
-        });
       }
     }
     
