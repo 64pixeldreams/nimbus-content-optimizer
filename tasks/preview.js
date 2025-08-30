@@ -433,6 +433,27 @@ const previewTask = {
     const { batch_id, profile, proposal_summary } = batchData;
     const successfulPreviews = previewResults.filter(r => !r.error);
     
+    // Load proposals to get head metadata for Google-style display
+    const googleStyleResults = await Promise.all(successfulPreviews.map(async (result) => {
+      try {
+        const proposalPath = path.join(path.dirname(previewDir), 'proposals', `${result.page_id}.json`);
+        const proposalData = JSON.parse(await fs.readFile(proposalPath, 'utf8'));
+        const head = proposalData.response?.head || {};
+        
+        return {
+          ...result,
+          title: head.title || 'No title generated',
+          description: head.metaDescription || 'No description generated'
+        };
+      } catch (error) {
+        return {
+          ...result,
+          title: 'Error loading title',
+          description: 'Error loading description'
+        };
+      }
+    }));
+    
     const html = `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -440,27 +461,62 @@ const previewTask = {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Nimbus Batch Preview: ${batch_id}</title>
   <style>
-    body { font-family: system-ui, sans-serif; max-width: 1200px; margin: 0 auto; padding: 20px; background: #f5f6fa; }
-    .header { background: white; padding: 30px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-    .stats { background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 20px; }
+    body { font-family: arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; background: #fff; }
+    .header { padding: 20px 0; border-bottom: 1px solid #ddd; margin-bottom: 30px; }
+    .stats { display: flex; gap: 30px; margin: 20px 0; }
     .stat { text-align: center; }
-    .stat-number { font-size: 2em; font-weight: bold; color: #007bff; }
-    .stat-label { color: #666; margin-top: 5px; }
-    .page-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin: 20px 0; }
-    .page-card { border: 1px solid #ddd; border-radius: 8px; padding: 20px; background: white; }
-    .page-card h3 { margin: 0 0 10px 0; color: #333; }
-    .page-card p { margin: 5px 0; color: #666; }
-    .page-card a { color: #007bff; text-decoration: none; font-weight: bold; }
-    .page-card a:hover { text-decoration: underline; }
+    .stat-number { font-size: 1.8em; font-weight: bold; color: #1a73e8; }
+    .stat-label { color: #70757a; font-size: 14px; }
+    
+    /* Google Search Results Style */
+    .search-results { margin: 20px 0; }
+    .search-result { margin-bottom: 30px; padding: 0; border: none; background: none; }
+    .result-title { 
+      font-size: 20px; 
+      color: #1a0dab; 
+      text-decoration: none; 
+      line-height: 1.3;
+      display: block;
+      margin-bottom: 3px;
+      cursor: pointer;
+    }
+    .result-title:hover { text-decoration: underline; }
+    .result-url { 
+      font-size: 14px; 
+      color: #006621; 
+      margin-bottom: 3px;
+      line-height: 1.3;
+    }
+    .result-description { 
+      font-size: 14px; 
+      color: #4d5156; 
+      line-height: 1.58;
+      margin: 0;
+    }
+    .result-meta {
+      font-size: 12px;
+      color: #70757a;
+      margin-top: 5px;
+      display: flex;
+      gap: 15px;
+    }
+    .confidence-high { color: #137333; font-weight: 500; }
+    .confidence-medium { color: #ea8600; font-weight: 500; }
+    .confidence-low { color: #d93025; font-weight: 500; }
+    
+    /* Character limit indicators */
+    .char-count { font-size: 11px; color: #70757a; margin-left: 5px; }
+    .char-over { color: #d93025; font-weight: bold; }
+    .char-good { color: #137333; }
   </style>
 </head>
 <body>
   <div class="header">
-    <h1>🎯 Batch Preview: ${batch_id}</h1>
+    <h1>🎯 Nimbus Batch Results: ${batch_id}</h1>
     <div class="stats">
       <div class="stat">
         <div class="stat-number">${successfulPreviews.length}</div>
-        <div class="stat-label">Pages</div>
+        <div class="stat-label">Pages Optimized</div>
       </div>
       <div class="stat">
         <div class="stat-number">${proposal_summary?.total_changes || 0}</div>
@@ -471,23 +527,42 @@ const previewTask = {
         <div class="stat-label">Avg Confidence</div>
       </div>
     </div>
-    <p><strong>Business:</strong> ${profile.name} (${profile.domain})</p>
-    <p><strong>Goal:</strong> ${profile.goal}</p>
+    <p style="color: #70757a;"><strong>Business:</strong> ${profile.name} • <strong>Goal:</strong> ${profile.goal}</p>
   </div>
 
-  <h2>📄 Page Previews</h2>
-  <div class="page-grid">
-    ${successfulPreviews.map(result => `
-      <div class="page-card">
-        <h3>${result.page_id}</h3>
-        <p>${result.changes} changes • ${Math.round(result.confidence * 100)}% confidence</p>
-        <a href="${result.page_id}.html">View Preview →</a>
-      </div>
-    `).join('')}
+  <div class="search-results">
+    ${googleStyleResults.map(result => {
+      const titleLength = result.title.length;
+      const descLength = result.description.length;
+      const titleTruncated = titleLength > 60 ? result.title.substring(0, 57) + '...' : result.title;
+      const descTruncated = descLength > 160 ? result.description.substring(0, 157) + '...' : result.description;
+      const confidenceClass = result.confidence >= 0.9 ? 'confidence-high' : result.confidence >= 0.8 ? 'confidence-medium' : 'confidence-low';
+      
+      return `
+        <div class="search-result">
+          <a href="${result.page_id}.html" class="result-title">
+            ${this.escapeHtml(titleTruncated)}
+            <span class="char-count ${titleLength > 60 ? 'char-over' : 'char-good'}">${titleLength}/60</span>
+          </a>
+          <div class="result-url">
+            ${profile.domain}${result.route || '/' + result.page_id}
+          </div>
+          <p class="result-description">
+            ${this.escapeHtml(descTruncated)}
+            <span class="char-count ${descLength > 160 ? 'char-over' : 'char-good'}">${descLength}/160</span>
+          </p>
+          <div class="result-meta">
+            <span class="${confidenceClass}">${Math.round(result.confidence * 100)}% confidence</span>
+            <span>${result.changes} changes</span>
+            <span>${result.type}/${result.tone}</span>
+          </div>
+        </div>
+      `;
+    }).join('')}
   </div>
 
-  <footer style="text-align: center; padding: 40px 20px; color: #666; border-top: 1px solid #ddd; margin-top: 40px;">
-    <p>Generated by Nimbus AI Content Optimizer</p>
+  <footer style="text-align: center; padding: 40px 20px; color: #70757a; border-top: 1px solid #ddd; margin-top: 40px;">
+    <p>Generated by Nimbus AI Content Optimizer • Click titles to view detailed changes</p>
   </footer>
 </body>
 </html>`;
