@@ -18,6 +18,7 @@ money_pages: [
   "/how-it-works.html"
 ]
 default_share_image: "https://www.repairsbypost.com/share.jpg"
+favicon_url: "https://www.repairsbypost.com/favicon.ico"  # Optional: Override auto-detection
 trust_links:
   trustpilot: "https://uk.trustpilot.com/review/repairsbypost.com"
   google: "https://g.page/RepairsByPost"

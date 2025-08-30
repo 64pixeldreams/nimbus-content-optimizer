@@ -466,6 +466,22 @@ const previewTask = {
     return matchingBlock ? matchingBlock.anchor : null;
   },
 
+  // Get favicon URL with smart fallbacks
+  getFaviconUrl(profile) {
+    // Priority 1: Manual override in profile
+    if (profile.favicon_url) {
+      return profile.favicon_url;
+    }
+    
+    // Priority 2: Auto-detect from domain
+    if (profile.domain) {
+      return `https://${profile.domain}/favicon.ico`;
+    }
+    
+    // Priority 3: Default fallback icon (Google-style blue circle)
+    return 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6" fill="%231a73e8"/></svg>';
+  },
+
   // V4.5: Get header image for Google-style preview from actual page content
   getHeaderImage(result, profile, contentMap) {
     // First try to get image from content map
@@ -630,13 +646,19 @@ const previewTask = {
         <div class="search-result">
           <div style="display: flex; gap: 15px; align-items: flex-start;">
             <div class="result-content" style="flex: 1; min-width: 0;">
+              <div class="result-site" style="display: flex; align-items: center; margin-bottom: 2px;">
+                <img src="${this.getFaviconUrl(profile)}" 
+                     style="width: 16px; height: 16px; margin-right: 8px; vertical-align: middle;"
+                     onerror="this.src='data:image/svg+xml,<svg xmlns=&quot;http://www.w3.org/2000/svg&quot; viewBox=&quot;0 0 16 16&quot;><circle cx=&quot;8&quot; cy=&quot;8&quot; r=&quot;6&quot; fill=&quot;%231a73e8&quot;/></svg>'">
+                <span style="font-size: 14px; color: #202124; font-weight: 400;">${profile.name}</span>
+              </div>
+              <div class="result-url" style="font-size: 12px; color: #006621; margin-bottom: 3px; line-height: 1.3;">
+                https://www.${profile.domain} › ${result.page_id.replace(/-/g, ' › ')}
+              </div>
               <a href="${result.page_id}.html" class="result-title">
                 ${this.escapeHtml(titleTruncated)}
                 <span class="char-count ${titleLength > 60 ? 'char-over' : 'char-good'}">${titleLength}/60</span>
               </a>
-              <div class="result-url">
-                ${profile.domain}${result.route || '/' + result.page_id}
-              </div>
               <p class="result-description">
                 ${this.escapeHtml(descTruncated)}
                 <span class="char-count ${descLength > 160 ? 'char-over' : 'char-good'}">${descLength}/160</span>
