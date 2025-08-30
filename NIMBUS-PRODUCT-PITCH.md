@@ -1,10 +1,19 @@
-# 🚀 Nimbus AI - Revolutionary Content Optimization Platform
+# 🚀 Nimbus Optimizer - AI-Powered Content Optimization Engine
 
-## 🎯 **Product Vision**
+## 🎯 **Elevator Pitch**
 
-**Nimbus AI transforms website content optimization from manual guesswork into intelligent, automated excellence.**
+**Nimbus Optimizer** is an AI-powered tool that scans and rewrites thousands of legacy HTML pages—turning old, low-performing websites into high-converting, SEO-optimized revenue machines in hours, not months.
 
-The world's first AI-powered content optimization platform that combines **lightning-fast tone testing**, **Google search preview replication**, and **intelligent business configuration** to deliver professional-grade content optimization at scale.
+## 📦 **Product Overview**
+
+| Category      | Value                                          |
+|---------------|------------------------------------------------|
+| **Name**      | Nimbus Optimizer                               |
+| **Type**      | AI-powered static site refactoring engine      |
+| **Stage**     | Minimum Viable Working Product (MVP)           |
+| **Use Case**  | SEO rewriting, legacy content refactoring, CTA injection |
+| **Ideal User**| SaaS founders, agencies, local businesses      |
+| **Stack**     | Node.js, Gulp/CLI, Cloudflare Workers + KV, OpenAI GPT-4 |
 
 ---
 
@@ -39,6 +48,7 @@ Nimbus AI uses advanced GPT-4 technology with specialized prompts to optimize ev
 - **8 Tone Personalities**: Local-expert, premium, startup, helpful-calm, classic-retail, mom-n-pop, clinical, govtech
 - **Roll-Tone Mode**: Different tone per page for brand comparison
 - **All-Tone Mode**: Same page with all 8 tones for deep analysis
+- **Folder-Based Config**: YAML configuration for tone and strategy per page family
 
 #### **🔍 Perfect Google Search Preview**
 - **Authentic SERP Replication**: Looks exactly like real Google search results
@@ -53,11 +63,40 @@ Nimbus AI uses advanced GPT-4 technology with specialized prompts to optimize ev
 - **Business-Aware CTAs**: Knows which links drive revenue vs navigation
 
 #### **📊 Comprehensive Content Optimization**
+- **Multi-Pass Optimization**: Specialized prompts for head, content, links, images, schema
 - **Head Metadata**: SEO-optimized titles and meta descriptions
 - **Content Blocks**: H1, H2, H3, paragraphs enhanced with brand voice
-- **Strategic Linking**: Internal link optimization for SEO authority distribution
+- **Strategic Deep Linking**: Connects local, brand, support, and help pages automatically
 - **Image Optimization**: Alt text, technical recommendations, accessibility
 - **Schema Markup**: JSON-LD for LocalBusiness, FAQPage, BreadcrumbList
+- **Review Injection**: Pulls Google/Trustpilot reviews and integrates into copy
+- **Local SEO Boost**: Adds regional references (postcodes, landmarks, local businesses)
+- **CTA Intelligence**: Business-aware call-to-action optimization
+- **Intent Detection**: Scans page purpose and optimizes accordingly
+
+---
+
+## 📈 **Current Traction**
+
+| Metric               | Status                        |
+|----------------------|-------------------------------|
+| MVP running?         | ✅ Yes                         |
+| Live test site?      | ✅ Repairs by Post (115 pages) |
+| Pages optimized?     | ✅ 100+ (local + brand)       |
+| Dashboard preview?   | ✅ Google-style (Cloudflare UI planned) |
+| Deploy ready?        | ✅ Yes — replaces pages with backups |
+| Performance tested?  | ✅ 95% cache improvement, 94% confidence |
+
+---
+
+## 🧠 **Strategic Advantages**
+
+- **100x faster** than human SEO/copywriting
+- **Plugin-free, static-first** — works with any HTML project
+- **Cloudflare-native architecture**: scalable, serverless, fast
+- **No user accounts needed** — drop in, run, regenerate
+- **Creates regenerative SEO systems** for any domain
+- **Revolutionary tone testing** — no competitor offers this
 
 ---
 
@@ -449,11 +488,13 @@ Total: $12.6M ARR
 ## 🔧 **Technical Specifications**
 
 ### **🌐 Architecture**
-- **Frontend**: Gulp-based CLI tool with HTML previews
-- **Backend**: Cloudflare Workers with KV storage
+- **Frontend**: Gulp-based CLI tool with HTML previews (CLI tool planned)
+- **Backend**: Cloudflare Workers with KV storage  
 - **AI Engine**: OpenAI GPT-4 Turbo with specialized prompts
-- **Caching**: SHA-256 hashed KV cache with 95% hit rate
+- **Caching**: SHA-256 HMAC hashed KV cache with 95% hit rate
 - **Storage**: Content maps, proposals, and previews in structured JSON
+- **Deployment**: Static-first, plugin-free, works with any HTML project
+- **Scalability**: Cloudflare-native architecture, serverless, fast
 
 ### **📊 Performance Metrics**
 - **Processing Speed**: 6-30 seconds per page (depending on mode)
