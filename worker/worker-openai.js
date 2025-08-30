@@ -6,29 +6,29 @@
 const CACHE_VERSION = 'v4.5';
 const CACHE_TTL = 86400 * 7; // 7 days
 
-// V4.4: Tone Profile System
+// V4.4: Tone Profile System (Enhanced for Distinct Personalities)
 const TONE_PROFILES = {
   friendly: {
     personality: "Friendly, professional, approachable",
-    language: "We're experts, reliable service, trusted choice",
+    language: "We're specialists, reliable service, trusted choice, professional care",
     cta_style: "Get started today, Contact us now",
     formality: "casual-professional"
   },
   startup: {
     personality: "Dynamic, innovative, growth-focused", 
-    language: "We're disrupting, game-changing, next-level, cutting-edge",
-    cta_style: "Join the revolution, Get started now, Transform your business",
+    language: "Revolutionary, game-changing, next-level, cutting-edge, innovative solutions",
+    cta_style: "Join the revolution, Get started now, Transform your experience",
     formality: "casual-dynamic"
   },
   corporate: {
     personality: "Professional, trustworthy, established",
-    language: "Industry-leading, proven expertise, reliable solutions, comprehensive", 
+    language: "Industry-leading, proven specialists, reliable solutions, comprehensive service", 
     cta_style: "Contact our team, Schedule consultation, Discover our services",
     formality: "formal-professional"
   },
   "local-shop": {
     personality: "Friendly, personal, community-focused",
-    language: "Your local experts, family business, personal service, neighborhood",
+    language: "Your local specialists, family business, personal service, neighborhood care",
     cta_style: "Pop in today, Give us a call, Visit our shop", 
     formality: "casual-friendly"
   },
@@ -43,6 +43,63 @@ const TONE_PROFILES = {
     language: "Simple, straightforward, hassle-free, transparent pricing",
     cta_style: "Try it now, See how it works, Get instant quote",
     formality: "casual-modern"
+  },
+
+  // V4.5: Human-Focused Tone Presets (Enhanced for Distinct Personalities)
+  "local-expert": {
+    personality: "Friendly, confident, down-to-earth",
+    language: "Your trusted local specialists, neighborhood professionals, reliable local service",
+    cta_style: "Let's get started, Give us a try, We're here to help",
+    formality: "casual-confident"
+  },
+
+  premium: {
+    personality: "Polished, formal, reassuring",
+    language: "Distinguished service, refined quality, prestigious care, exceptional standards",
+    cta_style: "Experience excellence, Discover premium service, Arrange consultation",
+    formality: "formal-luxury"
+  },
+
+  startup: {
+    personality: "Punchy, modern, clever",
+    language: "Revolutionary solutions, innovative approach, next-level service, game-changing results",
+    cta_style: "Get started instantly, Try it free, Join thousands",
+    formality: "casual-dynamic"
+  },
+
+  "helpful-calm": {
+    personality: "Warm, clear, supportive",
+    language: "We're here to help, gentle guidance, supportive care, understanding service",
+    cta_style: "Let us help, Get support, We'll guide you",
+    formality: "casual-supportive"
+  },
+
+  "classic-retail": {
+    personality: "Energetic, value-driven, persuasive",
+    language: "Fantastic value, unbeatable service, great deals, outstanding results",
+    cta_style: "Shop now, Save today, Don't miss out",
+    formality: "casual-energetic"
+  },
+
+  "mom-n-pop": {
+    personality: "Personal, homely, chatty",
+    language: "Family-run business, personal touch, we genuinely care, friendly neighborhood service",
+    cta_style: "Pop in anytime, Give us a call, We'd love to help",
+    formality: "casual-personal"
+  },
+
+  clinical: {
+    personality: "Precise, no-fluff, technical",
+    language: "Precise methodology, technical accuracy, systematic approach, measured results",
+    cta_style: "Request analysis, Schedule assessment, Get precise results",
+    formality: "formal-technical"
+  },
+
+  govtech: {
+    personality: "Professional, neutral, policy-aligned",
+    language: "Compliant solutions, regulatory standards, authorized service, official procedures",
+    cta_style: "Submit request, Access services, Contact department",
+    formality: "formal-neutral"
   }
 };
 
@@ -713,13 +770,23 @@ ${brandInfo ? `
 - Heritage: ${brandInfo.category.includes('swiss') ? 'Swiss craftsmanship and precision' : brandInfo.category.includes('fashion') ? 'Fashion-forward design and style' : 'Traditional watchmaking excellence'}
 ` : '- No brand context (local/service page)'}
 
-TONE APPLICATION:
-- Use the personality and language style throughout all content
+TONE APPLICATION - ENFORCE PERSONALITY:
+- MANDATORY: Use tone-specific language from the language style above
+- AVOID generic words: "Expert", "Professional", "Quality" (overused)
+- USE tone-specific alternatives from the language style
 - Apply the CTA approach to any call-to-action elements
 - Match the formality level in all copy
 - Ensure consistent brand voice across all optimizations
 - For luxury brands: Emphasize heritage, craftsmanship, investment value
 - For fashion brands: Emphasize style, trends, accessibility
+
+TONE-SPECIFIC LANGUAGE REQUIREMENTS:
+- Mom-n-pop: Use "family-run", "personal touch", "we genuinely care"
+- Startup: Use "revolutionary", "game-changing", "innovative"
+- Clinical: Use "precise", "systematic", "measured"
+- Classic-retail: Use "fantastic value", "unbeatable", "outstanding"
+- Helpful-calm: Use "gentle guidance", "supportive care", "understanding"
+- Govtech: Use "authorized", "compliant", "regulatory standards"
 
 CONTENT RELEVANCE POLICY - CRITICAL:
 - ONLY enhance existing content, NEVER replace with unrelated content
