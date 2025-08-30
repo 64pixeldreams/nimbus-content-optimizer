@@ -47,13 +47,11 @@ const TONE_PROFILES = {
 };
 
 async function generateCacheKey(payload) {
-  // Create a stable hash of the request payload
+  // V4.5 FIX: Hash the ENTIRE payload for maximum cache accuracy
+  // Any change in content, route, profile, directive = different cache key
   const cacheInput = {
-    content: payload.contentMap?.blocks || [],
-    profile: payload.profile,
-    directive: payload.directive,
-    version: CACHE_VERSION,
-    model: 'gpt-4-turbo'
+    ...payload, // Include EVERYTHING from the request
+    version: CACHE_VERSION // Add version for cache invalidation
   };
   
   const encoder = new TextEncoder();
