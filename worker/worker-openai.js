@@ -280,16 +280,30 @@ export default {
 // Step 3: Head Metadata Optimization Prompt Implementation
 async function executeHeadPrompt(profile, directive, contentMap, env, model) {
   const location = extractLocation(contentMap.route);
+  const brand = extractBrand(contentMap.route);
   
   const systemPrompt = `You are a head metadata optimization specialist focused on local SEO and conversion optimization.
 
 TASK: Optimize page head metadata for maximum SEO impact and click-through rates.
 
+BUSINESS CONTEXT:
+- Business: ${profile.name}
+- Services: ${profile.services.join(', ')}
+- Geographic scope: ${profile.geo_scope.join(', ')}
+- Review count: ${profile.review_count}
+- Guarantee: ${profile.guarantee}
+
+PAGE CONTEXT:
+- Page type: ${directive.type}
+- Location: ${location || 'N/A'}
+- Brand: ${brand || 'N/A'}
+
 REQUIREMENTS:
-- Title: 50-60 characters, include location and key benefit
+- Title: 50-60 characters, include ${brand ? 'brand name' : 'location'} and key benefit
 - Meta description: 140-165 characters, include trust signals and benefits  
-- For local pages: Use pattern "Service in {{Location}} | Key Benefit & Trust Signal"
-- Include review count, guarantee, and unique selling points
+- For local pages: Use pattern "${profile.services[0]} in {{Location}} | Key Benefit & Trust Signal"
+- For brand pages: Use pattern "{{Brand}} ${profile.services[0]} | Key Benefit & Trust Signal"
+- Include ${profile.review_count} reviews, ${profile.guarantee}, and unique selling points
 - UK spelling, conversion-focused language
 - Never exceed character limits
 
@@ -360,6 +374,39 @@ function extractLocation(route) {
   return null;
 }
 
+// V4.5: Extract brand name from brand page routes
+function extractBrand(route) {
+  const match = route.match(/\/brands\/(.+)-watch-repair/);
+  if (match) {
+    return match[1]
+      .replace(/-/g, ' ')
+      .replace(/\b\w/g, l => l.toUpperCase())
+      .replace(/And Co/g, '& Co'); // Fix "Dreyfuss And Co" → "Dreyfuss & Co"
+  }
+  return null;
+}
+
+// V4.5: JSON validation and repair utility
+function repairMalformedJSON(jsonString) {
+  try {
+    return JSON.parse(jsonString);
+  } catch (error) {
+    // Attempt common JSON fixes
+    let fixed = jsonString
+      .replace(/([^\\])"/g, '$1\\"')  // Escape unescaped quotes
+      .replace(/\n/g, '\\n')          // Escape newlines
+      .replace(/\r/g, '\\r')          // Escape carriage returns
+      .replace(/\t/g, '\\t')          // Escape tabs
+      .replace(/,(\s*[}\]])/g, '$1'); // Remove trailing commas
+    
+    try {
+      return JSON.parse(fixed);
+    } catch (secondError) {
+      throw new Error(`JSON repair failed: ${secondError.message}`);
+    }
+  }
+}
+
 async function executeAIPrompt(systemPrompt, userPrompt, env, model = 'gpt-4-turbo-preview') {
   const startTime = Date.now();
   
@@ -394,7 +441,8 @@ async function executeAIPrompt(systemPrompt, userPrompt, env, model = 'gpt-4-tur
       throw new Error('No response from OpenAI');
     }
 
-    const result = JSON.parse(aiResponse);
+    // V4.5: Enhanced JSON parsing with repair capability
+    const result = repairMalformedJSON(aiResponse);
     
     return {
       success: true,
@@ -598,6 +646,13 @@ TYPO DETECTION AND CORRECTION:
 - Correct grammar issues and awkward phrasing
 - Ensure professional, polished content throughout
 - Maintain meaning while improving readability
+
+CRITICAL JSON FORMATTING REQUIREMENTS:
+- ALWAYS escape quotes in text: Use \\" for quotes inside strings
+- NEVER include unescaped newlines - use \\n for line breaks
+- AVOID complex punctuation that breaks JSON
+- END response with valid JSON only - no additional text
+- TEST your JSON mentally before responding
 
 You must respond with valid JSON in this exact format:
 {
