@@ -7,6 +7,9 @@ const glob = require('glob');
 const cheerio = require('cheerio');
 const chalk = require('chalk');
 
+// V5: Enhanced text extraction for inline elements (modular - easy to disable)
+const { enhancedTextExtractor } = require('../lib/enhanced-text-extractor');
+
 const scanTask = {
   async run(options) {
     console.log(chalk.blue('🔍 Starting content scanning and mapping...'));
@@ -212,9 +215,19 @@ const scanTask = {
       const $elem = $(elem);
       const tagName = elem.tagName.toLowerCase();
       
+      // V5: Enhanced text extraction (feature flag for easy disable)
+      const USE_ENHANCED_EXTRACTION = true; // Easy toggle for testing
+      
+      let textData;
+      if (USE_ENHANCED_EXTRACTION && ['h1', 'h2', 'h3', 'p', 'li', 'blockquote', 'div', 'small'].includes(tagName)) {
+        textData = enhancedTextExtractor.extractText($elem, { cheerio: $ });
+      } else {
+        // Legacy extraction
+        textData = { text: $elem.text().trim(), extraction_method: 'legacy' };
+      }
+      
       // Skip empty elements
-      const text = $elem.text().trim();
-      if (['h1', 'h2', 'h3', 'p', 'li', 'blockquote'].includes(tagName) && !text) {
+      if (['h1', 'h2', 'h3', 'p', 'li', 'blockquote'].includes(tagName) && !textData.text) {
         return;
       }
       
@@ -231,17 +244,26 @@ const scanTask = {
       selectorMap[elementId] = selector;
       
       if (['h1', 'h2', 'h3', 'p', 'li', 'blockquote'].includes(tagName)) {
-        blocks.push({
+        const blockData = {
           i: index++,
           id: elementId,
           type: tagName,
-          text: text,
+          text: textData.text,
           selector: selector, // Keep for backward compatibility during transition
           nimbus_priority: nimbusAttr === 'priority' ? 'high' : nimbusAttr === 'ignore' ? 'skip' : 'normal' // V4.2: Content priority
-        });
+        };
+        
+        // V5: Add enhanced extraction data if available
+        if (textData.extraction_method !== 'legacy') {
+          blockData.extraction_method = textData.extraction_method;
+          blockData.inline_elements = textData.inline_elements || [];
+          blockData.enhanced = true;
+        }
+        
+        blocks.push(blockData);
       } else if (tagName === 'a') {
         const href = $elem.attr('href');
-        const anchor = text;
+        const anchor = textData.text;
         if (href && anchor) {
           // V4.3: Generate unique ID for this element
           const elementId = this.generateElementId(index, tagName);
