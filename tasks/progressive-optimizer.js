@@ -10,6 +10,9 @@ const crypto = require('crypto');
 const proposeV2Task = require('./propose-v2');
 const previewTask = require('./preview');
 
+// Import unified template engine
+const templateEngine = require('../lib/template-engine');
+
 // Use dynamic import for fetch (same pattern as existing tasks)
 let fetch;
 (async () => {
@@ -86,14 +89,36 @@ const progressiveOptimizer = {
       const page = pagesToProcess[i];
       const pageStartTime = Date.now();
       
-      // Override tone if specified
-      const directive = tone ? { ...page.directive, tone } : page.directive;
+      // V5: Determine tones to test for this page
+      let tonesToTest = [page.directive.tone]; // Default: use original tone
       
-      console.log(chalk.cyan(`🎯 ${i + 1}/${pagesToProcess.length}: ${page.page_id} [${directive.tone}]`));
+      if (tone === 'roll-tone') {
+        // Roll-tone: Use different tone per page
+        const tonePresets = ['local-expert', 'premium-new', 'startup-new', 'helpful-calm', 'classic-retail', 'mom-n-pop', 'clinical', 'govtech'];
+        tonesToTest = [tonePresets[i % tonePresets.length]];
+        console.log(chalk.cyan(`   🎭 Roll-tone mode: ${tonesToTest[0]} (page ${i + 1})`));
+      } else if (tone === 'all-tone') {
+        // All-tone: Test same page with all tones
+        tonesToTest = ['local-expert', 'premium-new', 'startup-new', 'helpful-calm', 'classic-retail', 'mom-n-pop', 'clinical', 'govtech'];
+        console.log(chalk.cyan(`   🎭 All-tone mode: Testing ${tonesToTest.length} tones for ${page.page_id}`));
+      } else if (tone) {
+        // Single tone override
+        tonesToTest = [tone];
+      }
       
-      try {
-        // Check for cached results from previous tiers
-        const cachedResults = await this.checkProgressiveCache(batch, page.page_id, tierLevel);
+      console.log(chalk.cyan(`🎯 ${i + 1}/${pagesToProcess.length}: ${page.page_id} [${tonesToTest.length} tone${tonesToTest.length > 1 ? 's' : ''}]`));
+      
+      // Process each tone for this page
+      for (let toneIndex = 0; toneIndex < tonesToTest.length; toneIndex++) {
+        const currentTone = tonesToTest[toneIndex];
+        const directive = { ...page.directive, tone: currentTone };
+        const pageId = tonesToTest.length > 1 ? `${page.page_id}-${currentTone}` : page.page_id;
+        
+        console.log(chalk.yellow(`   🎭 Tone ${toneIndex + 1}/${tonesToTest.length}: ${currentTone}`));
+        
+        try {
+          // Check for cached results from previous tiers
+          const cachedResults = await this.checkProgressiveCache(batch, pageId, tierLevel);
         
         let result;
         if (cachedResults.useCache) {
@@ -114,41 +139,43 @@ const progressiveOptimizer = {
           result = await this.requestOptimization(finalWorkerUrl, workBatch.profile, tierDirective, page.content_map, tierLevel);
           
           // Cache the result for future tier usage
-          await this.cacheProgressiveResult(batch, page.page_id, tierLevel, result);
+          await this.cacheProgressiveResult(batch, pageId, tierLevel, result);
         }
         
-        const pageTime = Date.now() - pageStartTime;
+        const toneTime = Date.now() - pageStartTime;
         const confidence = result.result?.confidence || result.confidence || 0;
-        console.log(chalk.green(`   ✅ Optimized in ${pageTime}ms - ${Math.round(confidence * 100)}% confidence`));
+        console.log(chalk.green(`      ✅ ${currentTone} optimized in ${toneTime}ms - ${Math.round(confidence * 100)}% confidence`));
         
         results.push({
-          page_id: page.page_id,
+          page_id: pageId,
           directive: directive,
           result: result,
+          content_map: page.content_map, // Add content map for image extraction
           tier_level: tierLevel,
           optimization_type: optimizationType,
           cached: cachedResults.useCache,
-          execution_time_ms: pageTime,
+          execution_time_ms: toneTime,
           confidence: confidence,
           changes: this.countChanges(result)
         });
         
-      } catch (error) {
-        console.log(chalk.red(`   ❌ Failed: ${error.message}`));
-        results.push({
-          page_id: page.page_id,
-          error: error.message,
-          tier_level: tierLevel,
-          execution_time_ms: Date.now() - pageStartTime
-        });
+        } catch (error) {
+          console.log(chalk.red(`      ❌ ${currentTone} failed: ${error.message}`));
+          results.push({
+            page_id: pageId,
+            error: error.message,
+            tier_level: tierLevel,
+            execution_time_ms: Date.now() - pageStartTime
+          });
+        }
       }
     }
     
     // Generate tier-specific preview AND individual page files
-    const previewPath = await this.generateTierPreview(batch, results, workBatch.profile, tierLevel);
+    const previewPath = await this.generateTierPreview(batch, results, workBatch.profile, tierLevel, optimizationType);
     
-    // Generate individual page files with before/after comparison
-    await this.generateIndividualPagePreviews(batch, results, workBatch.profile, tierLevel);
+    // Generate individual page files using EJS templates
+    await this.generateIndividualPagePreviewsEJS(batch, results, workBatch.profile, tierLevel, optimizationType);
     
     console.log(chalk.green(`📊 Tier ${tierLevel} preview: ${previewPath}`));
     
@@ -266,7 +293,7 @@ const progressiveOptimizer = {
   },
   
   // Generate tier-specific preview (reuse existing preview system)
-  async generateTierPreview(batchId, results, profile, tierLevel) {
+  async generateTierPreview(batchId, results, profile, tierLevel, optimizationType) {
     const previewDir = `.nimbus/work/${batchId}/tier-${tierLevel}-preview`;
     await fs.ensureDir(previewDir);
     
@@ -293,8 +320,8 @@ const progressiveOptimizer = {
       tier_name: tierNames[tierLevel]
     };
     
-    // Generate summary using existing preview system
-    const summaryPath = await this.generateTierSummary(previewDir, transformedResults, customBatchData);
+    // Generate summary using EJS template system
+    const summaryPath = await this.generateUnifiedSummary(previewDir, results, profile, tierLevel, optimizationType);
     return summaryPath;
   },
   
@@ -310,8 +337,12 @@ const progressiveOptimizer = {
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Tier ${tier_level} Results: ${tier_name}</title>
+  
+  <!-- Bootstrap 5 CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  
   <style>
-    body { font-family: arial, sans-serif; max-width: 1000px; margin: 0 auto; padding: 20px; background: #fff; }
+    body { font-family: arial, sans-serif; }
     .header { padding: 20px 0; border-bottom: 1px solid #ddd; margin-bottom: 30px; }
     .tier-badge { 
       display: inline-block; 
@@ -435,7 +466,60 @@ const progressiveOptimizer = {
     return summaryPath;
   },
   
-  // Generate individual page files with before/after comparison
+  // Generate unified summary using EJS template engine
+  async generateUnifiedSummary(previewDir, results, profile, tierLevel, optimizationType) {
+    const tierNames = { 1: 'Meta-Only', 2: 'Above-Fold', 3: 'Full Page' };
+    const optimizationName = tierNames[tierLevel] || optimizationType;
+    
+    console.log(chalk.gray(`   🎨 Generating EJS template with ${results.length} results`));
+    
+    // Format data for EJS template
+    const templateData = templateEngine.formatSearchResultsData(results, profile, optimizationName, tierLevel);
+    
+    console.log(chalk.gray(`   📊 Template data: ${templateData.pages_count} pages, ${templateData.avg_confidence}% confidence`));
+    console.log(chalk.gray(`   🖼️ First result image: ${templateData.results[0]?.result_image || 'MISSING'}`));
+    
+    // Render using EJS template
+    const html = await templateEngine.renderSearchResults(templateData);
+    
+    // Write to file
+    const summaryPath = path.join(previewDir, 'index.html');
+    await fs.writeFile(summaryPath, html, 'utf8');
+    
+    console.log(chalk.gray(`   ✅ EJS template rendered successfully`));
+    
+    return summaryPath;
+  },
+  
+  // Generate individual page files using EJS templates
+  async generateIndividualPagePreviewsEJS(batchId, results, profile, tierLevel, optimizationType) {
+    const previewDir = `.nimbus/work/${batchId}/tier-${tierLevel}-preview`;
+    const tierNames = { 1: 'Meta-Only', 2: 'Above-Fold', 3: 'Full Page' };
+    
+    for (const result of results.filter(r => r.success !== false)) {
+      // Load original content for comparison
+      const originalProposal = await this.loadOriginalProposal(batchId, result.page_id.replace(/-local-expert|-premium-new|-startup-new|-helpful-calm|-classic-retail|-mom-n-pop|-clinical|-govtech/, ''));
+      const originalHead = originalProposal?.request?.content_map?.head || {};
+      
+      // Format data for EJS template
+      const templateData = templateEngine.formatIndividualPreviewData(
+        result, 
+        { head: originalHead }, 
+        profile, 
+        tierNames[tierLevel] || optimizationType, 
+        tierLevel
+      );
+      
+      // Render using EJS template
+      const html = await templateEngine.renderIndividualPreview(templateData);
+      
+      // Write individual page file
+      const pagePreviewPath = path.join(previewDir, `${result.page_id}.html`);
+      await fs.writeFile(pagePreviewPath, html, 'utf8');
+    }
+  },
+  
+  // Generate individual page files with before/after comparison (OLD - keep for reference)
   async generateIndividualPagePreviews(batchId, results, profile, tierLevel) {
     const previewDir = `.nimbus/work/${batchId}/tier-${tierLevel}-preview`;
     const tierNames = { 1: 'Meta-Only', 2: 'Above-Fold', 3: 'Full Page' };

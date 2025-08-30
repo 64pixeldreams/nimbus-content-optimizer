@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= page_title %></title>
+  
+  <!-- Bootstrap 5 CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  
+  <!-- Font Awesome -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  
+  <style>
+    /* Modern System Font Stack */
+    body { 
+      font-family: -apple-system, BlinkMacSystemFont, "Avenir Next", avenir, "Segoe UI", "Helvetica Neue", helvetica, Ubuntu, roboto, noto, arial, sans-serif;
+    }
+    
+    /* Google SERP Preview Block */
+    .serp-preview {
+      font-family: arial, sans-serif; /* Google's exact font */
+      border: 1px solid #dadce0;
+      border-radius: 8px;
+      padding: 1.5rem;
+      background: #f8f9fa;
+    }
+    
+    .serp-preview .result-title { 
+      font-size: 20px; 
+      color: #1a0dab; 
+      line-height: 1.3;
+      text-decoration: none;
+      display: block;
+      margin-bottom: 3px;
+    }
+    .serp-preview .result-url { 
+      font-size: 14px; 
+      color: #006621; 
+      line-height: 1.3;
+      margin-bottom: 3px;
+    }
+    .serp-preview .result-description { 
+      font-size: 14px; 
+      color: #4d5156; 
+      line-height: 1.58;
+      margin: 0;
+    }
+    .serp-preview .result-meta { 
+      font-size: 12px; 
+      color: #70757a; 
+      margin-top: 10px;
+    }
+    .serp-preview .result-site { 
+      font-size: 14px; 
+      color: #202124; 
+    }
+  </style>
+</head>
+<body>
+  
+  <!-- Bootstrap 5 Navbar (same as search) -->
+  <nav class="navbar navbar-expand-lg navbar-light bg-light border-bottom">
+    <div class="container">
+      <a class="navbar-brand fw-bold" href="#"><%= business_name %></a>
+    </div>
+  </nav>
+
+  <div class="container">
+    
+    <!-- Back to Results Link -->
+    <div class="my-3">
+      <a href="index.html" class="text-decoration-none">
+        <i class="fas fa-arrow-left me-2"></i>Back to Results
+      </a>
+    </div>
+    
+    <!-- Clean Header Section -->
+    <div class="mb-3">
+      <h1 class="h2 mb-1"><%= page_display_name %></h1>
+      <p class="text-primary mb-3"><%= url_display %></p>
+      
+      <!-- One Line Stats Bar -->
+      <div class="bg-light p-3 rounded d-flex gap-4 flex-wrap align-items-center">
+        <div class="d-flex align-items-center gap-2">
+          <i class="fas fa-bullseye text-muted"></i>
+          <span class="text-muted text-uppercase">OPTIMIZATION</span>
+          <strong class="text-dark"><%= optimization_type.toUpperCase() %></strong>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+          <span class="text-muted text-uppercase">CONFIDENCE</span>
+          <strong class="text-dark"><%= confidence %>%</strong>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+          <strong class="text-dark"><%= changes_count %></strong>
+          <span class="text-muted text-uppercase">CHANGES</span>
+        </div>
+        <% if (tone) { %>
+        <div class="d-flex align-items-center gap-2">
+          <strong class="text-dark text-uppercase"><%= tone %></strong>
+          <span class="text-muted text-uppercase">TONE</span>
+          <i class="fas fa-microphone text-muted"></i>
+        </div>
+        <% } %>
+      </div>
+    </div>
+
+    <!-- Google SERP Preview Block -->
+    <div class="serp-preview mb-4 position-relative">
+      <div class="position-absolute top-0 start-0 p-2">
+        <small class="text-muted">SERP Listing</small>
+      </div>
+      
+      <div class="pt-4">
+        <div class="d-flex align-items-center mb-1">
+          <img src="<%= favicon_url %>" 
+               alt="<%= business_name %> favicon"
+               width="16" height="16" 
+               class="me-2"
+               onerror="this.src='data:image/svg+xml,<svg xmlns=&quot;http://www.w3.org/2000/svg&quot; viewBox=&quot;0 0 16 16&quot;><circle cx=&quot;8&quot; cy=&quot;8&quot; r=&quot;6&quot; fill=&quot;%231a73e8&quot;/></svg>'">
+          <span class="result-site"><%= business_name %></span>
+        </div>
+        
+        <div class="result-url"><%= url_display %></div>
+        <div class="result-title"><%= optimized_title %></div>
+        <div class="result-description"><%= optimized_description %></div>
+        
+        <div class="result-meta">
+          <%= cache_status %> • <%= confidence %>% confidence • <%= changes_count %> changes
+          <% if (tone) { %> • <i class="fas fa-microphone"></i> <%= tone %> tone<% } %>
+        </div>
+      </div>
+    </div>
+
+    <!-- Hero Section Preview -->
+    <div class="bg-gradient-primary text-white rounded-3 p-5 text-center mb-4 position-relative" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+      <div class="position-absolute top-0 start-0 p-2">
+        <small class="text-white">CTA Preview</small>
+      </div>
+      
+      <div class="row align-items-center pt-3">
+        <div class="col-md-8">
+          <h1 class="display-5 fw-bold mb-3"><%= optimized_title %></h1>
+          <p class="lead mb-4"><%= optimized_description %></p>
+          <div class="d-flex gap-3 justify-content-center">
+            <% if (primary_cta) { %>
+            <a href="#" class="btn btn-light btn-lg"><%= primary_cta %></a>
+            <% } else { %>
+            <a href="#" class="btn btn-light btn-lg">Get Quote Now</a>
+            <% } %>
+            <% if (secondary_cta) { %>
+            <a href="#" class="btn btn-outline-light btn-lg"><%= secondary_cta %></a>
+            <% } else { %>
+            <a href="#" class="btn btn-outline-light btn-lg">Learn More</a>
+            <% } %>
+          </div>
+        </div>
+        <% if (hero_image) { %>
+        <div class="col-md-4">
+          <img src="<%= hero_image %>" 
+               alt="Hero image" 
+               class="img-fluid rounded shadow"
+               style="max-height: 200px; object-fit: cover;">
+        </div>
+        <% } %>
+      </div>
+    </div>
+
+    <!-- Before/After Comparison (Progressive Content) -->
+    <% if (show_comparison) { %>
+    <div class="row g-4 mb-4">
+      <div class="col-md-6">
+        <div class="card border-warning h-100">
+          <div class="card-header bg-warning bg-opacity-10">
+            <h3 class="h5 text-warning mb-0">❌ Before (Original)</h3>
+          </div>
+          <div class="card-body d-flex flex-column">
+            
+            <% if (original_title) { %>
+            <div class="mb-3">
+              <div class="small text-muted text-uppercase fw-bold">Page Title</div>
+              <div class="p-2 bg-light rounded border-start border-warning border-3">
+                <%= original_title %>
+                <div class="small text-muted mt-1"><%= original_title_length %>/60 characters</div>
+              </div>
+            </div>
+            <% } %>
+            
+            <% if (original_description) { %>
+            <div class="mb-3">
+              <div class="small text-muted text-uppercase fw-bold">Meta Description</div>
+              <div class="p-2 bg-light rounded border-start border-warning border-3">
+                <%= original_description %>
+                <div class="small text-muted mt-1"><%= original_desc_length %>/160 characters</div>
+              </div>
+            </div>
+            <% } %>
+            
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-6">
+        <div class="card border-success h-100">
+          <div class="card-header bg-success bg-opacity-10">
+            <h3 class="h5 text-success mb-0">✅ After (AI Optimized)</h3>
+          </div>
+          <div class="card-body d-flex flex-column">
+            
+            <div class="mb-3">
+              <div class="small text-muted text-uppercase fw-bold">Page Title</div>
+              <div class="p-2 bg-light rounded border-start border-success border-3">
+                <%= optimized_title %>
+                <div class="small text-muted mt-1"><%= title_length %>/60 characters</div>
+              </div>
+            </div>
+            
+            <div class="mb-3">
+              <div class="small text-muted text-uppercase fw-bold">Meta Description</div>
+              <div class="p-2 bg-light rounded border-start border-success border-3">
+                <%= optimized_description %>
+                <div class="small text-muted mt-1"><%= desc_length %>/160 characters</div>
+              </div>
+            </div>
+            
+          </div>
+        </div>
+      </div>
+    </div>
+    <% } %>
+
+    <!-- AI Notes Section -->
+    <% if (ai_notes && ai_notes.length > 0) { %>
+    <div class="card mb-4">
+      <div class="card-header bg-info bg-opacity-10">
+        <h3 class="h5 text-info mb-0">🤖 AI Optimization Notes</h3>
+      </div>
+      <div class="card-body">
+        <ul class="mb-0">
+          <% ai_notes.forEach(function(note) { %>
+          <li><%= note %></li>
+          <% }); %>
+        </ul>
+      </div>
+    </div>
+    <% } %>
+    
+  </div>
+
+  <!-- Bootstrap 5 Footer (same as search) -->
+  <footer class="bg-light border-top mt-5 py-4">
+    <div class="container">
+      <div class="row align-items-center">
+        <div class="col-md-6">
+          <p class="mb-0 text-muted">
+            🎯 <%= optimization_type %> • Generated by 
+            <a href="https://nimbus.ai" class="text-decoration-none" target="_blank">Nimbus AI</a>
+          </p>
+        </div>
+        <div class="col-md-6 text-md-end">
+          <p class="mb-0 text-muted small">
+            Report generated: <%= generated_at %>
+          </p>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Bootstrap 5 JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
