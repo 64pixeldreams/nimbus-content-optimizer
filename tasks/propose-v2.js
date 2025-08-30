@@ -54,7 +54,19 @@ const proposeV2Task = {
       
       // V4.5: Apply tone override if specified
       let directive = { ...page.directive };
-      if (tone) {
+      let tonesToTest = [directive.tone]; // Default: use original tone
+      
+      if (tone === 'roll-tone') {
+        // Roll-tone: Use different tone per page
+        const tonePresets = ['local-expert', 'premium', 'startup', 'helpful-calm', 'classic-retail', 'mom-n-pop', 'clinical', 'govtech'];
+        directive.tone = tonePresets[i % tonePresets.length];
+        console.log(chalk.cyan(`   🎭 Roll-tone mode: ${directive.tone} (page ${i + 1})`));
+      } else if (tone === 'all-tone') {
+        // All-tone: Test same page with all tones
+        tonesToTest = ['local-expert', 'premium', 'startup', 'helpful-calm', 'classic-retail', 'mom-n-pop', 'clinical', 'govtech'];
+        console.log(chalk.cyan(`   🎭 All-tone mode: Testing ${tonesToTest.length} tones for ${page_id}`));
+      } else if (tone) {
+        // Single tone override
         directive.tone = tone;
         console.log(chalk.cyan(`   🎭 Tone override: ${tone}`));
       }
