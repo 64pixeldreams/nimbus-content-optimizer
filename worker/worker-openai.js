@@ -733,35 +733,42 @@ Return strategic linking JSON using only available URLs.`;
   };
 }
 
-// Step 5: Content Enhancement Prompt Implementation
+// Step 5: Content Enhancement Prompt Implementation (Simplified for Workers)
 async function executeContentPrompt(profile, directive, contentMap, env, model) {
+  const startTime = Date.now();
   const location = extractLocation(contentMap.route);
   const brand = extractBrand(contentMap.route);
   const brandInfo = brand ? classifyBrand(brand) : null;
   
-  // V2.5: Safer block increase (12 → 30-40 blocks)
+  // Filter content blocks and sanitize for AI processing
   const allBlocks = contentMap.blocks || [];
-  const contentBlocks = [
-    ...allBlocks.filter(b => ['h1', 'h2', 'h3'].includes(b.type)), // ALL headings
-    ...allBlocks.filter(b => b.type === 'p').slice(0, 20),         // 20 paragraphs (vs 15)
-    ...allBlocks.filter(b => b.type === 'li' && b.text && b.text.length > 20).slice(0, 15), // Substantial list items
-    ...allBlocks.filter(b => b.type === 'blockquote')              // ALL quotes
-  ]; // Gradual increase: 30-40 blocks vs previous 12
+  const contentBlocks = allBlocks.filter(block => 
+    ['p', 'h1', 'h2', 'h3', 'li', 'blockquote'].includes(block.type) &&
+    block.text && 
+    block.text.length > 10 && 
+    block.text.length < 300 // Strict length limit to prevent JSON issues
+  );
   
-  // Calculate current word counts
-  const blocksWithWordCounts = contentBlocks.map(block => ({
-    ...block,
+  // Sanitize text content to prevent JSON parsing issues
+  const sanitizedBlocks = contentBlocks.map(block => ({
+    selector: block.selector,
+    type: block.type,
+    text: (block.text || '')
+      .replace(/"/g, '\\"')  // Escape quotes
+      .replace(/\n/g, ' ')   // Replace newlines with spaces
+      .replace(/\r/g, ' ')   // Replace carriage returns
+      .replace(/\t/g, ' ')   // Replace tabs
+      .trim()
+      .substring(0, 250),    // Hard limit to 250 chars
     word_count: (block.text || '').split(' ').length
   }));
-  
-  const totalWords = blocksWithWordCounts.reduce((sum, block) => sum + block.word_count, 0);
   
   // V4.4: Get tone profile for business personality
   const toneProfile = TONE_PROFILES[directive.tone] || TONE_PROFILES.friendly;
   
-  const systemPrompt = `You are a content enhancement specialist focused on local SEO and conversion optimization while preserving information density.
+  const systemPrompt = `You are a content enhancement specialist focused on local SEO and conversion optimization.
 
-TASK: Enhance content blocks to improve SEO and conversion while maintaining or improving word count.
+TASK: Enhance content blocks while avoiding JSON parsing issues. Use simple text enhancement without complex formatting.
 
 V4.4 TONE PROFILE - ${directive.tone.toUpperCase()}:
 - PERSONALITY: ${toneProfile.personality}
@@ -815,32 +822,24 @@ TYPO DETECTION AND CORRECTION:
 - Ensure professional, polished content throughout
 - Maintain meaning while improving readability
 
-CRITICAL JSON FORMATTING REQUIREMENTS:
-- ALWAYS escape quotes in text: Use \\" for quotes inside strings
-- NEVER include unescaped newlines - use \\n for line breaks
-- AVOID complex punctuation that breaks JSON
-- END response with valid JSON only - no additional text
-- TEST your JSON mentally before responding
+JSON SAFETY REQUIREMENTS - CRITICAL:
+- Use simple text without quotes, newlines, or special characters
+- Avoid complex punctuation that could break JSON parsing
+- Keep content concise and focused
+- Return clean, parseable JSON only
 
-You must respond with valid JSON in this exact format:
+OUTPUT FORMAT: Return valid JSON with enhanced text:
 {
   "blocks": [
     {
       "selector": "css_selector",
-      "new_text": "enhanced_content_text",
-      "word_count_before": 45,
-      "word_count_after": 52,
-      "optimization_type": "trust_signals_added|location_targeting|clarity_improvement"
+      "original_text": "original content",
+      "optimized_text": "enhanced content with tone applied",
+      "optimization_notes": "brief description of changes"
     }
   ],
-  "content_summary": {
-    "total_word_count_before": 150,
-    "total_word_count_after": 168,
-    "word_count_change": "+18",
-    "enhancement_ratio": 1.12
-  },
-  "confidence": 0.94,
-  "notes": ["content enhancement decisions and word count justifications"]
+  "confidence": 0.85,
+  "processing_notes": ["summary of enhancements"]
 }
 
 GEOGRAPHIC INTELLIGENCE (V3 Enhancement):
@@ -865,54 +864,57 @@ OPTIMIZATION PRIORITIES:
 
 Return only valid JSON with enhanced content that preserves or improves word count.`;
 
-  const userPrompt = `Enhance content for this local business page while preserving word count:
+  const userPrompt = `Enhance these content blocks with ${directive.tone} tone:
 
-BUSINESS: ${profile.name} in ${location || 'UK'}
-TRUST SIGNALS: ${profile.review_count} reviews, ${profile.guarantee}
+BUSINESS: ${profile.business_name || 'Repairs by Post'}
+LOCATION: ${location || 'UK'}
 TONE: ${directive.tone}
-PHONE: ${profile.phone}
 
-CURRENT CONTENT BLOCKS (preserve/improve word count + fix typos):
-${blocksWithWordCounts.map((block, i) => 
-  `${i + 1}. [${block.type}] "${block.text}" (${block.word_count} words)${
-    block.text && (block.text.includes('braclet') || block.text.includes('acredited')) ? 
-    ' ⚠️ TYPOS DETECTED' : ''
-  }`
+CONTENT BLOCKS TO ENHANCE:
+${sanitizedBlocks.map((block, i) => 
+  `${i + 1}. [${block.type}] "${block.text}" (${block.word_count} words)`
 ).join('\n')}
 
-WORD COUNT REQUIREMENTS:
-- Current total: ${totalWords} words
-- Target: Maintain or improve (never reduce unless clarity significantly benefits)
-- Enhancement goal: Add trust signals, local context, expertise
+Apply ${directive.tone} personality and improve SEO value while keeping content safe for JSON parsing.`;
 
-V3 LOCALIZATION GOALS:
-1. Geographic intelligence: Use your knowledge of ${location || 'the area'} including county, nearby towns, postcodes
-2. Local authority: Position as "${location || 'area'}'s leading/premier service" 
-3. Service area depth: Specify coverage including "${location || 'area'} and surrounding areas"
-4. Community connection: Local business positioning since 2014
-5. Content uniqueness: Make this location feel distinctly different from other locations
-6. Trust localization: "${profile.review_count} reviews from customers across ${location || 'the area'} and region"
-7. Word count enhancement: Add rich local context while improving information density
-
-ENHANCEMENT REQUIREMENTS:
-- H1: 45-65 chars with location and primary benefit
-- H2: Benefit statements with trust signals
-- Paragraphs: Enhanced with local context, trust signals, expertise
-- Natural flow: Content must read naturally with enhancements
-- Information value: Every added word must provide user value
-
-Return enhanced content with word count tracking and justifications.`;
-
-  const promptResult = await executeAIPrompt(systemPrompt, userPrompt, env, model);
+  const aiResponse = await executeAIPrompt(systemPrompt, userPrompt, env, model);
   
-  return {
-    prompt_type: 'content',
-    success: promptResult.success,
-    result: promptResult.result,
-    processing_time_ms: promptResult.processing_time_ms,
-    tokens_used: promptResult.tokens_used,
-    error: promptResult.error
-  };
+  if (!aiResponse.success) {
+    return {
+      prompt_type: 'content',
+      success: false,
+      error: aiResponse.error,
+      processing_time_ms: Date.now() - startTime,
+      tokens_used: 0
+    };
+  }
+
+  // Process AI results (simplified for Workers environment)
+  try {
+    const aiBlocks = aiResponse.result.blocks || [];
+    
+    return {
+      prompt_type: 'content',
+      success: true,
+      result: {
+        blocks: aiBlocks,
+        confidence: aiResponse.result.confidence || 0.8,
+        processing_notes: aiResponse.result.processing_notes || [],
+        simplified_content_processing: true
+      },
+      processing_time_ms: Date.now() - startTime,
+      tokens_used: aiResponse.tokens_used || 0,
+      model_used: aiResponse.model_used
+    };
+  } catch (error) {
+    return {
+      prompt_type: 'content',
+      success: false,
+      error: `Content processing failed: ${error.message}`,
+      processing_time_ms: Date.now() - startTime,
+      tokens_used: aiResponse.tokens_used || 0
+    };
+  }
 }
 
 // Step 6: Image Optimization Prompt Implementation
