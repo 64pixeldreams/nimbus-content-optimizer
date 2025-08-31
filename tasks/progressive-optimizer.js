@@ -285,6 +285,13 @@ const progressiveOptimizer = {
     }
     
     const result = await response.json();
+    
+    // Log debug information from worker
+    if (result.debug_logs && result.debug_logs.length > 0) {
+      console.log(chalk.gray('\n📋 Worker Debug Logs:'));
+      result.debug_logs.forEach(log => console.log(chalk.gray(`   ${log}`)));
+    }
+    
     if (result.error) {
       throw new Error(`AI Worker error: ${result.error}`);
     }
