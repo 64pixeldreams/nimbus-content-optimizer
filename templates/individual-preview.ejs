@@ -272,26 +272,28 @@
        <% if (tier >= 2 && content_blocks && content_blocks.length > 0) { %>
          <div class="alert alert-info mb-3">
            <i class="fas fa-info-circle me-2"></i>
-           <strong>Note:</strong> The AI has created new content blocks rather than optimizing existing paragraphs. 
-           The "Before" content shows the closest matching original text, while "After" shows the AI-generated content.
+           <strong>Note:</strong> The AI enhances existing content blocks while maintaining the same context and meaning. 
+           Each block shows the original content (Before) and the AI-enhanced version (After) with the same ID for perfect matching.
          </div>
          
          <% content_blocks.forEach(function(block, index) { %>
          <div class="row mb-3">
            <div class="col-md-6">
              <div class="small text-muted text-uppercase fw-bold mb-2">
-               <i class="fas fa-code me-1 text-muted"></i><%= block.selector %>
+               <i class="fas fa-code me-1 text-muted"></i>Block <%= block.id || (index + 1) %>
              </div>
              <div class="p-2 bg-light rounded border-start border-warning border-3 text-muted">
                <%= block.original_text %>
+               <div class="small text-muted mt-1">ID: <%= block.id || (index + 1) %></div>
              </div>
            </div>
            <div class="col-md-6">
              <div class="small text-muted text-uppercase fw-bold mb-2">
-               <i class="fas fa-bullseye me-1 text-muted"></i>AI GENERATED CONTENT
+               <i class="fas fa-bullseye me-1 text-muted"></i>AI ENHANCED CONTENT
              </div>
              <div class="p-2 bg-light rounded border-start border-success border-3">
                <%= block.optimized_text %>
+               <div class="small text-muted mt-1">ID: <%= block.id || (index + 1) %></div>
              </div>
            </div>
          </div>

@@ -475,10 +475,8 @@ const scanTask = {
 
   // V4.3: Generate unique element ID
   generateElementId(index, type) {
-    // Create a unique ID using timestamp + index + type
-    const timestamp = Date.now().toString(36);
-    const indexStr = index.toString(36);
-    return `${timestamp}${indexStr}${type.charAt(0)}`;
+    // Use simple incremental ID for easy reference
+    return (index + 1).toString();
   },
 
   // V4.1: Business-aware link classification

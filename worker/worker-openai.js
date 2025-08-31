@@ -832,6 +832,7 @@ OUTPUT FORMAT: Return valid JSON with enhanced text:
 {
   "blocks": [
     {
+      "id": "block_id_number",
       "selector": "css_selector",
       "original_text": "original content",
       "optimized_text": "enhanced content with tone applied",
@@ -872,8 +873,16 @@ TONE: ${directive.tone}
 
 CONTENT BLOCKS TO ENHANCE:
 ${sanitizedBlocks.map((block, i) => 
-  `${i + 1}. [${block.type}] "${block.text}" (${block.word_count} words)`
+  `ID: ${block.id || (i + 1)} | [${block.type}] "${block.text}" (${block.word_count} words)`
 ).join('\n')}
+
+CRITICAL INSTRUCTIONS:
+1. INCLUDE THE BLOCK ID in your response (e.g., "id": "1", "id": "2")
+2. REWRITE existing content - do NOT change the topic or subject matter
+3. If content is about "pricing", enhance the pricing information
+4. If content is about "battery replacement", enhance battery replacement content
+5. Maintain the same context and meaning while improving tone and clarity
+6. RETURN THE EXACT SAME ID that was provided in the input
 
 Apply ${directive.tone} personality and improve SEO value while keeping content safe for JSON parsing.`;
 
