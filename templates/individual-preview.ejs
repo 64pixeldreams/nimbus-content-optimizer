@@ -149,18 +149,18 @@
           </p>
           <div class="d-flex gap-3 justify-content-center">
             <% if (optimized_primary_cta && !optimized_primary_cta.includes('0800') && !optimized_primary_cta.includes('@')) { %>
-            <a href="#" class="btn btn-light btn-lg"><%= optimized_primary_cta %></a>
+            <a href="<%= optimized_primary_cta_url || '/start-repair.html' %>" class="btn btn-light btn-lg"><%= optimized_primary_cta %></a>
             <% } else if (primary_cta) { %>
-            <a href="#" class="btn btn-light btn-lg"><%= primary_cta %></a>
+            <a href="<%= optimized_primary_cta_url || '/start-repair.html' %>" class="btn btn-light btn-lg"><%= primary_cta %></a>
             <% } else { %>
-            <a href="#" class="btn btn-light btn-lg">Get Quote Now</a>
+            <a href="/start-repair.html" class="btn btn-light btn-lg">Get Quote Now</a>
             <% } %>
             <% if (optimized_secondary_cta) { %>
-            <a href="#" class="btn btn-outline-light btn-lg"><%= optimized_secondary_cta %></a>
+            <a href="<%= optimized_secondary_cta_url || 'https://uk.trustpilot.com/review/repairsbypost.com' %>" class="btn btn-outline-light btn-lg"><%= optimized_secondary_cta %></a>
             <% } else if (secondary_cta) { %>
-            <a href="#" class="btn btn-outline-light btn-lg"><%= secondary_cta %></a>
+            <a href="<%= optimized_secondary_cta_url || '/how-it-works.html' %>" class="btn btn-outline-light btn-lg"><%= secondary_cta %></a>
             <% } else { %>
-            <a href="#" class="btn btn-outline-light btn-lg">Learn More</a>
+            <a href="/how-it-works.html" class="btn btn-outline-light btn-lg">Learn More</a>
             <% } %>
           </div>
         </div>
