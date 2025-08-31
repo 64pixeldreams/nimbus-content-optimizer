@@ -827,6 +827,8 @@ JSON SAFETY REQUIREMENTS - CRITICAL:
 - Avoid complex punctuation that could break JSON parsing
 - Keep content concise and focused
 - Return clean, parseable JSON only
+- Use simple sentences without complex punctuation
+- Avoid special characters like &, <, >, ", '
 
 OUTPUT FORMAT: Return valid JSON with enhanced text:
 {
@@ -842,6 +844,8 @@ OUTPUT FORMAT: Return valid JSON with enhanced text:
   "confidence": 0.85,
   "processing_notes": ["summary of enhancements"]
 }
+
+CRITICAL: You MUST include the "id" field for each block. The ID should match the input block ID exactly.
 
 GEOGRAPHIC INTELLIGENCE (V3 Enhancement):
 Use your knowledge of ${location || 'the area'} including:
@@ -865,24 +869,37 @@ OPTIMIZATION PRIORITIES:
 
 Return only valid JSON with enhanced content that preserves or improves word count.`;
 
-  const userPrompt = `Enhance these content blocks with ${directive.tone} tone:
+  const userPrompt = `You must enhance these content blocks with ${directive.tone} tone and return them with their exact IDs:
 
 BUSINESS: ${profile.business_name || 'Repairs by Post'}
 LOCATION: ${location || 'UK'}
 TONE: ${directive.tone}
 
 CONTENT BLOCKS TO ENHANCE:
-${sanitizedBlocks.map((block, i) => 
-  `ID: ${block.id || (i + 1)} | [${block.type}] "${block.text}" (${block.word_count} words)`
-).join('\n')}
+${sanitizedBlocks.map((block, i) => {
+  const blockId = block.id || (i + 1).toString();
+  return `BLOCK ID "${blockId}": [${block.type}] "${block.text}" (${block.word_count} words)`;
+}).join('\n')}
 
-CRITICAL INSTRUCTIONS:
-1. INCLUDE THE BLOCK ID in your response (e.g., "id": "1", "id": "2")
-2. REWRITE existing content - do NOT change the topic or subject matter
-3. If content is about "pricing", enhance the pricing information
-4. If content is about "battery replacement", enhance battery replacement content
-5. Maintain the same context and meaning while improving tone and clarity
-6. RETURN THE EXACT SAME ID that was provided in the input
+MANDATORY RESPONSE FORMAT - COPY THIS STRUCTURE EXACTLY:
+{
+  "blocks": [
+${sanitizedBlocks.map((block, i) => {
+  const blockId = block.id || (i + 1).toString();
+  return `    {
+      "id": "${blockId}",
+      "selector": "${block.selector || 'p'}",
+      "original_text": "${block.text}",
+      "optimized_text": "YOUR_ENHANCED_CONTENT_HERE",
+      "optimization_notes": "YOUR_NOTES_HERE"
+    }`;
+}).join(',\n')}
+  ],
+  "confidence": 0.95,
+  "processing_notes": ["Applied ${directive.tone} tone", "Enhanced content blocks"]
+}
+
+CRITICAL: Replace only "YOUR_ENHANCED_CONTENT_HERE" and "YOUR_NOTES_HERE" with your enhancements. Keep all IDs exactly as shown above.
 
 Apply ${directive.tone} personality and improve SEO value while keeping content safe for JSON parsing.`;
 
@@ -897,10 +914,68 @@ Apply ${directive.tone} personality and improve SEO value while keeping content 
       tokens_used: 0
     };
   }
+  
+  // Validate and repair JSON response
+  let parsedResult;
+  try {
+    parsedResult = aiResponse.result;
+  } catch (parseError) {
+    console.log('🔍 JSON Parse Error:', parseError.message);
+    console.log('🔍 Raw AI Response:', aiResponse.result);
+    
+    // Try to repair common JSON issues
+    let repairedJson = aiResponse.result;
+    
+    // Fix common issues
+    repairedJson = repairedJson.replace(/,\s*}/g, '}'); // Remove trailing commas
+    repairedJson = repairedJson.replace(/,\s*]/g, ']'); // Remove trailing commas in arrays
+    repairedJson = repairedJson.replace(/}\s*,\s*$/g, '}'); // Remove trailing comma after object
+    
+    try {
+      parsedResult = JSON.parse(repairedJson);
+      console.log('✅ JSON repaired successfully');
+    } catch (repairError) {
+      console.log('❌ JSON repair failed:', repairError.message);
+      return {
+        prompt_type: 'content',
+        success: false,
+        error: `JSON parsing failed: ${parseError.message}. Repair failed: ${repairError.message}`,
+        processing_time_ms: Date.now() - startTime,
+        tokens_used: 0
+      };
+    }
+  }
 
   // Process AI results (simplified for Workers environment)
   try {
-    const aiBlocks = aiResponse.result.blocks || [];
+    const aiBlocks = parsedResult.blocks || [];
+    
+      // Debug: Log what the AI actually returned
+  console.log('🔍 AI Response Structure:', JSON.stringify(aiResponse.result, null, 2));
+  console.log('🔍 AI Blocks:', JSON.stringify(aiBlocks, null, 2));
+  
+  // Validate that AI response includes IDs
+  const blocksWithIds = aiBlocks.filter(block => block.id);
+  const blocksWithoutIds = aiBlocks.filter(block => !block.id);
+  
+  console.log(`🔍 Blocks WITH IDs: ${blocksWithIds.length}`);
+  console.log(`🔍 Blocks WITHOUT IDs: ${blocksWithoutIds.length}`);
+  
+  if (blocksWithoutIds.length > 0) {
+    console.log('⚠️ WARNING: Some blocks missing IDs:', blocksWithoutIds);
+    console.log('🔍 Raw AI response that failed ID validation:', aiResponse.result);
+  }
+  
+  // Force ID assignment if AI didn't provide them
+  if (blocksWithoutIds.length > 0) {
+    console.log('🔧 Attempting to repair missing IDs...');
+    aiBlocks.forEach((block, index) => {
+      if (!block.id) {
+        block.id = (index + 1).toString();
+        console.log(`🔧 Assigned ID "${block.id}" to block ${index + 1}`);
+      }
+    });
+  }
     
     return {
       prompt_type: 'content',
