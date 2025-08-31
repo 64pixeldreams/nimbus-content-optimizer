@@ -268,31 +268,28 @@
        </div>
        <% } %>
 
-       <!-- Above-Fold Body Content Row (Tier 2+) -->
-       <% if (tier >= 2 && original_body_content) { %>
-       <div class="row mb-3">
-         <div class="col-md-6">
-           <div class="small text-muted text-uppercase fw-bold mb-2">Body Content</div>
-           <div class="p-2 bg-light rounded border-start border-warning border-3 text-muted">
-             <%= original_body_content %>
+       <!-- Individual Content Blocks Comparison (Tier 2+) -->
+       <% if (tier >= 2 && content_blocks && content_blocks.length > 0) { %>
+         <% content_blocks.forEach(function(block, index) { %>
+         <div class="row mb-3">
+           <div class="col-md-6">
+             <div class="small text-muted text-uppercase fw-bold mb-2">
+               <i class="fas fa-code me-1 text-muted"></i><%= block.selector %>
+             </div>
+             <div class="p-2 bg-light rounded border-start border-warning border-3 text-muted">
+               <%= block.original_text %>
+             </div>
+           </div>
+           <div class="col-md-6">
+             <div class="small text-muted text-uppercase fw-bold mb-2">
+               <i class="fas fa-bullseye me-1 text-muted"></i>OPTIMIZED WITH AI
+             </div>
+             <div class="p-2 bg-light rounded border-start border-success border-3">
+               <%= block.optimized_text %>
+             </div>
            </div>
          </div>
-         <div class="col-md-6">
-           <div class="small text-muted text-uppercase fw-bold mb-2">
-             <i class="fas fa-bullseye me-1 text-muted"></i>OPTIMIZED WITH AI
-           </div>
-           <div class="p-2 bg-light rounded border-start border-success border-3">
-             <% if (optimized_body_content) { %>
-               <% optimized_body_content.split('\n\n').forEach(function(paragraph, index) { %>
-                 <% if (index > 0) { %><br><br><% } %>
-                 <%= paragraph %>
-               <% }); %>
-             <% } else { %>
-               <%= optimized_body_content %>
-             <% } %>
-           </div>
-         </div>
-       </div>
+         <% }); %>
        <% } %>
 
        <!-- Primary CTA Row (Tier 2+) -->
