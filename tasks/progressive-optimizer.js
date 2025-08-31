@@ -46,14 +46,14 @@ const progressiveOptimizer = {
     return results;
   },
   
-  // Tier 3: Full Page Optimization (15-30s) - Uses existing propose-v2
+  // Tier 3: Full Page Optimization (15-30s) - Uses unified template system
   async runFullPage(options) {
     console.log(chalk.blue('🏆 TIER 3: Full Page Optimization (Complete)'));
     
     const startTime = Date.now();
     
-    // Use existing propose-v2 task for full optimization
-    const results = await proposeV2Task.run(options);
+    // Run full optimization using our unified system
+    const results = await this.executeOptimization(options, 3, 'full_page');
     
     const totalTime = Date.now() - startTime;
     console.log(chalk.green(`✅ Tier 3 complete: ${totalTime}ms`));
@@ -263,7 +263,7 @@ const progressiveOptimizer = {
     }
     
     const requestBody = {
-      prompt_type: tierLevel === 1 ? 'head' : 'content', // Use existing prompt types
+      prompt_type: tierLevel === 1 ? 'head' : 'multi', // Tier 1: head only, Tier 2+: multi-prompt
       model: 'gpt-4-turbo-preview',
       profile: profile,
       directive: directive,
@@ -497,14 +497,24 @@ const progressiveOptimizer = {
     const tierNames = { 1: 'Meta-Only', 2: 'Above-Fold', 3: 'Full Page' };
     
     for (const result of results.filter(r => r.success !== false)) {
-      // Load original content for comparison
-      const originalProposal = await this.loadOriginalProposal(batchId, result.page_id.replace(/-local-expert|-premium-new|-startup-new|-helpful-calm|-classic-retail|-mom-n-pop|-clinical|-govtech/, ''));
-      const originalHead = originalProposal?.request?.content_map?.head || {};
+      // Load original content for comparison from the current batch content map
+      const originalHead = result.content_map?.head || {};
+      
+      // If no head data in content map, try to load from original proposal
+      if (!originalHead.title && !originalHead.metaDescription) {
+        const originalProposal = await this.loadOriginalProposal(batchId, result.page_id.replace(/-local-expert|-premium-new|-startup-new|-helpful-calm|-classic-retail|-mom-n-pop|-clinical|-govtech/, ''));
+        const proposalHead = originalProposal?.request?.content_map?.head || {};
+        Object.assign(originalHead, proposalHead);
+      }
+      
+      // Debug: Check original head data
+      console.log(chalk.gray(`   📋 Original title: "${originalHead.title || 'MISSING'}"`));
+      console.log(chalk.gray(`   📋 Original desc: "${originalHead.metaDescription || 'MISSING'}"`));
       
       // Format data for EJS template
       const templateData = templateEngine.formatIndividualPreviewData(
         result, 
-        { head: originalHead }, 
+        { head: originalHead, blocks: result.content_map?.blocks || [] }, 
         profile, 
         tierNames[tierLevel] || optimizationType, 
         tierLevel

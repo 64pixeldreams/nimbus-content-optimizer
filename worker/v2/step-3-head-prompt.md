@@ -98,3 +98,4 @@ Return optimized JSON.
 
 ## Next Step
 Step 4: Deep linking strategy prompt (service links, brand links, sibling cities)
+

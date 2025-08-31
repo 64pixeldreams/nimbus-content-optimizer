@@ -159,3 +159,4 @@ Return enhanced content blocks with word count tracking.
 
 ## Next Step
 Step 6: Image optimization prompt (alt text, CLS improvements)
+

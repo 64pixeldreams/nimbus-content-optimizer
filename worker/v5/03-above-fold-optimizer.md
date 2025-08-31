@@ -249,3 +249,4 @@ function extractHeroElements(contentMap) {
 - **Tier 3 (Full page):** Provides cached hero results
 - **Tone testing:** Perfect for rapid tone validation
 - **Conversion testing:** A/B test hero sections quickly
+

@@ -126,3 +126,4 @@ CONTENT STYLE: {{folder_config.content_style}}
 **Help pages**: +25% engagement (helpful, authoritative)
 
 **Simple config → Meaningful results → More dollars!** 💰
+

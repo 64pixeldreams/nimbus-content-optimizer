@@ -174,3 +174,4 @@ Return optimized image data with technical recommendations.
 
 ## Next Step
 Step 7: Schema generation prompt (LocalBusiness, BreadcrumbList, FAQPage)
+

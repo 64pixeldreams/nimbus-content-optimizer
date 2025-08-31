@@ -258,10 +258,25 @@ const scanTask = {
           blockData.extraction_method = textData.extraction_method;
           blockData.inline_elements = textData.inline_elements || [];
           blockData.enhanced = true;
+          
+          // V5: Skip processing inline links separately if enhanced extraction captured them
+          if (textData.inline_elements && textData.inline_elements.length > 0) {
+            blockData.skip_inline_processing = true;
+          }
         }
         
         blocks.push(blockData);
       } else if (tagName === 'a') {
+        // V5: Skip if this link was already captured by enhanced extraction
+        const parentBlock = blocks.find(b => 
+          b.inline_elements && 
+          b.inline_elements.some(el => el.text === textData.text && el.href === $elem.attr('href'))
+        );
+        
+        if (parentBlock && parentBlock.skip_inline_processing) {
+          console.log(`   ⏭️  Skipping duplicate link: ${textData.text} (captured in enhanced block)`);
+          return; // Skip this link - already captured
+        }
         const href = $elem.attr('href');
         const anchor = textData.text;
         if (href && anchor) {

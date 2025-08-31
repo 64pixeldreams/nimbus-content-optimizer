@@ -65,8 +65,8 @@
   
   <!-- Bootstrap 5 Navbar -->
   <nav class="navbar navbar-expand-lg navbar-light bg-light border-bottom">
-    <div class="container">
-      <a class="navbar-brand fw-bold" href="#"><%= business_name %></a>
+    <div class="container-fluid">
+      <a class="navbar-brand fw-bold" href="https://nimbus.ai"><i class="fas fa-bullseye me-1"></i>Nimbus AI</a>
     </div>
   </nav>
 
@@ -75,7 +75,7 @@
     <!-- Bootstrap 5 Jumbotron -->
     <div class="bg-primary text-white rounded-3 p-5 my-4">
       <div class="container-fluid py-2">
-        <h1 class="display-6 fw-bold">🎯 <%= business_name %> - <%= optimization_type %></h1>
+        <h1 class="fs-4 fw-semibold">Optimization Results...</h1>
         
         <!-- Stats in Jumbotron -->
         <div class="row g-4 my-3">
@@ -98,9 +98,9 @@
           </div>
           <% } %>
         </div>
-        
+        <hr>
         <% if (business_goal) { %>
-        <p class="fs-5 mb-0 opacity-75"><strong>Goal:</strong> <%= business_goal %></p>
+        <p class="fs-6 mb-0 opacity-75"><i class="fas fa-bullseye me-1"></i><strong class="fw-semibold">Goal:</strong> <%= business_goal %></p>
         <% } %>
       </div>
     </div>
@@ -185,7 +185,7 @@
           <div class="flex-shrink-0">
             <img src="<%= result.result_image %>" 
                  alt="<%= result.page_id %> preview" 
-                 width="80" height="80"
+                 width="120" height="120"
                  class="result-image"
                  onerror="this.style.display='none'">
           </div>

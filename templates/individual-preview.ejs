@@ -61,8 +61,8 @@
   
   <!-- Bootstrap 5 Navbar (same as search) -->
   <nav class="navbar navbar-expand-lg navbar-light bg-light border-bottom">
-    <div class="container">
-      <a class="navbar-brand fw-bold" href="#"><%= business_name %></a>
+    <div class="container-fluid">
+      <a class="navbar-brand fw-bold" href="https://nimbus.ai"><i class="fas fa-bullseye me-1"></i>Nimbus AI</a>
     </div>
   </nav>
 
@@ -132,7 +132,8 @@
       </div>
     </div>
 
-    <!-- Hero Section Preview -->
+    <!-- Hero Section Preview (Only for Tier 2+ Above-Fold) -->
+    <% if (tier >= 2) { %>
     <div class="bg-gradient-primary text-white rounded-3 p-5 text-center mb-4 position-relative" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
       <div class="position-absolute top-0 start-0 p-2">
         <small class="text-white">CTA Preview</small>
@@ -140,15 +141,23 @@
       
       <div class="row align-items-center pt-3">
         <div class="col-md-8">
-          <h1 class="display-5 fw-bold mb-3"><%= optimized_title %></h1>
-          <p class="lead mb-4"><%= optimized_description %></p>
+          <h1 class="display-5 fw-bold mb-3">
+            <%= optimized_h1 || optimized_title %>
+          </h1>
+          <p class="lead mb-4">
+            <%= optimized_description %>
+          </p>
           <div class="d-flex gap-3 justify-content-center">
-            <% if (primary_cta) { %>
+            <% if (optimized_primary_cta && !optimized_primary_cta.includes('0800') && !optimized_primary_cta.includes('@')) { %>
+            <a href="#" class="btn btn-light btn-lg"><%= optimized_primary_cta %></a>
+            <% } else if (primary_cta) { %>
             <a href="#" class="btn btn-light btn-lg"><%= primary_cta %></a>
             <% } else { %>
             <a href="#" class="btn btn-light btn-lg">Get Quote Now</a>
             <% } %>
-            <% if (secondary_cta) { %>
+            <% if (optimized_secondary_cta) { %>
+            <a href="#" class="btn btn-outline-light btn-lg"><%= optimized_secondary_cta %></a>
+            <% } else if (secondary_cta) { %>
             <a href="#" class="btn btn-outline-light btn-lg"><%= secondary_cta %></a>
             <% } else { %>
             <a href="#" class="btn btn-outline-light btn-lg">Learn More</a>
@@ -165,83 +174,153 @@
         <% } %>
       </div>
     </div>
+    <% } %>
 
     <!-- Before/After Comparison (Progressive Content) -->
     <% if (show_comparison) { %>
-    <div class="row g-4 mb-4">
-      <div class="col-md-6">
-        <div class="card border-warning h-100">
-          <div class="card-header bg-warning bg-opacity-10">
-            <h3 class="h5 text-warning mb-0">❌ Before (Original)</h3>
+      <hr>
+    <div class="mb-4">
+      <h3 class="h5 mb-4 text-center">
+        <i class="fas fa-bullseye me-2"></i>Before vs After Comparison
+      </h3>
+            
+      <!-- Page Title Row -->
+      <% if (original_title) { %>
+      <div class="row mb-3">
+        <div class="col-md-6">
+          <div class="small text-muted text-uppercase fw-bold mb-2">Page Title</div>
+          <div class="p-2 bg-light rounded border-start border-warning border-3 text-muted">
+            <%= original_title %>
+            <div class="small text-muted mt-1"><%= original_title_length %>/60 characters</div>
           </div>
-          <div class="card-body d-flex flex-column">
-            
-            <% if (original_title) { %>
-            <div class="mb-3">
-              <div class="small text-muted text-uppercase fw-bold">Page Title</div>
-              <div class="p-2 bg-light rounded border-start border-warning border-3">
-                <%= original_title %>
-                <div class="small text-muted mt-1"><%= original_title_length %>/60 characters</div>
-              </div>
-            </div>
-            <% } %>
-            
-            <% if (original_description) { %>
-            <div class="mb-3">
-              <div class="small text-muted text-uppercase fw-bold">Meta Description</div>
-              <div class="p-2 bg-light rounded border-start border-warning border-3">
-                <%= original_description %>
-                <div class="small text-muted mt-1"><%= original_desc_length %>/160 characters</div>
-              </div>
-            </div>
-            <% } %>
-            
+        </div>
+        <div class="col-md-6">
+          <div class="small text-muted text-uppercase fw-bold mb-2">
+            <i class="fas fa-bullseye me-1 text-muted"></i>OPTIMIZED WITH AI
+          </div>
+          <div class="p-2 bg-light rounded border-start border-success border-3">
+            <%= optimized_title %>
+            <div class="small text-muted mt-1"><%= title_length %>/60 characters</div>
           </div>
         </div>
       </div>
+      <% } %>
+            
+      <!-- Meta Description Row -->
+      <% if (original_description) { %>
+      <div class="row mb-3">
+        <div class="col-md-6">
+          <div class="small text-muted text-uppercase fw-bold mb-2">Meta Description</div>
+          <div class="p-2 bg-light rounded border-start border-warning border-3 text-muted">
+            <%= original_description %>
+            <div class="small text-muted mt-1"><%= original_desc_length %>/160 characters</div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="small text-muted text-uppercase fw-bold mb-2">
+            <i class="fas fa-bullseye me-1 text-muted"></i>OPTIMIZED WITH AI
+          </div>
+          <div class="p-2 bg-light rounded border-start border-success border-3">
+            <%= optimized_description %>
+            <div class="small text-muted mt-1"><%= desc_length %>/160 characters</div>
+          </div>
+        </div>
+      </div>
+      <% } %>
+            
+      <!-- H1 Headline Row (Tier 2+) -->
+      <% if (tier >= 2 && original_h1) { %>
+      <div class="row mb-3">
+        <div class="col-md-6">
+          <div class="small text-muted text-uppercase fw-bold mb-2">H1 Headline</div>
+          <div class="p-2 bg-light rounded border-start border-warning border-3 text-muted">
+            <%= original_h1 %>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="small text-muted text-uppercase fw-bold mb-2">
+            <i class="fas fa-bullseye me-1 text-muted"></i>OPTIMIZED WITH AI
+          </div>
+          <div class="p-2 bg-light rounded border-start border-success border-3">
+            <%= optimized_h1 || optimized_title %>
+          </div>
+        </div>
+      </div>
+      <% } %>
+            
+             <!-- H2 Subheadline Row (Tier 2+) -->
+       <% if (tier >= 2 && original_h2) { %>
+       <div class="row mb-3">
+         <div class="col-md-6">
+           <div class="small text-muted text-uppercase fw-bold mb-2">H2 Subheadline</div>
+           <div class="p-2 bg-light rounded border-start border-warning border-3 text-muted">
+             <%= original_h2 %>
+           </div>
+         </div>
+         <div class="col-md-6">
+           <div class="small text-muted text-uppercase fw-bold mb-2">
+             <i class="fas fa-bullseye me-1 text-muted"></i>OPTIMIZED WITH AI
+           </div>
+           <div class="p-2 bg-light rounded border-start border-success border-3">
+             <%= optimized_h2 || optimized_description %>
+           </div>
+         </div>
+       </div>
+       <% } %>
 
-      <div class="col-md-6">
-        <div class="card border-success h-100">
-          <div class="card-header bg-success bg-opacity-10">
-            <h3 class="h5 text-success mb-0">✅ After (AI Optimized)</h3>
-          </div>
-          <div class="card-body d-flex flex-column">
-            
-            <div class="mb-3">
-              <div class="small text-muted text-uppercase fw-bold">Page Title</div>
-              <div class="p-2 bg-light rounded border-start border-success border-3">
-                <%= optimized_title %>
-                <div class="small text-muted mt-1"><%= title_length %>/60 characters</div>
-              </div>
-            </div>
-            
-            <div class="mb-3">
-              <div class="small text-muted text-uppercase fw-bold">Meta Description</div>
-              <div class="p-2 bg-light rounded border-start border-success border-3">
-                <%= optimized_description %>
-                <div class="small text-muted mt-1"><%= desc_length %>/160 characters</div>
-              </div>
-            </div>
-            
-          </div>
-        </div>
-      </div>
+       <!-- Above-Fold Body Content Row (Tier 2+) -->
+       <% if (tier >= 2 && original_body_content) { %>
+       <div class="row mb-3">
+         <div class="col-md-6">
+           <div class="small text-muted text-uppercase fw-bold mb-2">Body Content</div>
+           <div class="p-2 bg-light rounded border-start border-warning border-3 text-muted">
+             <%= original_body_content %>
+           </div>
+         </div>
+         <div class="col-md-6">
+           <div class="small text-muted text-uppercase fw-bold mb-2">
+             <i class="fas fa-bullseye me-1 text-muted"></i>OPTIMIZED WITH AI
+           </div>
+           <div class="p-2 bg-light rounded border-start border-success border-3">
+             <%= optimized_body_content %>
+           </div>
+         </div>
+       </div>
+       <% } %>
+
+       <!-- Primary CTA Row (Tier 2+) -->
+       <% if (tier >= 2 && original_primary_cta && !original_primary_cta.includes('0800') && !original_primary_cta.includes('@')) { %>
+       <div class="row mb-3">
+         <div class="col-md-6">
+           <div class="small text-muted text-uppercase fw-bold mb-2">Primary CTA</div>
+           <div class="p-2 bg-light rounded border-start border-warning border-3 text-muted">
+             <%= original_primary_cta %>
+           </div>
+         </div>
+         <div class="col-md-6">
+           <div class="small text-muted text-uppercase fw-bold mb-2">
+             <i class="fas fa-bullseye me-1 text-muted"></i>OPTIMIZED WITH AI
+           </div>
+           <div class="p-2 bg-light rounded border-start border-success border-3">
+             <%= optimized_primary_cta || 'Get Quote Now' %>
+           </div>
+         </div>
+       </div>
+       <% } %>
+
     </div>
+    <hr>
     <% } %>
 
     <!-- AI Notes Section -->
     <% if (ai_notes && ai_notes.length > 0) { %>
-    <div class="card mb-4">
-      <div class="card-header bg-info bg-opacity-10">
-        <h3 class="h5 text-info mb-0">🤖 AI Optimization Notes</h3>
-      </div>
-      <div class="card-body">
-        <ul class="mb-0">
-          <% ai_notes.forEach(function(note) { %>
-          <li><%= note %></li>
-          <% }); %>
-        </ul>
-      </div>
+    <div class="bg-light p-3 rounded mb-4">
+      <h3 class="h6 text-dark mb-3">AI Optimization Notes</h3>
+      <ul class="mb-0 text-dark">
+        <% ai_notes.forEach(function(note) { %>
+        <li><%= note %></li>
+        <% }); %>
+      </ul>
     </div>
     <% } %>
     

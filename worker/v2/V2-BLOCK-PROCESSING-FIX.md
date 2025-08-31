@@ -104,3 +104,4 @@ const contentBlocks = [
 **This should give us 30-40 blocks vs current 12, without overwhelming the AI.**
 
 ## 🚀 **Should I implement this safer block increase first, then work on geographic intelligence?**
+

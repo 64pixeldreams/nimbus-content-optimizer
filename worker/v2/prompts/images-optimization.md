@@ -85,3 +85,4 @@ CONTEXT CLUES FOR IMAGES:
 
 Return comprehensive image optimization with location targeting.
 ```
+

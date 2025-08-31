@@ -106,3 +106,4 @@ function countChangesInResult(result) {
   if (result.schema) count += 1;
   return count;
 }
+

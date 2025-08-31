@@ -166,3 +166,4 @@ export default {
 
 ## Next Step
 Step 3: Head metadata optimization prompt (focused on titles, descriptions, canonical)
+
