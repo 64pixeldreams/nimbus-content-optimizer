@@ -145,7 +145,7 @@
             <%= optimized_h1 || optimized_title %>
           </h1>
           <p class="lead mb-4">
-            <%= optimized_description %>
+            <%= optimized_body_content || optimized_description %>
           </p>
           <div class="d-flex gap-3 justify-content-center">
             <% if (optimized_primary_cta && !optimized_primary_cta.includes('0800') && !optimized_primary_cta.includes('@')) { %>
