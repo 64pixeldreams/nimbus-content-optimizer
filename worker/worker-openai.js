@@ -314,12 +314,28 @@ export default {
       await setCachedResult(cacheKey, result, env, debugLogs);
       console.log(`Cached result for ${prompt_type}: ${content_map.route}`);
 
-      return new Response(JSON.stringify({
+      const finalResult = {
         ...result,
         cached: false,
         cache_key: cacheKey.substring(0, 12), // First 12 chars for debugging
         debug_logs: debugLogs // Include debug info
-      }), {
+      };
+
+      // Log to Slack
+      try {
+        await fetch('https://posttoslack.tudodesk.workers.dev/', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            text: `🚀 Optimization Complete - ${prompt_type}`,
+            data: finalResult
+          })
+        });
+      } catch (slackError) {
+        console.log('Slack logging failed:', slackError.message);
+      }
+
+      return new Response(JSON.stringify(finalResult), {
         headers: {
           'Content-Type': 'application/json',
           'Access-Control-Allow-Origin': '*'
@@ -551,7 +567,7 @@ async function executeAIPrompt(systemPrompt, userPrompt, env, model = 'gpt-4o') 
         { role: 'user', content: userPrompt }
       ],
       temperature: 0.3,
-      max_tokens: 4000, // Set to 4000 (within the 4096 limit) to handle large content like Hublot
+      max_tokens: 12000, // Increased to 12000 to handle massive content like Hublot (gpt-4o supports 128K)
       response_format: { type: 'json_object' }
     };
     
@@ -824,18 +840,48 @@ async function executeContentPrompt(profile, directive, contentMap, env, model) 
   const toneProfile = TONE_PROFILES[directive.tone] || TONE_PROFILES.friendly;
   
   const systemPrompt = `Return a JSON object with this exact structure:
-{"blocks":[{"id":"string","optimized_text":"string","optimization_notes":"string"}],"confidence":0.95}
+{"blocks":[{"id":"string","tag_type":"H1|H2|H3|BTN|LINK|CONTENT","optimized_text":"string","optimization_notes":"string"}],"confidence":0.95}
 
-Rules:
+You are a master content writer specializing in ${directive.tone} business communication. Transform each content block to be more engaging, professional, and conversion-focused while maintaining the core message.
+
+Each block has a tag_type indicating its HTML purpose. Optimize according to tag function and SEO impact:
+- H1: Primary keyword focus, single per page, headline impact
+- H2: Secondary keywords, content structure  
+- H3: Supporting keywords
+- BTN: Action language, conversion focus
+- LINK: Anchor text optimization
+- CONTENT: Supporting information, readability
+
+ENHANCEMENT RULES:
 1. Start with { and end with }
 2. No text before or after the JSON
-3. Enhance the language but keep the same topic
-4. If original mentions prices, keep those prices
-5. Add "${profile.review_count || '1.5K+'} reviews" where appropriate`;
+3. Make SUBSTANTIAL improvements to language, flow, and engagement
+4. Use more compelling and professional vocabulary
+5. Add emotional triggers and benefit-focused language
+6. Improve readability and scannability
+7. If original mentions prices, keep those prices exactly
+8. Add "${profile.review_count || '1.5K+'} reviews" and trust signals where appropriate
+9. Use active voice and strong action words
+10. Make the content more persuasive and conversion-oriented
 
-  const userPrompt = `${sanitizedBlocks.map(block => 
-    `ID ${block.id}: ${block.text}`
-  ).join('\n')}`;
+TONE: ${directive.tone} - ${toneProfile.description}
+PERSONALITY: ${toneProfile.personality}
+LANGUAGE STYLE: ${toneProfile.language}`;
+
+  const userPrompt = `Transform these content blocks for ${profile.name} (${profile.domain}) with a ${directive.tone} tone.
+
+BUSINESS CONTEXT:
+- Goal: ${profile.goal}
+- Services: ${profile.services.join(', ')}
+- Trust signals: ${profile.review_count} reviews, ${profile.guarantee}
+- Phone: ${profile.phone}
+
+CONTENT BLOCKS TO ENHANCE:
+${sanitizedBlocks.map(block => 
+  `ID ${block.id}: ${block.text}`
+).join('\n')}
+
+Make each block significantly more engaging, professional, and conversion-focused while preserving the core message and any pricing information.`;
 
   const aiResponse = await executeAIPrompt(systemPrompt, userPrompt, env, model);
   
@@ -986,17 +1032,35 @@ Rules:
     });
   }
   
+  // MERGE ORIGINAL TEXT WITH AI RESPONSE FOR BEFORE/AFTER COMPARISON
+  console.log('🔍 Merging original text with AI response for Before/After comparison...');
+  const mergedBlocks = aiBlocks.map((aiBlock, index) => {
+    // Find the original block by ID or fall back to index
+    const originalBlock = sanitizedBlocks.find(b => b.id === aiBlock.id) || sanitizedBlocks[index];
+    
+    if (!originalBlock) {
+      console.log(`⚠️ No original block found for AI block ${aiBlock.id}, using placeholder`);
+      return {
+        ...aiBlock,
+        original_text: `[Original content for block ${aiBlock.id}]`
+      };
+    }
+    
+    console.log(`✅ Merged original text for block ${aiBlock.id}`);
+    return {
+      ...aiBlock,
+      original_text: originalBlock.text
+    };
+  });
+  
   // Validate topic preservation
   console.log('🔍 Validating topic preservation...');
-  aiBlocks.forEach((aiBlock, index) => {
-    const originalBlock = sanitizedBlocks.find(b => b.id === aiBlock.id) || sanitizedBlocks[index];
-    if (!originalBlock) return;
-    
-    const originalLower = originalBlock.text.toLowerCase();
+  mergedBlocks.forEach((aiBlock, index) => {
+    const originalLower = (aiBlock.original_text || '').toLowerCase();
     const optimizedLower = (aiBlock.optimized_text || '').toLowerCase();
     
     // Check if key elements are preserved
-    const prices = originalBlock.text.match(/£\d+/g) || [];
+    const prices = (aiBlock.original_text || '').match(/£\d+/g) || [];
     const missingPrices = prices.filter(p => !aiBlock.optimized_text.includes(p));
     
     if (missingPrices.length > 0) {
@@ -1016,7 +1080,7 @@ Rules:
       prompt_type: 'content',
       success: true,
       result: {
-        blocks: aiBlocks,
+        blocks: mergedBlocks,
         confidence: aiResponse.result.confidence || 0.8,
         processing_notes: aiResponse.result.processing_notes || [],
         simplified_content_processing: true

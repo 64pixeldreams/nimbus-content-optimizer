@@ -264,7 +264,7 @@ const progressiveOptimizer = {
     
     const requestBody = {
       prompt_type: tierLevel === 1 ? 'head' : 'multi', // Tier 1: head only, Tier 2+: multi-prompt
-      model: 'gpt-4-turbo-preview',
+              model: 'gpt-4o',
       profile: profile,
       directive: directive,
       content_map: contentMap,

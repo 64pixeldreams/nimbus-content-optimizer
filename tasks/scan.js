@@ -248,6 +248,7 @@ const scanTask = {
           i: index++,
           id: elementId,
           type: tagName,
+          tag_type: this.getTagType(elem),
           text: textData.text,
           selector: selector, // Keep for backward compatibility during transition
           nimbus_priority: nimbusAttr === 'priority' ? 'high' : nimbusAttr === 'ignore' ? 'skip' : 'normal' // V4.2: Content priority
@@ -471,6 +472,22 @@ const scanTask = {
     // dist/local/watch-repairs-abbots-langley.html -> watch-repairs-abbots-langley
     const basename = path.basename(filePath, '.html');
     return basename === 'index' ? 'home' : basename;
+  },
+
+  // Get semantic tag type for AI optimization
+  getTagType(element, isMetaTitle = false, isMetaDescription = false) {
+    if (isMetaTitle) return 'META_TITLE'
+    if (isMetaDescription) return 'META_DESC'
+    
+    const tagName = element.tagName.toLowerCase()
+    
+    if (tagName === 'h1') return 'H1'
+    if (tagName === 'h2') return 'H2' 
+    if (tagName === 'h3') return 'H3'
+    if (tagName === 'button' || element.classList.contains('btn')) return 'BTN'
+    if (tagName === 'a') return 'LINK'
+    
+    return 'CONTENT'  // For p, div, span, etc.
   },
 
   // V4.3: Generate unique element ID
