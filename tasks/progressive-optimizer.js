@@ -262,13 +262,32 @@ const progressiveOptimizer = {
       fetch = nodeFetch;
     }
     
+    // Import context builder functions
+    const { detectPageContext, detectPrimaryService, extractBrand, extractLocation } = require('../worker/prompt-context-builder');
+    
+    // Extract contextual information
+    const pageType = detectPageContext(contentMap);
+    const brand = extractBrand(contentMap.route);
+    const location = extractLocation(contentMap.route);
+    const service = detectPrimaryService(contentMap, profile.services);
+    
     const requestBody = {
       prompt_type: tierLevel === 1 ? 'head' : 'multi', // Tier 1: head only, Tier 2+: multi-prompt
-              model: 'gpt-4o',
+      model: 'gpt-4o',
       profile: profile,
       directive: directive,
       content_map: contentMap,
       tier_level: tierLevel, // Add tier info for AI context
+      
+      // Add contextual information for intelligent prompts
+      page_type: pageType,
+      page_context: {
+        brand: brand,
+        location: location || 'UK', // Default to UK
+        service: service,
+        product: null // Could be extracted later if needed
+      },
+      
       cache_bust: Date.now(),
       no_cache: true
     };

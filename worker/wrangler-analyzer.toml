@@ -5,3 +5,8 @@ account_id = "55987b6602e8ac9db46e14dcc7ad2c79"
 
 # Environment variables (set these in Cloudflare dashboard or via CLI)
 # OPENAI_API_KEY will be set as a secret via wrangler
+
+# KV storage for caching
+[[kv_namespaces]]
+binding = "NIMBUS_CACHE"
+id = "fc3d8474323a4256a3b65a36d4e6f6c6"

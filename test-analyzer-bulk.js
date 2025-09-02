@@ -1,13 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 
-async function postToSlack(result) {
-    await fetch('https://posttoslack.tudodesk.workers.dev/', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(result)
-    }).catch(console.error);
-}
+
 
 async function testBulkAnalyzer() {
   console.log('🧪 TESTING ANALYZER - TIER 1 HEAD/SERP WITH PAGE ANALYSIS\n');
@@ -25,15 +19,12 @@ async function testBulkAnalyzer() {
 
   console.log(`📄 Loaded TIER 1 HEAD data:`, headData);
 
-  // Log to Slack: Received page for optimization
-  await postToSlack({
-    text: "📥 Received page for optimization below",
-    data: headData
-  });
 
-  // Prepare payload with EXACT HEAD data as blocks
-  const payload = {
-    blocks: [
+
+          // Prepare payload with EXACT HEAD data as blocks
+        const payload = {
+          ignoreCache: true, // Force fresh call to see new cache key
+          blocks: [
       {
         id: "title",
         tag_type: "META_TITLE",
@@ -90,18 +81,7 @@ async function testBulkAnalyzer() {
     console.log(responseText);
     console.log('='.repeat(80));
 
-    // Log to Slack: Full analyzer response
-    if (response.ok) {
-      try {
-        const result = JSON.parse(responseText);
-        await postToSlack({
-          text: "✨ Optimized page below",
-          data: result
-        });
-      } catch (parseError) {
-        console.log('Failed to parse for Slack logging');
-      }
-    }
+
 
   } catch (error) {
     console.log('\n❌ Error:', error.message);

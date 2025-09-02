@@ -1,5 +1,6 @@
 name: "Repairs by Post"
 domain: "repairsbypost.com"
+country: "UK"
 services: [
   "watch-repair",
   "battery-replacement", 
