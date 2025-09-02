@@ -31,7 +31,9 @@ program
   .option('--mode <type>', 'Approval mode: interactive|auto|reject', 'interactive')
   .option('--confidence <threshold>', 'Auto-approve confidence threshold (0.0-1.0)')
   .option('--backup', 'Create backup files before modification', true)
-  .option('--tone <profile>', 'Override tone profile (local-expert, premium, startup, etc.)')
+  .option('--tone <profile>', 'Override tone profile (local-expert, premium, startup, etc.')
+  .option('--contentClass <selector>', 'Content container class/selector for extraction')
+  .option('--aboveFoldClass <selector>', 'Above-fold container class/selector for extraction')
   .parse(process.argv);
 
 const options = program.opts();

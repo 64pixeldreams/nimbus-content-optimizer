@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Above-the-Fold Extractor Test</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    .test-section {
+      margin: 20px 0;
+      border: 1px solid #ddd;
+      padding: 20px;
+      border-radius: 8px;
+    }
+    .results {
+      background: #f5f5f5;
+      padding: 15px;
+      border-radius: 4px;
+      margin-top: 10px;
+    }
+    pre {
+      background: #333;
+      color: #fff;
+      padding: 10px;
+      border-radius: 4px;
+      overflow-x: auto;
+    }
+    .hero-section {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 60px 20px;
+      text-align: center;
+      margin: 20px 0;
+    }
+    .btn {
+      display: inline-block;
+      padding: 12px 24px;
+      margin: 10px;
+      background: #fff;
+      color: #333;
+      text-decoration: none;
+      border-radius: 4px;
+      font-weight: bold;
+    }
+    .btn-primary {
+      background: #28a745;
+      color: white;
+    }
+  </style>
+</head>
+<body>
+  <h1>Above-the-Fold Content Extractor Demo</h1>
+  
+  <!-- Test Content -->
+  <div class="test-section">
+    <h2>Test Page Content</h2>
+    
+    <section class="hero-section" id="test-hero">
+      <div class="container">
+        <h1>Professional Web Development Services</h1>
+        <h2>Modern, Fast, Responsive Websites</h2>
+        <p class="lead">We build cutting-edge web applications that drive results for your business. With over 10 years of experience, we deliver excellence.</p>
+        <div class="cta-buttons">
+          <a href="/quote" class="btn btn-primary">Get Started Today</a>
+          <a href="/portfolio" class="btn">View Our Work</a>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+  <!-- Results Display -->
+  <div class="test-section">
+    <h2>Extraction Results</h2>
+    <button onclick="runExtraction()">Run Extraction</button>
+    <div id="results" class="results"></div>
+  </div>
+  
+  <!-- Include the extractor (browser version) -->
+  <script type="module">
+    // Simplified browser version of the extractor
+    window.extractAboveFoldContent = function(element, options = {}) {
+      try {
+        // Find H1
+        const h1 = element.querySelector('h1');
+        if (!h1) return { success: false, error: 'No H1 found' };
+        
+        // Find container
+        let container = h1.closest('.hero-section, .jumbotron, .page-header') || h1.parentElement;
+        
+        // Extract elements
+        const extracted = {
+          h1: h1.textContent.trim(),
+          h2: Array.from(container.querySelectorAll('h2')).map(el => el.textContent.trim()),
+          buttons: Array.from(container.querySelectorAll('a.btn, button')).map(btn => ({
+            text: btn.textContent.trim(),
+            href: btn.href || null,
+            classes: btn.className
+          })),
+          content: Array.from(container.querySelectorAll('p')).map(p => p.textContent.trim()),
+          container: {
+            tag: container.tagName.toLowerCase(),
+            classes: container.className,
+            id: container.id
+          }
+        };
+        
+        // Simple validation
+        const validation = {
+          isValid: !!(extracted.h1 && (extracted.buttons.length > 0 || extracted.content.length > 0)),
+          hasH1: !!extracted.h1,
+          hasButtons: extracted.buttons.length > 0,
+          hasContent: extracted.content.length > 0
+        };
+        
+        return {
+          success: true,
+          extracted,
+          validation
+        };
+        
+      } catch (error) {
+        return {
+          success: false,
+          error: error.message
+        };
+      }
+    };
+    
+    window.runExtraction = function() {
+      const heroElement = document.getElementById('test-hero');
+      const result = extractAboveFoldContent(heroElement);
+      
+      const resultsDiv = document.getElementById('results');
+      resultsDiv.innerHTML = '<h3>Extraction Result:</h3><pre>' + 
+        JSON.stringify(result, null, 2) + '</pre>';
+    };
+  </script>
+</body>
+</html>
+
