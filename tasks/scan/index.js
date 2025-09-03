@@ -49,7 +49,9 @@ const scanTask = {
       customMainSelector: customMainSelector || config.main,
       contentClass: contentClass || config.main,
       aboveFoldClass: aboveFoldClass || config.above_fold,
-      extractionRules: config.extraction_rules || null
+      extractionRules: config.extraction_rules || null,
+      metadataRules: config.metadata_rules || null,
+      contentDimensionsRules: config.content_dimensions || {}
     };
     
     if (config.main || config.above_fold) {
@@ -73,7 +75,9 @@ const scanTask = {
           customMainSelector: finalConfig.customMainSelector,
           contentClass: finalConfig.contentClass,
           aboveFoldClass: finalConfig.aboveFoldClass,
-          extractionRules: finalConfig.extractionRules
+          extractionRules: finalConfig.extractionRules,
+          metadataRules: finalConfig.metadataRules,
+          contentDimensionsRules: finalConfig.contentDimensionsRules
         });
         
         // Build complete content map

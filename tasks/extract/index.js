@@ -12,6 +12,7 @@ const { extractHeadMetadata } = require('./modules/metadata-extractor');
 const { findMainContent } = require('./modules/content-finder');
 const { extractIsolatedContent } = require('./modules/dom-isolator');
 const { extractBlocksFromDOM } = require('./modules/block-extractor');
+const { extractContentDimensions } = require('./modules/content-dimension-extractor');
 
 /**
  * Extract content from a single HTML file
@@ -24,15 +25,17 @@ async function extractContent(filePath, options = {}) {
     customMainSelector,
     contentClass,
     aboveFoldClass,
-    extractionRules
+    extractionRules,
+    metadataRules,
+    contentDimensionsRules
   } = options;
   
   // Load HTML file
   const htmlContent = await fs.readFile(filePath, 'utf8');
   const $ = cheerio.load(htmlContent);
   
-  // Extract head metadata
-  const head = extractHeadMetadata($);
+  // Extract head metadata using config rules
+  const head = extractHeadMetadata($, metadataRules);
   
   // Find main content container
   const mainSelector = findMainContent($, customMainSelector);
@@ -52,6 +55,21 @@ async function extractContent(filePath, options = {}) {
     extractionRules
   );
   
+  // Build initial content structure (needed for metadata lookup)
+  const contentStructure = {
+    engine: 'html',
+    main_selector: mainSelector,
+    head: head,
+    blocks: extractionResult.blocks,
+    above_fold_blocks: extractionResult.above_fold,
+    rest_of_page_blocks: extractionResult.rest_of_page,
+    selector_map: extractionResult.selectorMap,
+    path: filePath
+  };
+  
+  // Extract content dimensions (using already extracted data)
+  const dimensions = await extractContentDimensions(filePath, $, contentStructure, contentDimensionsRules);
+  
   return {
     engine: 'html',
     main_selector: mainSelector,
@@ -60,6 +78,7 @@ async function extractContent(filePath, options = {}) {
     above_fold_blocks: extractionResult.above_fold,     // Blocks in above-fold area
     rest_of_page_blocks: extractionResult.rest_of_page, // Blocks outside above-fold
     selector_map: extractionResult.selectorMap,          // ID-to-selector mapping
+    dimensions: dimensions,                              // Content dimensions
     extraction_config: {                                 // Document what selectors were used
       content_class: contentClass || null,
       above_fold_class: aboveFoldClass || null

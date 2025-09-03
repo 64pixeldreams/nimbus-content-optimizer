@@ -457,26 +457,8 @@ Return optimized head metadata meeting exact character requirements.`;
   };
 }
 
-// Utility functions for V2
-function extractLocation(route) {
-  const match = route.match(/\/branches\/watch-repairs-(.+)/);
-  if (match) {
-    return match[1].replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-  }
-  return null;
-}
-
-// V4.5: Extract brand name from brand page routes
-function extractBrand(route) {
-  const match = route.match(/\/brands\/(.+)-watch-repair/);
-  if (match) {
-    return match[1]
-      .replace(/-/g, ' ')
-      .replace(/\b\w/g, l => l.toUpperCase())
-      .replace(/And Co/g, '& Co'); // Fix "Dreyfuss And Co" → "Dreyfuss & Co"
-  }
-  return null;
-}
+// OLD EXTRACTION FUNCTIONS DELETED - NOW USING CONTENT DIMENSIONS SYSTEM
+// See: gulp/tasks/extract/modules/dimensions/ for the new flexible extraction system
 
 // V4.5: Brand classification for luxury vs fashion differentiation
 function classifyBrand(brandName) {

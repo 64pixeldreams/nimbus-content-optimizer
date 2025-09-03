@@ -41,8 +41,14 @@
     "   - Descendant selectors: 'div.content h3', 'section a'",
     "   - Attribute selectors: 'div[class*=\"banner\"]', 'a[href*=\"contact\"]'",
     "",
+    "📋 METADATA RULES:",
+    "   Purpose: Control which metadata elements get extracted from <head> section",
+    "   Examples: 'title', 'meta[name=\"description\"]', 'link[rel=\"canonical\"]'",
+    "   Social: 'meta[property=\"og:title\"]', 'meta[name=\"twitter:title\"]'",
+    "   Favicon: 'link[rel=\"icon\"]', 'link[rel=\"shortcut icon\"]'",
+    "",
     "⚡ USAGE:",
-    "   1. Edit inherit, selectors, and extraction_rules below",
+    "   1. Edit inherit, selectors, extraction_rules, and metadata_rules below",
     "   2. Run: gulp nimbus:scan:map --folder ../dist/local", 
     "   3. Nimbus will use these rules automatically",
     "   4. Check results in .nimbus/maps/ folder",
@@ -59,6 +65,27 @@
     "_note": "Leave empty to extract all common elements (current default behavior)",
     "above_fold": ["h1", "h2", "h3", "p", "li", "blockquote", "a", "img", "button", "input[type='submit']", "[class*='btn']", "[class*='cta']"],
     "rest_of_page": ["h1", "h2", "h3", "p", "li", "blockquote", "a", "img", "button", "input[type='submit']", "[class*='btn']", "[class*='cta']"]
+  },
+  "metadata_rules": {
+    "_note": "Control which metadata elements get extracted from the <head> section",
+    "title": "title",
+    "meta_description": "meta[name='description']",
+    "canonical": "link[rel='canonical']",
+    "og_title": "meta[property='og:title']",
+    "og_description": "meta[property='og:description']",
+    "og_image": "meta[property='og:image']",
+    "twitter_title": "meta[name='twitter:title']",
+    "twitter_description": "meta[name='twitter:description']",
+    "twitter_image": "meta[name='twitter:image']",
+    "favicon": "link[rel='icon'], link[rel='shortcut icon'], link[rel='apple-touch-icon']"
+  },
+  "content_dimensions": {
+    "_comment": "🎯 CONTENT DIMENSIONS - Extract structured data from content (see README.md in templates folder for examples)",
+    "location": {},
+    "brand": {},
+    "service": {},
+    "product": {},
+    "faq_title": {}
   },
   "_examples": {
     "basic_site": {

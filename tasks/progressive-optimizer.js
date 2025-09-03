@@ -263,13 +263,17 @@ const progressiveOptimizer = {
     }
     
     // Import context builder functions
-    const { detectPageContext, detectPrimaryService, extractBrand, extractLocation } = require('../worker/prompt-context-builder');
+    const { detectPageContext, detectPrimaryService } = require('../worker/prompt-context-builder');
+    const { fetchProperty } = require('../tasks/extract/modules/dimensions/utilities');
     
-    // Extract contextual information
+    // Extract contextual information using clean dimension fetcher
     const pageType = detectPageContext(contentMap);
-    const brand = extractBrand(contentMap.route);
-    const location = extractLocation(contentMap.route);
-    const service = detectPrimaryService(contentMap, profile.services);
+    const fetcher = fetchProperty(contentMap.dimensions);
+    const brand = fetcher.brand();
+    const location = fetcher.location();
+    const service = fetcher.service() || detectPrimaryService(contentMap, profile.services);
+    const product = fetcher.product();
+    const faqTitle = fetcher.faqTitle();
     
     const requestBody = {
       prompt_type: tierLevel === 1 ? 'head' : 'multi', // Tier 1: head only, Tier 2+: multi-prompt
@@ -279,13 +283,14 @@ const progressiveOptimizer = {
       content_map: contentMap,
       tier_level: tierLevel, // Add tier info for AI context
       
-      // Add contextual information for intelligent prompts
+      // Add contextual information for intelligent prompts (now using content dimensions!)
       page_type: pageType,
       page_context: {
         brand: brand,
         location: location || 'UK', // Default to UK
         service: service,
-        product: null // Could be extracted later if needed
+        product: product,
+        faq_title: faqTitle
       },
       
       cache_bust: Date.now(),

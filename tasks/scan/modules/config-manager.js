@@ -25,7 +25,7 @@ async function getExtractionConfig(folderPath) {
 async function resolveConfig(folderPath, visited) {
   // Prevent infinite loops
   if (visited.has(folderPath)) {
-    return { selectors: {}, extraction_rules: {} };
+    return { selectors: {}, extraction_rules: {}, metadata_rules: {} };
   }
   visited.add(folderPath);
   
@@ -34,7 +34,7 @@ async function resolveConfig(folderPath, visited) {
   // Read or create config
   let config = await readOrCreateConfig(configPath, folderPath);
   
-  // If inherit: true, skip local and use parent
+  // If inherit: true, merge with parent config
   if (config.inherit === true) {
     const parentPath = path.dirname(folderPath);
     
@@ -44,7 +44,17 @@ async function resolveConfig(folderPath, visited) {
     }
     
     console.log(chalk.cyan(`   🔗 Inheriting from: ${parentPath}`));
-    return await resolveConfig(parentPath, visited);
+    const parentConfig = await resolveConfig(parentPath, visited);
+    
+    // Merge parent config with local config (local overrides parent)
+    return {
+      ...parentConfig,
+      ...config,
+      selectors: { ...parentConfig.selectors, ...config.selectors },
+      extraction_rules: config.extraction_rules || parentConfig.extraction_rules,
+      metadata_rules: config.metadata_rules || parentConfig.metadata_rules,
+      content_dimensions: config.content_dimensions || parentConfig.content_dimensions
+    };
   }
   
   return config;
@@ -127,13 +137,15 @@ function isRootFolder(folderPath) {
  */
 function validateConfig(config) {
   if (!config || !config.selectors) {
-    return { main: null, above_fold: null, extraction_rules: null };
+    return { main: null, above_fold: null, extraction_rules: null, metadata_rules: null, content_dimensions: {} };
   }
   
   return {
     main: config.selectors.main || null,
     above_fold: config.selectors.above_fold || null,
-    extraction_rules: config.extraction_rules || null
+    extraction_rules: config.extraction_rules || null,
+    metadata_rules: config.metadata_rules || null,
+    content_dimensions: config.content_dimensions || {}
   };
 }
 
