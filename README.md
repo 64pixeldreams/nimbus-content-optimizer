@@ -63,7 +63,28 @@ gulp nimbus:scan:map --folder ../dist/local --limit 1
 - ✅ **7 above-fold blocks** extracted with surgical precision
 - ✅ **57 rest-of-page blocks** with full content intelligence
 - ✅ **Complete metadata** including favicon URL
+- ✅ **Content dimensions** - location, brand, service extraction
 - ✅ **Zero hardcoded assumptions** - 100% config-driven
+
+## 🎯 **Content Dimensions System**
+
+**Extract structured business data automatically:**
+
+```json
+{
+  "dimensions": {
+    "location": { "success": true, "value": "ashford", "error": null },
+    "brand": { "success": true, "value": "rolex", "error": null },
+    "service": { "success": true, "value": "watch repair", "error": null }
+  }
+}
+```
+
+**Extraction Methods:**
+- 🔗 **URL Pattern** - Extract from file paths (`/watch-repairs-ashford.html` → `location: "ashford"`)
+- 🎯 **Content Selector** - Extract from HTML elements (`h1` → brand names)
+- 📌 **Static Value** - Use fixed values (`service: "watch repair"`)
+- 🏷️ **Metadata Lookup** - Use already-extracted metadata (`{meta-title}`, `{og-description}`)
 
 ## 🚀 **AI Pipeline Vision**
 
@@ -74,6 +95,11 @@ This system is the **foundation for AI content optimization**:
   "content_zones": {
     "above_fold": { "optimization_priority": "high" },
     "rest_of_page": { "optimization_priority": "medium" }
+  },
+  "ai_context": {
+    "location": "ashford",
+    "brand": "rolex", 
+    "service": "watch repair"
   }
 }
 ```

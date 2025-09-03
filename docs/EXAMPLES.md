@@ -4,12 +4,12 @@
 
 ## 🎯 **Overview**
 
-This document provides real-world examples of how to use NimbusAI for different types of websites and content optimization scenarios. Each example includes complete configuration files and expected results.
+This document provides real-world examples of how to use NimbusAI for different types of websites and content optimization scenarios. Each example includes complete configuration files, content dimensions setup, and expected results.
 
 ## 🏪 **E-commerce Product Pages**
 
-### **Scenario: Watch Repair Service**
-**Goal:** Extract product information, pricing, and call-to-action elements for AI optimization
+### **Scenario: Watch Repair Service with Content Dimensions**
+**Goal:** Extract product information, pricing, call-to-action elements AND business dimensions for AI optimization
 
 #### **Configuration**
 ```json
@@ -690,7 +690,103 @@ const recommendations = await createRecommendations(insights);
 - Override only what's different in child configs
 - Keep inheritance hierarchy simple
 
+## 🎯 **Content Dimensions Examples**
+
+### **RBP Local Pages**
+**URL:** `/watch-repairs-ashford.html`
+**Goal:** Extract location and service information
+
+#### **Configuration**
+```json
+{
+  "content_dimensions": {
+    "location": {
+      "enabled": true,
+      "extraction_method": "url_pattern",
+      "source": "{absoluteurl}",
+      "pattern": "/watch-repairs-([^/]+)\\.html$",
+      "extract": "$1"
+    },
+    "service": {
+      "enabled": true,
+      "extraction_method": "static_value",
+      "value": "watch repair"
+    }
+  }
+}
+```
+
+#### **Expected Result**
+```json
+{
+  "dimensions": {
+    "location": { "success": true, "value": "ashford", "error": null },
+    "service": { "success": true, "value": "watch repair", "error": null }
+  }
+}
+```
+
+### **RBP Brand Pages**
+**URL:** `/rolex-watch-repair-london.html`
+**Goal:** Extract brand, location, and service
+
+#### **Configuration**
+```json
+{
+  "content_dimensions": {
+    "brand": {
+      "enabled": true,
+      "extraction_method": "url_pattern",
+      "source": "{absoluteurl}",
+      "pattern": "/([^/]+)-watch-repair-([^/]+)\\.html$",
+      "extract": "$1"
+    },
+    "location": {
+      "enabled": true,
+      "extraction_method": "url_pattern",
+      "source": "{absoluteurl}",
+      "pattern": "/([^/]+)-watch-repair-([^/]+)\\.html$",
+      "extract": "$2"
+    },
+    "service": {
+      "enabled": true,
+      "extraction_method": "static_value",
+      "value": "watch repair"
+    }
+  }
+}
+```
+
+#### **Expected Result**
+```json
+{
+  "dimensions": {
+    "brand": { "success": true, "value": "rolex", "error": null },
+    "location": { "success": true, "value": "london", "error": null },
+    "service": { "success": true, "value": "watch repair", "error": null }
+  }
+}
+```
+
+### **AI Pipeline Integration**
+**How dimensions enhance AI prompts:**
+
+#### **Before (Generic):**
+```
+"Optimize this content for better engagement: {content}"
+```
+
+#### **After (Context-Aware):**
+```
+"Optimize this {service} content for {brand} in {location} for better local engagement: {content}"
+```
+
+#### **Real Example:**
+```
+"Optimize this watch repair content for Rolex in Ashford for better local engagement: {content}"
+```
+
 ---
 
-**These examples demonstrate the power and flexibility of NimbusAI for real-world content extraction and AI pipeline integration scenarios.**
+**These examples demonstrate the power and flexibility of NimbusAI for real-world content extraction, content dimensions, and AI pipeline integration scenarios.**
 

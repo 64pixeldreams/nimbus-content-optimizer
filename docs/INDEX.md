@@ -41,6 +41,17 @@ Complete configuration reference and examples
 - Selectors configuration
 - Extraction rules
 - Metadata rules
+- Content dimensions setup
+
+### **[🎯 CONTENT-DIMENSIONS.md](./CONTENT-DIMENSIONS.md)**
+**NEW!** Structured business data extraction system
+- What are content dimensions?
+- 4 extraction methods (URL, Content, Static, Metadata)
+- Real-world RBP examples
+- AI pipeline integration
+- Configuration guide
+- Error handling
+- Best practices
 - Real-world examples
 - Advanced configuration
 - Best practices

@@ -9,6 +9,7 @@ NimbusAI uses a **hierarchical, config-driven system** that allows you to define
 - **🔗 Inheritance** - Parent/child config relationships
 - **⚡ Surgical Precision** - Target specific elements with CSS selectors
 - **📋 Metadata Control** - Define which head elements to extract
+- **🎯 Content Dimensions** - Extract structured business data automatically
 - **🎛️ Flexible Rules** - Override any setting at any level
 
 ## 📁 **Configuration Files**
@@ -401,6 +402,43 @@ Control which metadata elements get extracted from the `<head>` section
   }
 }
 ```
+
+## 🎯 **Content Dimensions Configuration**
+
+Content Dimensions extract structured business data from web pages. See **[Content Dimensions Guide](./CONTENT-DIMENSIONS.md)** for complete documentation.
+
+### **Basic Dimensions Setup**
+```json
+{
+  "content_dimensions": {
+    "location": {
+      "enabled": true,
+      "extraction_method": "url_pattern",
+      "source": "{absoluteurl}",
+      "pattern": "/watch-repairs-([^/]+)\\.html$",
+      "extract": "$1"
+    },
+    "service": {
+      "enabled": true,
+      "extraction_method": "static_value",
+      "value": "watch repair"
+    }
+  }
+}
+```
+
+### **Available Extraction Methods**
+- **`url_pattern`** - Extract from file paths using regex
+- **`content_selector`** - Extract from HTML elements
+- **`static_value`** - Use fixed values
+- **`metadata`** - Lookup from extracted metadata
+
+### **Metadata Source Variables**
+- `{meta-title}` - Page title
+- `{meta-description}` - Meta description  
+- `{og-title}` - Open Graph title
+- `{canonical-url}` - Canonical URL
+- `{absoluteurl}` - File path
 
 ## 🚀 **Advanced Configuration**
 

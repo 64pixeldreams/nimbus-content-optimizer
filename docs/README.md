@@ -14,6 +14,7 @@ NimbusAI is a **breakthrough content extraction system** that transforms how web
 - **⚡ Surgical Precision** - Target specific elements with CSS selectors
 - **🔗 Hierarchical Configuration** - Parent/child config inheritance
 - **📋 Metadata Intelligence** - Extract favicon, Open Graph, Twitter cards
+- **🎯 Content Dimensions** - Extract location, brand, service data automatically
 - **🚀 AI Pipeline Ready** - Foundation for content optimization workflows
 
 ## ⚡ **Quick Start**

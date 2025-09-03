@@ -86,6 +86,20 @@
       "[class*='cta']"
     ]
   },
+  "content_dimensions": {
+    "location": {
+      "enabled": true,
+      "extraction_method": "url_pattern",
+      "source": "{absoluteurl}",
+      "pattern": "watch-repairs-([^/\\\\]+)\\.html$",
+      "extract": "$1"
+    },
+    "service": {
+      "enabled": true,
+      "extraction_method": "static_value",
+      "value": "watch repair"
+    }
+  },
   "_examples": {
     "basic_site": {
       "above_fold": [
