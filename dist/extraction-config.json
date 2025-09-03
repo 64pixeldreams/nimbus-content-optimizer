@@ -1,0 +1,143 @@
+{
+  "_comment": "NIMBUS CONTENT EXTRACTION CONFIGURATION",
+  "_instructions": [
+    "═══════════════════════════════════════════════════════════════",
+    "🎯 NIMBUS CONTENT EXTRACTION CONFIGURATION",
+    "═══════════════════════════════════════════════════════════════",
+    "",
+    "This file controls how Nimbus extracts content from your HTML files.",
+    "",
+    "🔗 INHERITANCE:",
+    "   inherit: true  = Use parent folder's selectors + merge with selectors below",
+    "   inherit: false = Use only the selectors defined in this file",
+    "   Note: Root folders should use inherit: false",
+    "",
+    "📦 MAIN SELECTOR:",
+    "   Purpose: Target the main content area (excludes nav, header, footer)",
+    "   Examples: 'main', '.content', '#main-content', 'article', '.page-content'",
+    "   Leave empty: Auto-detection will be used",
+    "",
+    "🎯 ABOVE-FOLD SELECTOR:",
+    "   Purpose: Target the hero/banner section for above-fold optimization",
+    "   Examples: '.hero', '.banner', '.container', '.jumbotron', '.splash', '.hero-section'",
+    "   Leave empty: No above-fold separation (all content treated as one block)",
+    "",
+    "🎛️ EXTRACTION RULES:",
+    "   Purpose: Control exactly which elements get extracted from each area",
+    "   Default: Extract all common elements if not specified",
+    "   ",
+    "   📦 ABOVE-FOLD RULES:",
+    "   Examples: ['h1', 'h2', 'p', 'btn.cta', 'img', 'div.banner']",
+    "   Advanced: ['h1.headline', 'div.hero > p', 'a.btn-primary', 'div[class*=\"promo\"]']",
+    "   ",
+    "   📄 REST-OF-PAGE RULES:",
+    "   Examples: ['h3', 'li', 'a', 'blockquote', 'div.testimonial']",
+    "   Advanced: ['section.faq > h3', 'ul.features > li', 'div.review p']",
+    "   ",
+    "   🎯 SELECTOR TYPES:",
+    "   - Simple tags: 'h1', 'p', 'img', 'button'",
+    "   - With classes: 'h1.headline', 'btn.cta', 'div.banner'",
+    "   - Child selectors: 'div.hero > p', 'section > h2'",
+    "   - Descendant selectors: 'div.content h3', 'section a'",
+    "   - Attribute selectors: 'div[class*=\"banner\"]', 'a[href*=\"contact\"]'",
+    "",
+    "⚡ USAGE:",
+    "   1. Edit inherit, selectors, and extraction_rules below",
+    "   2. Run: gulp nimbus:scan:map --folder ../dist/local",
+    "   3. Nimbus will use these rules automatically",
+    "   4. Check results in .nimbus/maps/ folder",
+    "",
+    "💡 TIP: Use browser dev tools to find the right CSS selectors",
+    "═══════════════════════════════════════════════════════════════"
+  ],
+  "inherit": false,
+  "selectors": {
+    "main": "main",
+    "above_fold": ".container"
+  },
+  "extraction_rules": {
+    "_note": "Leave empty to extract all common elements (current default behavior)",
+    "above_fold": [
+      "h1","h2","p",".img",
+      "a[href='/start-repair.html']"
+    ],
+    "rest_of_page": [
+      "h1",
+      "h2",
+      "h3",
+      "p",
+      "li",
+      "blockquote",
+      "a",
+      "img",
+      "button",
+      "input[type='submit']",
+      "[class*='btn']",
+      "[class*='cta']",
+       "div"
+    ]
+  },
+  "_examples": {
+    "basic_site": {
+      "above_fold": [
+        "h1",
+        "h2",
+        "p",
+        "img",
+        "button",
+        "a"
+      ],
+      "rest_of_page": [
+        "h3",
+        "li",
+        "a",
+        "blockquote"
+      ]
+    },
+    "ecommerce_product": {
+      "above_fold": [
+        "h1.product-title",
+        "p.price",
+        "btn.add-to-cart",
+        "img.product"
+      ],
+      "rest_of_page": [
+        "h3",
+        "div.reviews",
+        "li.features",
+        "p.description"
+      ]
+    },
+    "service_business": {
+      "above_fold": [
+        "h1",
+        "h2",
+        "p.intro",
+        "btn.cta",
+        "div.guarantee"
+      ],
+      "rest_of_page": [
+        "h3",
+        "li",
+        "div.testimonial",
+        "a"
+      ]
+    },
+    "blog_post": {
+      "above_fold": [
+        "h1.post-title",
+        "p.excerpt",
+        "img.featured",
+        "div.author"
+      ],
+      "rest_of_page": [
+        "h2",
+        "h3",
+        "p",
+        "blockquote",
+        "ul",
+        "ol"
+      ]
+    }
+  }
+}
