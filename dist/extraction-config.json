@@ -77,6 +77,19 @@
        "div"
     ]
   },
+  "metadata_rules": {
+    "_note": "Control which metadata elements get extracted from the <head> section",
+    "title": "title",
+    "meta_description": "meta[name='description']",
+    "canonical": "link[rel='canonical']",
+    "og_title": "meta[property='og:title']",
+    "og_description": "meta[property='og:description']",
+    "og_image": "meta[property='og:image']",
+    "twitter_title": "meta[name='twitter:title']",
+    "twitter_description": "meta[name='twitter:description']",
+    "twitter_image": "meta[name='twitter:image']",
+    "favicon": "link[rel='icon'], link[rel='shortcut icon'], link[rel='apple-touch-icon']"
+  },
   "_examples": {
     "basic_site": {
       "above_fold": [
