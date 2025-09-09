@@ -1,0 +1,69 @@
+name = "nimbus-platform"
+main = "src/index.js"
+compatibility_date = "2023-12-01"
+account_id = "YOUR_CLOUDFLARE_ACCOUNT_ID"
+
+# Environment configuration
+[env.production]
+name = "nimbus-platform-prod"
+
+[env.staging]
+name = "nimbus-platform-staging"
+
+# KV Namespace bindings
+[[kv_namespaces]]
+binding = "NIMBUS_USERS"
+id = "YOUR_USERS_KV_ID"
+
+[[kv_namespaces]]
+binding = "NIMBUS_PROJECTS"
+id = "YOUR_PROJECTS_KV_ID"
+
+[[kv_namespaces]]
+binding = "NIMBUS_PAGES"
+id = "YOUR_PAGES_KV_ID"
+
+[[kv_namespaces]]
+binding = "NIMBUS_KEYS"
+id = "YOUR_KEYS_KV_ID"
+
+[[kv_namespaces]]
+binding = "NIMBUS_SESSIONS"
+id = "YOUR_SESSIONS_KV_ID"
+
+[[kv_namespaces]]
+binding = "NIMBUS_CACHE"
+id = "YOUR_CACHE_KV_ID"
+
+[[kv_namespaces]]
+binding = "NIMBUS_EMAILS"
+id = "YOUR_EMAILS_KV_ID"
+
+[[kv_namespaces]]
+binding = "NIMBUS_LISTS"
+id = "YOUR_LISTS_KV_ID"
+
+# D1 Database binding
+[[d1_databases]]
+binding = "NIMBUS_DB"
+database_name = "nimbus-production"
+database_id = "YOUR_D1_DATABASE_ID"
+
+# Environment variables
+[vars]
+ENVIRONMENT = "development"
+APP_URL = "https://your-worker.workers.dev"
+SLACK_WEBHOOK_URL = "https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK"
+MAILERSEND_API_KEY = "mlsn.YOUR_MAILERSEND_API_KEY"
+
+# Production environment variables
+[env.production.vars]
+ENVIRONMENT = "production"
+OPENAI_API_KEY = "sk-proj-YOUR_OPENAI_API_KEY"
+MAILERSEND_API_KEY = "mlsn.YOUR_PRODUCTION_MAILERSEND_KEY"
+
+# Staging environment variables
+[env.staging.vars]
+ENVIRONMENT = "staging"
+OPENAI_API_KEY = "sk-proj-YOUR_STAGING_OPENAI_KEY"
+MAILERSEND_API_KEY = "mlsn.YOUR_STAGING_MAILERSEND_KEY"

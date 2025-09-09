@@ -1,0 +1,20 @@
+{
+  "inherit": true,
+  "selectors": { 
+    "main": "main" 
+  },
+  "content_dimensions": {
+    "brand": {
+      "enabled": true,
+      "extraction_method": "url_pattern",
+      "source": "{absoluteurl}",
+      "pattern": "([^/\\\\]+)-watch-repair\\.html$",
+      "extract": "$1"
+    },
+    "service": {
+      "enabled": true,
+      "extraction_method": "static_value",
+      "value": "watch repair"
+    }
+  }
+}
