@@ -388,7 +388,7 @@ router.post('/api/function', async (request, env) => {
           user: requestContext.auth?.user_id || 'anonymous'
         };
       }, {
-        auth: false,
+        auth: true,
         validation: {}
       });
     }

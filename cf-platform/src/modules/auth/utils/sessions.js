@@ -116,9 +116,19 @@ export async function createSession(env, userId, email, request, logger) {
 
     // Store in datastore
     const datastore = new Datastore(env, logger);
+    
+    logger?.log('Attempting to store session', { 
+      token: sessionToken.substring(0, 10) + '...',
+      namespace: 'SESSION',
+      dataLength: JSON.stringify(sessionData).length
+    });
+    
     await datastore.put('SESSION', sessionToken, sessionData);
     
-    logger?.log('Session stored successfully', { token: sessionToken.substring(0, 10) + '...' });
+    logger?.log('Session stored in KV', { 
+      token: sessionToken.substring(0, 10) + '...',
+      namespace: 'NIMBUS_SESSIONS'
+    });
 
     // Add to user's sessions list (temporarily disabled for debugging)
     // await datastore.queryListAddItem('sessions', userId, sessionToken);
