@@ -1,0 +1,69 @@
+name = "nimbus-platform"
+main = "src/index.js"
+compatibility_date = "2023-12-01"
+account_id = "55987b6602e8ac9db46e14dcc7ad2c79"
+
+# Environment configuration
+[env.production]
+name = "nimbus-platform-prod"
+
+[env.staging]
+name = "nimbus-platform-staging"
+
+# KV Namespace bindings
+[[kv_namespaces]]
+binding = "NIMBUS_USERS"
+id = "5cfb46ae2f94458089f94bfcd7710889"
+
+[[kv_namespaces]]
+binding = "NIMBUS_PROJECTS"
+id = "7cd4420fe7b34afeba274ce471b78c3a"
+
+[[kv_namespaces]]
+binding = "NIMBUS_PAGES"
+id = "435f23c64cff45e993b842f9052e3f4a"
+
+[[kv_namespaces]]
+binding = "NIMBUS_KEYS"
+id = "39810d2aed874d92aa7219a2641d597a"
+
+[[kv_namespaces]]
+binding = "NIMBUS_SESSIONS"
+id = "3f8b5bd027b64b06b87f06cd0b23f606"
+
+[[kv_namespaces]]
+binding = "NIMBUS_CACHE"
+id = "fc3d8474323a4256a3b65a36d4e6f6c6"
+
+[[kv_namespaces]]
+binding = "NIMBUS_EMAILS"
+id = "c78ffefc70cb46d8b8624e8b435c9c62"
+
+[[kv_namespaces]]
+binding = "NIMBUS_LISTS"
+id = "a07f990192434d5b8cbf8d669665745e"
+
+# D1 Database binding
+[[d1_databases]]
+binding = "NIMBUS_DB"
+database_name = "nimbus-production"
+database_id = "6f6dae5e-2aac-40f2-bcde-d58c1b58fe4c"
+
+# Environment variables
+[vars]
+ENVIRONMENT = "development"
+APP_URL = "https://nimbus-platform.martin-598.workers.dev"
+SLACK_WEBHOOK_URL = "https://hooks.slack.com/services/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"
+MAILERSEND_API_KEY = "mlsn.91015172ff88c7581d808d07107ff88081c9117f5849b0e3bf0c830788175e73"
+
+# Production environment variables
+[env.production.vars]
+ENVIRONMENT = "production"
+OPENAI_API_KEY = "your-openai-key"
+MAILERSEND_API_KEY = "your-mailersend-key"
+
+# Staging environment variables
+[env.staging.vars]
+ENVIRONMENT = "staging"
+OPENAI_API_KEY = "your-staging-openai-key"
+MAILERSEND_API_KEY = "your-staging-mailersend-key"
