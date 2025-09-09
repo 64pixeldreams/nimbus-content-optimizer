@@ -5,7 +5,7 @@
  */
 
 import { execSync } from 'child_process';
-import { writeFileSync, existsSync } from 'fs';
+import { writeFileSync, existsSync, readFileSync } from 'fs';
 import { join } from 'path';
 
 const moduleName = process.argv[2];
@@ -77,7 +77,7 @@ To unlock this module:
 
 ---
 
-` + require('fs').readFileSync(readmePath, 'utf8').replace(/^# .*$/m, '');
+` + readFileSync(readmePath, 'utf8').replace(/^# .*$/m, '');
     
     writeFileSync(readmePath, readmeContent);
     console.log(`✅ Updated README with lock status`);
