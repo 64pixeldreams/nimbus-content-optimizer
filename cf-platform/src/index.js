@@ -328,6 +328,15 @@ router.post('/api/function', async (request, env) => {
       cloudFunction.define('project.list', projectList, projectListConfig);
       cloudFunction.define('project.get', projectGet, projectGetConfig);
       
+      // Register pages CloudFunctions
+      const { create, get, list, update, remove } = await import('./modules/pages/functions/index.js');
+      
+      cloudFunction.define('page.create', create);
+      cloudFunction.define('page.get', get);
+      cloudFunction.define('page.list', list);
+      cloudFunction.define('page.update', update);
+      cloudFunction.define('page.remove', remove);
+      
       // Register session debug function
       cloudFunction.define('debug.session', async (requestContext) => {
         const { env, logger } = requestContext;
