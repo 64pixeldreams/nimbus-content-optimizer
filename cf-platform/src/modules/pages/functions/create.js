@@ -1,59 +1,55 @@
 /**
- * Create Page Function
+ * Page Create CloudFunction
  * Creates a new page from extracted content data
  */
 
-import { DataModel } from '../../datamodel/index.js';
+import { PageManager } from '../core/page-manager.js';
 
-export async function create(request, env, logger) {
-  const { 
-    project_id,
-    url,
-    title,
-    content,
-    extracted_data,
-    metadata 
-  } = request.data;
-
-  // Validate required fields
-  if (!project_id || !url) {
-    return {
-      success: false,
-      error: 'Missing required fields: project_id, url'
-    };
-  }
-
+/**
+ * Create page CloudFunction handler
+ * @param {Object} requestContext - CloudFunction request context
+ * @returns {Promise<Object>} Page creation result
+ */
+export async function pageCreate(requestContext) {
+  const { env, logger, payload, auth } = requestContext;
+  
+  logger.log('Page creation started', { 
+    userId: auth.user_id,
+    projectId: payload.project_id,
+    url: payload.url
+  });
+  
   try {
-    // Create new page
-    const page = await DataModel.create('PAGE', request.datastore, {
-      project_id,
-      url,
-      title: title || 'Untitled Page',
-      status: 'extracted',
-      content: content || '',
-      extracted_data: extracted_data || {},
-      metadata: metadata || {}
-    }, logger);
-
-    await page.save();
-
-    return {
-      success: true,
-      data: {
-        page_id: page.get('page_id'),
-        project_id: page.get('project_id'),
-        url: page.get('url'),
-        title: page.get('title'),
-        status: page.get('status'),
-        created_at: page.get('created_at')
-      }
-    };
-
+    // Initialize page manager with user context
+    const pages = new PageManager(env, auth.user_id);
+    
+    // Create page using manager
+    const result = await pages.create(payload);
+    
+    logger.log('Page creation completed', { 
+      success: result.success,
+      pageId: result.page?.page_id 
+    });
+    
+    return result;
+    
   } catch (error) {
-    logger?.error('Failed to create page', error);
-    return {
-      success: false,
-      error: error.message
-    };
+    logger.error('Page creation failed', error);
+    throw error;
   }
 }
+
+/**
+ * CloudFunction configuration
+ */
+export const pageCreateConfig = {
+  auth: true,
+  validation: {
+    project_id: { type: 'string', required: true },
+    url: { type: 'string', required: true },
+    title: { type: 'string' },
+    content: { type: 'text' },
+    extracted_data: { type: 'json' },
+    metadata: { type: 'json' }
+  }
+};

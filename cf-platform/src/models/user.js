@@ -16,6 +16,7 @@ export const UserModel = {
   fields: {
     user_id: { type: 'string', primary: true },
     email: { type: 'string', required: true },
+    name: { type: 'string', default: '' }, // Auto-generated from email if not provided
     email_verified: { type: 'boolean', default: false },
     password_hash: { type: 'string', required: true },
     
@@ -45,6 +46,7 @@ export const UserModel = {
     syncFields: [
       'user_id',
       'email',
+      'name',
       'email_verified',
       'status',
       'last_login',
@@ -57,6 +59,25 @@ export const UserModel = {
   },
   
   hooks: {
+    beforeCreate: async (instance, data, env, logger) => {
+      // Auto-generate name if not provided
+      if (!data.name || data.name.trim() === '') {
+        const email = data.email || instance.get('email');
+        const emailPart = email.split('@')[0];
+        // Convert email to friendly name: "john.doe" → "John Doe"
+        const friendlyName = emailPart
+          .split(/[._-]/)
+          .map(part => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
+          .join(' ');
+        
+        instance.set('name', friendlyName);
+        logger?.log('Auto-generated user name', { 
+          email,
+          generatedName: friendlyName 
+        });
+      }
+    },
+    
     afterCreate: async (instance, data, env, logger) => {
       // Create email mapping for login
       const datastore = new (await import('../modules/datastore/index.js')).Datastore(env, logger);
@@ -70,7 +91,8 @@ export const UserModel = {
       // Send welcome email
       logger?.log('Welcome email queued', { 
         userId: instance.get('user_id'),
-        email: instance.get('email') 
+        email: instance.get('email'),
+        name: instance.get('name')
       });
     },
     

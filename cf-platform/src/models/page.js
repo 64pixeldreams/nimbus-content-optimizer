@@ -55,16 +55,66 @@ export const PageModel = {
   
   hooks: {
     afterCreate: async (instance, data, env, logger) => {
-      // Queue for processing
-      logger?.log('Page queued for processing', { 
-        pageId: instance.get('page_id'),
-        projectId: instance.get('project_id')
-      });
+      try {
+        // Create audit log entry using new audit system
+        const { PageAudit } = await import('../modules/pages/utils/audit.js');
+        
+        const context = {
+          env,
+          logger,
+          user_id: instance.get('user_id'),
+          project_id: instance.get('project_id'),
+          page_id: instance.get('page_id')
+        };
+        
+        const pageData = {
+          url: instance.get('url'),
+          title: instance.get('title'),
+          status: instance.get('status'),
+          content: data?.content || instance.get('content') || '',
+          metadata: data?.metadata || instance.get('metadata') || {}
+        };
+        
+        await PageAudit.created(context, pageData);
+        
+        logger?.log('Page queued for processing', { 
+          pageId: instance.get('page_id'),
+          projectId: instance.get('project_id')
+        });
+        
+      } catch (error) {
+        logger?.error('Audit logging failed in afterCreate hook', error);
+        // Don't throw - audit logging shouldn't break page creation
+      }
     },
     
     afterUpdate: async (instance, changes, env, logger) => {
+      // Create audit log for status changes
+      if (changes.status) {
+        const { SavedLogger } = await import('../modules/logs/core/saved-logger.js');
+        const { Datastore } = await import('../modules/datastore/index.js');
+        
+        const datastore = new Datastore(env, logger);
+        const audit = new SavedLogger(
+          datastore,
+          { user_id: instance.get('user_id'), project_id: instance.get('project_id') },
+          instance.get('page_id')
+        );
+        
+        audit.log('Page status updated', {
+          page_id: instance.get('page_id'),
+          project_id: instance.get('project_id'),
+          old_status: changes.status.old,
+          new_status: changes.status.new,
+          action: `page_status_${changes.status.new}`,
+          url: instance.get('url'),
+          title: instance.get('title')
+        });
+        
+        await audit.persist();
+      }
+      
       if (changes.status === 'completed') {
-        // Send webhook notification
         logger?.log('Page processing completed', { 
           pageId: instance.get('page_id'),
           status: 'completed'

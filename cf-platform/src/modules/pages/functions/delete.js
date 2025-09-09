@@ -5,8 +5,9 @@
 
 import { DataModel } from '../../datamodel/index.js';
 
-export async function remove(request, env, logger) {
-  const { page_id } = request.data;
+export async function remove(requestContext) {
+  const { env, logger, payload, auth, datastore } = requestContext;
+  const { page_id } = payload;
 
   if (!page_id) {
     return {
@@ -17,7 +18,7 @@ export async function remove(request, env, logger) {
 
   try {
     // Load page
-    const page = await DataModel.get('PAGE', request.datastore, page_id, logger);
+    const page = await DataModel.get('PAGE', datastore, page_id, logger);
 
     // Soft delete (sets deleted_at timestamp)
     await page.delete();
