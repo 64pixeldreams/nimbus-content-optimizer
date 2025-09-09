@@ -328,6 +328,55 @@ router.post('/api/function', async (request, env) => {
       cloudFunction.define('project.list', projectList, projectListConfig);
       cloudFunction.define('project.get', projectGet, projectGetConfig);
       
+      // Register session debug function
+      cloudFunction.define('debug.session', async (requestContext) => {
+        const { env, logger } = requestContext;
+        
+        try {
+          logger.log('Session debug started');
+          
+          // Test session creation
+          const { createSession } = await import('./modules/auth/utils/sessions.js');
+          const mockRequest = {
+            headers: new Map([
+              ['CF-Connecting-IP', '127.0.0.1'],
+              ['User-Agent', 'Debug Test']
+            ])
+          };
+          
+          const session = await createSession(env, 'user:test123', 'test@example.com', mockRequest, logger);
+          
+          logger.log('Session created', { 
+            token: session.token.substring(0, 10) + '...',
+            expires: session.expires 
+          });
+          
+          // Test session retrieval
+          const { Datastore } = await import('./modules/datastore/index.js');
+          const datastore = new Datastore(env, logger);
+          const storedSession = await datastore.get('SESSION', session.token);
+          
+          logger.log('Session retrieval', { 
+            found: !!storedSession,
+            data: storedSession ? { user_id: storedSession.user_id, email: storedSession.email } : null
+          });
+          
+          return {
+            sessionCreated: true,
+            sessionToken: session.token.substring(0, 10) + '...',
+            sessionStored: !!storedSession,
+            kvNamespace: 'NIMBUS_SESSIONS'
+          };
+          
+        } catch (error) {
+          logger.error('Session debug failed', error);
+          throw error;
+        }
+      }, {
+        auth: false,
+        validation: {}
+      });
+      
       // Register test function
       cloudFunction.define('hello.world', async (requestContext) => {
         const { logger } = requestContext;

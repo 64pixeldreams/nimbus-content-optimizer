@@ -78,31 +78,64 @@ export async function validateSessionToken(env, sessionToken) {
  * @returns {Promise<Object>} Session data with token
  */
 export async function createSession(env, userId, email, request, logger) {
-  const sessionToken = generateSessionToken();
-  const now = new Date();
-  const expires = new Date(now.getTime() + SESSION_DURATION);
+  const timer = logger?.timer('createSession');
   
-  const sessionData = {
-    user_id: userId,
-    email,
-    created: now.toISOString(),
-    expires: expires.toISOString(),
-    ip: request.headers.get('CF-Connecting-IP') || 'unknown',
-    user_agent: request.headers.get('User-Agent') || 'unknown'
-  };
+  try {
+    const sessionToken = generateSessionToken();
+    const now = new Date();
+    const expires = new Date(now.getTime() + SESSION_DURATION);
+    
+    // Safely extract headers
+    let ip = 'unknown';
+    let user_agent = 'unknown';
+    
+    try {
+      if (request?.headers) {
+        if (typeof request.headers.get === 'function') {
+          ip = request.headers.get('CF-Connecting-IP') || 'unknown';
+          user_agent = request.headers.get('User-Agent') || 'unknown';
+        } else if (request.headers['CF-Connecting-IP']) {
+          ip = request.headers['CF-Connecting-IP'] || 'unknown';
+          user_agent = request.headers['User-Agent'] || 'unknown';
+        }
+      }
+    } catch (headerError) {
+      logger?.warn('Failed to extract headers', headerError);
+    }
+    
+    const sessionData = {
+      user_id: userId,
+      email,
+      created: now.toISOString(),
+      expires: expires.toISOString(),
+      ip,
+      user_agent
+    };
 
-  // Store in datastore
-  const datastore = new Datastore(env, logger);
-  await datastore.put('SESSION', sessionToken, sessionData);
+    logger?.log('Creating session', { userId, email, token: sessionToken.substring(0, 10) + '...' });
 
-  // Add to user's sessions list (temporarily disabled for debugging)
-  // await datastore.queryListAddItem('sessions', userId, sessionToken);
+    // Store in datastore
+    const datastore = new Datastore(env, logger);
+    await datastore.put('SESSION', sessionToken, sessionData);
+    
+    logger?.log('Session stored successfully', { token: sessionToken.substring(0, 10) + '...' });
 
-  return {
-    token: sessionToken,
-    expires: expires.toISOString(),
-    ...sessionData
-  };
+    // Add to user's sessions list (temporarily disabled for debugging)
+    // await datastore.queryListAddItem('sessions', userId, sessionToken);
+
+    timer?.end({ success: true });
+    
+    return {
+      token: sessionToken,
+      expires: expires.toISOString(),
+      ...sessionData
+    };
+    
+  } catch (error) {
+    logger?.error('Session creation failed', error);
+    timer?.end({ error: true });
+    throw error;
+  }
 }
 
 /**
