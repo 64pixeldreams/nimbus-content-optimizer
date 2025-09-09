@@ -1,4 +1,15 @@
-# 📊 DATASTORE Module
+# Datastore Module
+
+## 🔒 MODULE STATUS: LOCKED v1.0
+- **Lock Date**: 09/09/2025
+- **API Stability**: STABLE - No breaking changes allowed
+- **Dependencies**: See below
+- **Test Status**: PASSING
+- **Production Status**: LIVE
+
+---
+
+
 
 A unified data storage interface for Cloudflare Workers with swappable adapters for KV and D1.
 
