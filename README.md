@@ -49,6 +49,7 @@ gulp nimbus:scan:map --folder ../dist/local --limit 1
 
 ## 📚 **Documentation**
 
+- **[🤖 CURSOR_GUIDE.md](CURSOR_GUIDE.md)** - Quick reference for AI assistants
 - **[📖 Complete Guide](./docs/README.md)** - Project overview and quick start
 - **[🏗️ Architecture](./docs/ARCHITECTURE.md)** - System design and modules
 - **[🎛️ Configuration](./docs/CONFIG-GUIDE.md)** - Complete config reference
