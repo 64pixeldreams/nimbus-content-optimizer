@@ -24,11 +24,15 @@ export class ProjectManager {
     const timer = this.logger.timer('create');
     
     try {
-      // Create project - DataModel handles validation and ID generation
-      const project = await DataModel.create('PROJECT', {
+      // Initialize datastore
+      const { Datastore } = await import('../../datastore/index.js');
+      const datastore = new Datastore(this.env, this.logger);
+      
+      // Create project using DataModel
+      const project = await DataModel.create('PROJECT', datastore, {
         ...data,
         user_id: this.userId
-      }, this.env, this.userId);
+      }, this.logger);
       
       timer.end({ projectId: project.get('project_id') });
       return {
@@ -53,7 +57,11 @@ export class ProjectManager {
     const timer = this.logger.timer('get');
     
     try {
-      const project = await DataModel.get('PROJECT', projectId, this.env, this.userId);
+      // Initialize datastore
+      const { Datastore } = await import('../../datastore/index.js');
+      const datastore = new Datastore(this.env, this.logger);
+      
+      const project = await DataModel.get('PROJECT', datastore, projectId, this.logger);
       
       if (!project) {
         timer.end({ found: false });
@@ -86,8 +94,12 @@ export class ProjectManager {
     const timer = this.logger.timer('update');
     
     try {
+      // Initialize datastore
+      const { Datastore } = await import('../../datastore/index.js');
+      const datastore = new Datastore(this.env, this.logger);
+      
       // Load project
-      const project = await DataModel.get('PROJECT', projectId, this.env, this.userId);
+      const project = await DataModel.get('PROJECT', datastore, projectId, this.logger);
       
       if (!project) {
         timer.end({ found: false });
@@ -130,8 +142,12 @@ export class ProjectManager {
     const timer = this.logger.timer('delete');
     
     try {
+      // Initialize datastore
+      const { Datastore } = await import('../../datastore/index.js');
+      const datastore = new Datastore(this.env, this.logger);
+      
       // Load project
-      const project = await DataModel.get('PROJECT', projectId, this.env, this.userId);
+      const project = await DataModel.get('PROJECT', datastore, projectId, this.logger);
       
       if (!project) {
         timer.end({ found: false });
@@ -167,17 +183,21 @@ export class ProjectManager {
     const timer = this.logger.timer('list');
     
     try {
-      const query = DataModel.query('PROJECT', this.env)
-        .where('user_id', '=', this.userId)
+      // Initialize datastore
+      const { Datastore } = await import('../../datastore/index.js');
+      const datastore = new Datastore(this.env, this.logger);
+      
+      const query = DataModel.query('PROJECT', datastore, this.logger)
+        .where('user_id', this.userId)
         .orderBy('created_at', 'DESC');
       
       // Apply filters
       if (options.status) {
-        query.where('status', '=', options.status);
+        query.where('status', options.status);
       }
       
       if (options.domain) {
-        query.where('domain', '=', options.domain);
+        query.where('domain', options.domain);
       }
       
       // Include full data if requested
@@ -185,20 +205,14 @@ export class ProjectManager {
         query.withData();
       }
       
-      // Execute
-      const result = await query.execute();
+      // Execute query
+      const result = await query.list();
       
-      timer.end({ count: result.items.length });
+      timer.end({ count: result.data.length });
       return {
         success: true,
-        projects: result.items,
-        pagination: {
-          page: result.page,
-          limit: result.limit,
-          total: result.total,
-          hasNext: result.hasNext,
-          hasPrev: result.hasPrev
-        }
+        projects: result.data,
+        pagination: result.pagination
       };
       
     } catch (error) {
@@ -218,7 +232,11 @@ export class ProjectManager {
     const timer = this.logger.timer('updateConfig');
     
     try {
-      const project = await DataModel.get('PROJECT', projectId, this.env, this.userId);
+      // Initialize datastore
+      const { Datastore } = await import('../../datastore/index.js');
+      const datastore = new Datastore(this.env, this.logger);
+      
+      const project = await DataModel.get('PROJECT', datastore, projectId, this.logger);
       
       if (!project) {
         timer.end({ found: false });
@@ -257,7 +275,11 @@ export class ProjectManager {
     const timer = this.logger.timer('updateExtractionRules');
     
     try {
-      const project = await DataModel.get('PROJECT', projectId, this.env, this.userId);
+      // Initialize datastore
+      const { Datastore } = await import('../../datastore/index.js');
+      const datastore = new Datastore(this.env, this.logger);
+      
+      const project = await DataModel.get('PROJECT', datastore, projectId, this.logger);
       
       if (!project) {
         timer.end({ found: false });
@@ -293,7 +315,11 @@ export class ProjectManager {
     const timer = this.logger.timer('checkOwnership');
     
     try {
-      const project = await DataModel.get('PROJECT', projectId, this.env, this.userId);
+      // Initialize datastore
+      const { Datastore } = await import('../../datastore/index.js');
+      const datastore = new Datastore(this.env, this.logger);
+      
+      const project = await DataModel.get('PROJECT', datastore, projectId, this.logger);
       const isOwner = project && project.get('user_id') === this.userId;
       
       timer.end({ isOwner });

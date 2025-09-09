@@ -38,7 +38,7 @@ export async function login(request, env) {
     logger.log('Login attempt', { email });
     
     // Get password hash
-    const passwordData = await getPasswordHash(env, email.toLowerCase());
+    const passwordData = await getPasswordHash(env, email.toLowerCase(), logger);
     
     if (!passwordData) {
       logger.warn('Login failed - user not found', { email });

@@ -123,8 +123,8 @@ function timingSafeEqual(a, b) {
  * @param {string} userId - User ID
  * @param {string} passwordHash - Hashed password
  */
-export async function storePasswordHash(env, email, userId, passwordHash) {
-  const datastore = new Datastore(env);
+export async function storePasswordHash(env, email, userId, passwordHash, logger) {
+  const datastore = new Datastore(env, logger);
   
   await datastore.put('EMAIL', `email:${email}`, {
     user_id: userId,
@@ -137,10 +137,11 @@ export async function storePasswordHash(env, email, userId, passwordHash) {
  * Get password hash by email
  * @param {Object} env - Cloudflare env
  * @param {string} email - User email
+ * @param {Object} logger - Logger instance
  * @returns {Promise<Object|null>} Password data or null
  */
-export async function getPasswordHash(env, email) {
-  const datastore = new Datastore(env);
+export async function getPasswordHash(env, email, logger) {
+  const datastore = new Datastore(env, logger);
   return await datastore.get('EMAIL', `email:${email}`);
 }
 

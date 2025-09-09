@@ -33,11 +33,11 @@ class AuthSingleton {
   /**
    * Proxy methods to instance
    */
-  async validateApiKey(request) {
+  async validateApiKey(request, logger = null) {
     return this.getInstance().validateApiKey(request);
   }
 
-  async validateSession(request) {
+  async validateSession(request, logger = null) {
     return this.getInstance().validateSession(request);
   }
 }

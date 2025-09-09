@@ -250,6 +250,84 @@ router.post('/api/function', async (request, env) => {
         validation: {}
       });
       
+      // Register login debug function
+      cloudFunction.define('debug.login', async (requestContext) => {
+        const { env, logger, payload } = requestContext;
+        
+        try {
+          const { email, password } = payload;
+          logger.log('Debug login started', { email });
+          
+          // Step 1: Check EMAIL mapping exists
+          const { Datastore } = await import('./modules/datastore/index.js');
+          const datastore = new Datastore(env, logger);
+          
+          const emailKey = `email:${email.toLowerCase()}`;
+          const passwordData = await datastore.get('EMAIL', emailKey);
+          
+          logger.log('EMAIL mapping lookup', { 
+            emailKey, 
+            found: !!passwordData,
+            data: passwordData ? { user_id: passwordData.user_id, hasHash: !!passwordData.hash } : null
+          });
+          
+          if (!passwordData) {
+            return { success: false, error: 'User not found', step: 'email_lookup' };
+          }
+          
+          // Step 2: Verify password
+          const { verifyPassword } = await import('./modules/auth/utils/passwords.js');
+          const isValid = await verifyPassword(password, passwordData.hash);
+          
+          logger.log('Password verification', { isValid });
+          
+          if (!isValid) {
+            return { success: false, error: 'Invalid password', step: 'password_verify' };
+          }
+          
+          // Step 3: Test session creation
+          const { createSession } = await import('./modules/auth/utils/sessions.js');
+          const session = await createSession(env, passwordData.user_id, email, {
+            headers: new Map([['CF-Connecting-IP', '127.0.0.1'], ['User-Agent', 'Debug']])
+          }, logger);
+          
+          logger.log('Session creation', { 
+            token: session.token.substring(0, 10) + '...', 
+            expires: session.expires 
+          });
+          
+          return {
+            success: true,
+            user_id: passwordData.user_id,
+            email: email,
+            session_token: session.token,
+            expires: session.expires,
+            steps_completed: ['email_lookup', 'password_verify', 'session_create']
+          };
+          
+        } catch (error) {
+          logger.error('Debug login failed', error);
+          return { 
+            success: false, 
+            error: error.message,
+            stack: error.stack 
+          };
+        }
+      }, {
+        auth: false,
+        validation: {
+          email: { type: 'string', required: true },
+          password: { type: 'string', required: true }
+        }
+      });
+      
+      // Register project CloudFunctions
+      const { projectCreate, projectCreateConfig, projectList, projectListConfig, projectGet, projectGetConfig } = await import('./modules/project/functions/index.js');
+      
+      cloudFunction.define('project.create', projectCreate, projectCreateConfig);
+      cloudFunction.define('project.list', projectList, projectListConfig);
+      cloudFunction.define('project.get', projectGet, projectGetConfig);
+      
       // Register test function
       cloudFunction.define('hello.world', async (requestContext) => {
         const { logger } = requestContext;
