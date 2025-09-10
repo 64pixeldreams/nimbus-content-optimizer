@@ -56,26 +56,27 @@ export const PageModel = {
   hooks: {
     afterCreate: async (instance, data, env, logger) => {
       try {
-        // Create audit log entry using new audit system
-        const { PageAudit } = await import('../modules/pages/utils/audit.js');
+        // Create audit log for page creation
+        const { Datastore } = await import('../modules/datastore/index.js');
+        const { AuditLogger } = await import('../modules/logs/core/audit-logger.js');
         
-        const context = {
-          env,
-          logger,
-          user_id: instance.get('user_id'),
-          project_id: instance.get('project_id'),
-          page_id: instance.get('page_id')
-        };
+        const datastore = new Datastore(env, logger);
+        const auditLogger = new AuditLogger(datastore, logger);
         
-        const pageData = {
-          url: instance.get('url'),
-          title: instance.get('title'),
-          status: instance.get('status'),
-          content: data?.content || instance.get('content') || '',
-          metadata: data?.metadata || instance.get('metadata') || {}
-        };
-        
-        await PageAudit.created(context, pageData);
+        await auditLogger.logPageActivity(
+          instance.get('user_id'),
+          instance.get('page_id'),
+          instance.get('project_id'),
+          'page_created',
+          `Page created: ${instance.get('title') || instance.get('url')}`,
+          {
+            url: instance.get('url'),
+            title: instance.get('title'),
+            status: instance.get('status'),
+            content_size: instance.get('content')?.length || 0,
+            metadata: data?.metadata || instance.get('metadata') || {}
+          }
+        );
         
         logger?.log('Page queued for processing', { 
           pageId: instance.get('page_id'),
@@ -91,27 +92,29 @@ export const PageModel = {
     afterUpdate: async (instance, changes, env, logger) => {
       // Create audit log for status changes
       if (changes.status) {
-        const { SavedLogger } = await import('../modules/logs/core/saved-logger.js');
-        const { Datastore } = await import('../modules/datastore/index.js');
-        
-        const datastore = new Datastore(env, logger);
-        const audit = new SavedLogger(
-          datastore,
-          { user_id: instance.get('user_id'), project_id: instance.get('project_id') },
-          instance.get('page_id')
-        );
-        
-        audit.log('Page status updated', {
-          page_id: instance.get('page_id'),
-          project_id: instance.get('project_id'),
-          old_status: changes.status.old,
-          new_status: changes.status.new,
-          action: `page_status_${changes.status.new}`,
-          url: instance.get('url'),
-          title: instance.get('title')
-        });
-        
-        await audit.persist();
+        try {
+          const { Datastore } = await import('../modules/datastore/index.js');
+          const { AuditLogger } = await import('../modules/logs/core/audit-logger.js');
+          
+          const datastore = new Datastore(env, logger);
+          const auditLogger = new AuditLogger(datastore, logger);
+          
+          await auditLogger.logPageActivity(
+            instance.get('user_id'),
+            instance.get('page_id'),
+            instance.get('project_id'),
+            `page_status_${changes.status.new}`,
+            `Page status updated: ${changes.status.old} → ${changes.status.new}`,
+            {
+              url: instance.get('url'),
+              title: instance.get('title'),
+              old_status: changes.status.old,
+              new_status: changes.status.new
+            }
+          );
+        } catch (auditError) {
+          logger?.warn('Failed to create page status audit log', auditError);
+        }
       }
       
       if (changes.status === 'completed') {

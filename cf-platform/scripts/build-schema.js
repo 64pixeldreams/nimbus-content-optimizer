@@ -11,11 +11,13 @@ import { resolve } from 'path';
 import { UserModel } from '../src/models/user.js';
 import { ProjectModel } from '../src/models/project.js';
 import { PageModel } from '../src/models/page.js';
+import { LogModel } from '../src/models/log.js';
 
 // Register all models
 DataModel.register(UserModel);
 DataModel.register(ProjectModel);
 DataModel.register(PageModel);
+DataModel.register(LogModel);
 
 // Generate schema
 const schema = DataModel.generateAllSchemas();

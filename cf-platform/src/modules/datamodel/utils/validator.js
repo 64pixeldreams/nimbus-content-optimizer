@@ -110,6 +110,17 @@ function validateRule(value, rule, fieldName) {
         }
         break;
         
+      case 'url-optional':
+        // Only validate URL if value is not empty
+        if (value && value.trim() !== '') {
+          try {
+            new URL(value);
+          } catch {
+            return `Field '${fieldName}' must be a valid URL or empty`;
+          }
+        }
+        break;
+        
       case 'domain':
         const domainRegex = /^([a-z0-9]+(-[a-z0-9]+)*\.)+[a-z]{2,}$/i;
         if (!domainRegex.test(value)) {

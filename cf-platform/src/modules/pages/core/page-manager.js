@@ -60,7 +60,7 @@ export class PageManager {
       // Initialize datastore
       const { Datastore } = await import('../../datastore/index.js');
       const datastore = new Datastore(this.env, this.logger);
-      datastore.setAuthContext(this.userId);
+      datastore.auth(this.userId);
       
       // Get page using DataModel
       const page = await DataModel.get('PAGE', datastore, pageId, this.logger);
@@ -91,7 +91,7 @@ export class PageManager {
       // Initialize datastore
       const { Datastore } = await import('../../datastore/index.js');
       const datastore = new Datastore(this.env, this.logger);
-      datastore.setAuthContext(this.userId);
+      datastore.auth(this.userId);
       
       // Build query
       const query = DataModel.query('PAGE', datastore, this.logger);
@@ -112,7 +112,8 @@ export class PageManager {
       query.orderBy('created_at', 'DESC');
       
       // Execute query
-      const results = await query.execute();
+      const result = await query.list();
+      const results = result.data || [];
       
       timer.end({ count: results.length });
       return {
@@ -143,7 +144,7 @@ export class PageManager {
       // Initialize datastore
       const { Datastore } = await import('../../datastore/index.js');
       const datastore = new Datastore(this.env, this.logger);
-      datastore.setAuthContext(this.userId);
+      datastore.auth(this.userId);
       
       // Load page
       const page = await DataModel.get('PAGE', datastore, pageId, this.logger);
@@ -187,7 +188,7 @@ export class PageManager {
       // Initialize datastore
       const { Datastore } = await import('../../datastore/index.js');
       const datastore = new Datastore(this.env, this.logger);
-      datastore.setAuthContext(this.userId);
+      datastore.auth(this.userId);
       
       // Load page
       const page = await DataModel.get('PAGE', datastore, pageId, this.logger);

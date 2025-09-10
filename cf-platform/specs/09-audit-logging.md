@@ -17,28 +17,29 @@ Comprehensive audit trail system for pages, projects, and user activities with D
 CREATE TABLE audit_logs (
   log_id TEXT PRIMARY KEY,
   user_id TEXT NOT NULL,
-  project_id TEXT,
-  page_id TEXT,
   entity_type TEXT NOT NULL,        -- 'page', 'project', 'user', 'system'
+  entity_id TEXT,                   -- Primary entity ID being logged
   action TEXT NOT NULL,             -- 'created', 'updated', 'processed', 'deleted'
-  details TEXT,                     -- JSON details about the action
-  timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  request_id TEXT,
-  ip_address TEXT,
-  user_agent TEXT,
+  message TEXT NOT NULL,            -- Human-readable log message
+  level TEXT DEFAULT 'info',        -- 'info', 'warn', 'error'
+  entity_ids TEXT DEFAULT '[]',     -- JSON array of all related entity IDs (flexible indexing)
+  details TEXT DEFAULT '{}',        -- JSON details about the action
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   
   -- Indexes for efficient queries
-  INDEX idx_audit_user_id (user_id),
-  INDEX idx_audit_project_id (project_id),
-  INDEX idx_audit_page_id (page_id),
-  INDEX idx_audit_entity_type (entity_type),
-  INDEX idx_audit_action (action),
-  INDEX idx_audit_timestamp (timestamp),
-  INDEX idx_audit_user_timestamp (user_id, timestamp),
-  INDEX idx_audit_project_timestamp (project_id, timestamp),
-  INDEX idx_audit_page_timestamp (page_id, timestamp)
+  INDEX idx_audit_logs_user_id (user_id),
+  INDEX idx_audit_logs_entity_id (entity_id)
 );
 ```
+
+### **Flexible Entity Indexing**
+The new `entity_ids` field allows scalable relationships:
+- **User Log**: `entity_ids = ["user:abc123"]`
+- **Project Log**: `entity_ids = ["project:xyz789", "user:abc123"]`
+- **Page Log**: `entity_ids = ["page:def456", "project:xyz789", "user:abc123"]`
+
+This design allows querying logs by any related entity ID without hardcoded fields.
 
 ## 🎯 **Audit Event Types**
 
@@ -127,45 +128,37 @@ CREATE TABLE audit_logs (
 
 ## 🔍 **Audit Feed Queries**
 
-### **Page Activity Feed**
+### **Flexible Entity Query System**
 ```javascript
+// Get all activity for any entity using entity_ids
+async function getEntityAuditFeed(entityId, limit = 50) {
+  const query = `
+    SELECT log_id, user_id, entity_type, entity_id, action, message, details, created_at
+    FROM audit_logs 
+    WHERE entity_ids LIKE ? 
+    ORDER BY created_at DESC 
+    LIMIT ?
+  `;
+  return await d1.prepare(query).bind(`%${entityId}%`, limit).all();
+}
+
 // Get all activity for a specific page
 async function getPageAuditFeed(pageId, limit = 50) {
-  const query = `
-    SELECT log_id, user_id, action, details, timestamp, request_id
-    FROM audit_logs 
-    WHERE page_id = ? 
-    ORDER BY timestamp DESC 
-    LIMIT ?
-  `;
-  return await d1.prepare(query).bind(pageId, limit).all();
+  return await getEntityAuditFeed(pageId, limit);
 }
-```
 
-### **Project Activity Feed**
-```javascript
 // Get all activity for a project (includes all pages)
 async function getProjectAuditFeed(projectId, limit = 100) {
-  const query = `
-    SELECT log_id, user_id, page_id, action, details, timestamp
-    FROM audit_logs 
-    WHERE project_id = ? 
-    ORDER BY timestamp DESC 
-    LIMIT ?
-  `;
-  return await d1.prepare(query).bind(projectId, limit).all();
+  return await getEntityAuditFeed(projectId, limit);
 }
-```
 
-### **User Activity Feed**
-```javascript
 // Get all user activity across all projects/pages
 async function getUserAuditFeed(userId, limit = 100) {
   const query = `
-    SELECT log_id, project_id, page_id, entity_type, action, details, timestamp
+    SELECT log_id, entity_type, entity_id, action, message, details, created_at
     FROM audit_logs 
     WHERE user_id = ? 
-    ORDER BY timestamp DESC 
+    ORDER BY created_at DESC 
     LIMIT ?
   `;
   return await d1.prepare(query).bind(userId, limit).all();
@@ -176,35 +169,36 @@ async function getUserAuditFeed(userId, limit = 100) {
 
 ### **CloudFunction Integration**
 ```javascript
-// Enhanced page operations with audit logging
+// Enhanced page operations with audit logging (using Model Hooks)
 page.create {
-  // ... create page ...
+  // Page creation automatically triggers afterCreate hook
+  // Hook creates audit log with entity_ids = [page_id, project_id, user_id]
   
-  // Auto-audit log
-  await auditLog({
+  // Manual audit logging (if needed)
+  await auditLogger.createLog({
     user_id: auth.user_id,
-    project_id: payload.project_id,
-    page_id: newPage.page_id,
     entity_type: "page",
+    entity_id: newPage.page_id,
     action: "created",
+    message: `Page created: ${payload.title}`,
+    entity_ids: [newPage.page_id, payload.project_id, auth.user_id],
     details: {
       url: payload.url,
-      content_blocks: payload.content.above_fold_blocks.length + payload.content.rest_of_page_blocks.length,
+      title: payload.title,
       extraction_source: "gulp_local"
     }
   });
 }
 
 page.process {
-  // ... start AI processing ...
-  
-  // Audit processing start
-  await auditLog({
+  // Processing start
+  await auditLogger.createLog({
     user_id: auth.user_id,
-    project_id: page.project_id,
-    page_id: payload.page_id,
-    entity_type: "page", 
+    entity_type: "page",
+    entity_id: payload.page_id,
     action: "processing_started",
+    message: `AI processing started for ${page.title}`,
+    entity_ids: [payload.page_id, page.project_id, auth.user_id],
     details: {
       optimization_type: payload.optimization_type,
       ai_model: "gpt-4"
@@ -213,13 +207,14 @@ page.process {
   
   // ... AI processing happens ...
   
-  // Audit completion
-  await auditLog({
+  // Processing completion
+  await auditLogger.createLog({
     user_id: auth.user_id,
-    project_id: page.project_id,
-    page_id: payload.page_id,
     entity_type: "page",
-    action: "optimization_completed", 
+    entity_id: payload.page_id,
+    action: "optimization_completed",
+    message: `AI optimization completed for ${page.title}`,
+    entity_ids: [payload.page_id, page.project_id, auth.user_id],
     details: {
       processing_time_ms: processingTime,
       changes_made: changesCount,
@@ -231,23 +226,22 @@ page.process {
 
 ### **Audit Feed CloudFunctions**
 ```javascript
-// Get audit feed for page
-audit.page.feed {
-  page_id: "page:abc123",
+// Get audit feed for any entity (using entity_ids)
+page.logs {
+  type: "user",           // Get logs for authenticated user
+  project_id?: "project:xyz", // Optional: filter by project
   limit?: 50
 }
 
-// Get audit feed for project  
-audit.project.feed {
-  project_id: "project:xyz",
-  limit?: 100
-}
+// Examples of actual usage:
+// Get all user activity
+cf.run('page.logs', { type: 'user', limit: 50 })
 
-// Get user activity feed
-audit.user.feed {
-  user_id: "user:abc123",
-  limit?: 100
-}
+// Get project-specific activity  
+cf.run('page.logs', { type: 'user', project_id: 'project:xyz', limit: 100 })
+
+// Get page-specific activity (would need custom implementation)
+cf.run('page.logs', { type: 'entity', entity_id: 'page:abc123', limit: 50 })
 ```
 
 ## 🎯 **Frontend Integration**

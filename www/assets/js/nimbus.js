@@ -80,19 +80,65 @@ const nimbus = {
   // ============================================================================
   
   async loadDashboard() {
-    const [projects, recentLogs] = await Promise.all([
-      this.projects.list(),
-      this.logs.user(10)
-    ]);
-    
-    return {
-      user: cf.getUser(),
-      projects,
-      recentActivity: recentLogs,
-      stats: {
-        projectCount: projects.length
+    try {
+      // Load projects first
+      const projects = await this.projects.list();
+      
+      // Load all pages for the user (across all projects)
+      let allPages = [];
+      let totalPages = 0;
+      let processingPages = 0;
+      
+      try {
+        // Get all pages for each project
+        for (const project of projects) {
+          try {
+            const pages = await this.pages.list(project.project_id);
+            project.page_count = pages.length;
+            project.pages = pages;
+            allPages = allPages.concat(pages);
+          } catch (pageError) {
+            console.warn(`Could not load pages for project ${project.project_id}:`, pageError.message);
+            project.page_count = 0;
+            project.pages = [];
+          }
+        }
+        
+        totalPages = allPages.length;
+        processingPages = allPages.filter(p => p.status === 'processing').length;
+        
+      } catch (pageError) {
+        console.warn('Could not load pages:', pageError.message);
+        // Set default counts
+        projects.forEach(project => {
+          project.page_count = 0;
+          project.pages = [];
+        });
       }
-    };
+      
+      // Try to load logs, but don't fail if it doesn't work
+      let recentLogs = [];
+      try {
+        recentLogs = await this.logs.user(10);
+      } catch (logError) {
+        console.warn('Could not load logs:', logError.message);
+        recentLogs = []; // Empty logs if fails
+      }
+      
+      return {
+        user: cf.getUser(),
+        projects,
+        recentActivity: recentLogs,
+        stats: {
+          projectCount: projects.length,
+          pageCount: totalPages,
+          processingCount: processingPages
+        }
+      };
+    } catch (error) {
+      console.error('Dashboard load failed:', error);
+      throw error;
+    }
   },
   
   async loadProject(projectId) {

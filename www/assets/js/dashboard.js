@@ -12,7 +12,14 @@ document.addEventListener('DOMContentLoaded', async () => {
   
   // Check authentication
   if (!cf.isAuthenticated()) {
-    window.location.href = '/auth/login.html';
+    console.error('Dashboard: User not authenticated!');
+    document.getElementById('content').innerHTML = `
+      <div class="alert alert-danger">
+        <h4>Authentication Error</h4>
+        <p>User not authenticated. Please log in.</p>
+        <a href="/auth/login.html" class="btn btn-primary">Go to Login</a>
+      </div>
+    `;
     return;
   }
   
@@ -33,9 +40,8 @@ async function loadDashboard() {
     
     // Update stats
     document.getElementById('projects-count').textContent = data.stats.projectCount;
-    document.getElementById('pages-count').textContent = 
-      data.projects.reduce((sum, p) => sum + (p.page_count || 0), 0);
-    document.getElementById('processing-count').textContent = '0'; // TODO: Calculate processing
+    document.getElementById('pages-count').textContent = data.stats.pageCount;
+    document.getElementById('processing-count').textContent = data.stats.processingCount;
     
     // Render projects
     renderProjects(data.projects);
@@ -45,7 +51,13 @@ async function loadDashboard() {
     
   } catch (error) {
     console.error('Failed to load dashboard:', error);
-    showError('Failed to load dashboard data');
+    
+    // Show specific error message
+    const errorMessage = error.message.includes('nimbus') ? 
+      'Nimbus wrapper error: ' + error.message :
+      'Failed to load dashboard data: ' + error.message;
+      
+    showError(errorMessage);
   }
 }
 

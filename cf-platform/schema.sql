@@ -1,5 +1,5 @@
 -- DataModel Generated Schema
--- Generated at: 2025-09-09T20:26:21.671Z
+-- Generated at: 2025-09-10T19:59:21.012Z
 
 -- Table: users
 CREATE TABLE IF NOT EXISTS users (
@@ -47,4 +47,21 @@ CREATE TABLE IF NOT EXISTS page_meta (
 
 CREATE INDEX IF NOT EXISTS idx_page_meta_project_id ON page_meta (project_id);
 CREATE INDEX IF NOT EXISTS idx_page_meta_user_id ON page_meta (user_id);
+
+-- Table: audit_logs
+CREATE TABLE IF NOT EXISTS audit_logs (
+  log_id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL,
+  entity_type TEXT NOT NULL,
+  entity_id TEXT,
+  action TEXT NOT NULL,
+  message TEXT NOT NULL,
+  level TEXT DEFAULT 'info',
+  entity_ids TEXT DEFAULT '[]',
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_audit_logs_user_id ON audit_logs (user_id);
+CREATE INDEX IF NOT EXISTS idx_audit_logs_entity_id ON audit_logs (entity_id);
 

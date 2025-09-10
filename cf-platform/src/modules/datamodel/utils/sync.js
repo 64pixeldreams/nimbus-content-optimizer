@@ -36,7 +36,15 @@ export function prepareD1Data(data, modelDef) {
   if (modelDef.d1?.syncFields) {
     for (const field of modelDef.d1.syncFields) {
       if (data[field] !== undefined) {
-        d1Data[field] = data[field];
+        const fieldDef = modelDef.fields[field];
+        const value = data[field];
+        
+        // Handle JSON fields by stringifying them
+        if (fieldDef?.type === 'json' && value !== null && value !== undefined) {
+          d1Data[field] = typeof value === 'string' ? value : JSON.stringify(value);
+        } else {
+          d1Data[field] = value;
+        }
       }
     }
   }

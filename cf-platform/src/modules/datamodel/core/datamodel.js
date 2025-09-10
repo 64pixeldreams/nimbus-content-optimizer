@@ -268,9 +268,13 @@ export class DataModel {
       
       // Execute after hook
       if (isCreate) {
+        console.log('🔧 DATAMODEL: Calling afterCreate hook for', this.modelName);
         await executeHook(this.modelDef, 'afterCreate', this, null, this.datastore.env, this.logger);
+        console.log('🔧 DATAMODEL: afterCreate hook completed for', this.modelName);
       } else {
+        console.log('🔧 DATAMODEL: Calling afterUpdate hook for', this.modelName);
         await executeHook(this.modelDef, 'afterUpdate', this, changes, this.datastore.env, this.logger);
+        console.log('🔧 DATAMODEL: afterUpdate hook completed for', this.modelName);
       }
       
       timer?.end({ id, action: isCreate ? 'create' : 'update' });

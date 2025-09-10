@@ -12,6 +12,7 @@ import { Datastore } from './modules/datastore/index.js';
 import { UserModel } from './models/user.js';
 import { ProjectModel } from './models/project.js';
 import { PageModel } from './models/page.js';
+import { LogModel } from './models/log.js';
 
 // Auth routes
 import { login } from './routes/auth/login.js';
@@ -40,6 +41,7 @@ let cloudFunction = null;
 DataModel.registerModel(UserModel);
 DataModel.registerModel(ProjectModel);
 DataModel.registerModel(PageModel);
+DataModel.registerModel(LogModel);
 
 // Health check
 router.get('/health', (request, env) => {
@@ -83,6 +85,45 @@ router.post('/api/function', async (request, env) => {
       }, {
         auth: false, // Can be secured later if needed
         validation: {}
+      });
+      
+      // Register test log creation function
+      cloudFunction.define('test.log.create', async (requestContext) => {
+        const { env, logger, payload, auth } = requestContext;
+        
+        try {
+          // Use LogManager to create the log
+          const { LogManager } = await import('./modules/logs/core/log-manager.js');
+          const logManager = new LogManager(env, auth.user_id);
+          
+          const result = await logManager.create(payload);
+          
+          logger.log('Test log created', { 
+            success: result.success,
+            logId: payload.log_id || 'unknown'
+          });
+          
+          return result;
+          
+        } catch (error) {
+          logger.error('Test log creation failed', error);
+          return {
+            success: false,
+            error: error.message
+          };
+        }
+      }, {
+        auth: true,
+        validation: {
+          user_id: { type: 'string', required: true },
+          entity_type: { type: 'string', required: true },
+          entity_id: { type: 'string', required: true },
+          action: { type: 'string', required: true },
+          message: { type: 'string', required: true },
+          level: { type: 'string', default: 'info' },
+          entity_ids: { type: 'json', default: [] },
+          details: { type: 'json', default: {} }
+        }
       });
       
       // Register user signup function for debugging
@@ -452,6 +493,21 @@ router.delete('/users/account', withAuth, deleteAccount);
 // Export for Cloudflare Worker
 export default {
   async fetch(request, env, ctx) {
+    // Handle CORS preflight requests
+    if (request.method === 'OPTIONS') {
+      const origin = request.headers.get('Origin') || 'http://localhost:3000';
+      return new Response(null, {
+        status: 200,
+        headers: {
+          'Access-Control-Allow-Origin': origin,
+          'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+          'Access-Control-Allow-Headers': 'Content-Type, Authorization, Cookie, X-Request-ID, X-Session-Token',
+          'Access-Control-Allow-Credentials': 'true',
+          'Access-Control-Max-Age': '86400'
+        }
+      });
+    }
+
     // Set up request context for logging
     LOGS.setRequest({
       requestId: crypto.randomUUID(),
@@ -461,7 +517,29 @@ export default {
     });
 
     try {
-      return await router.handle(request, env, ctx);
+      const response = await router.handle(request, env, ctx);
+      
+      // Add CORS headers to all responses
+      const origin = request.headers.get('Origin') || 'http://localhost:3000';
+      const corsHeaders = {
+        'Access-Control-Allow-Origin': origin,
+        'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization, Cookie, X-Request-ID, X-Session-Token',
+        'Access-Control-Allow-Credentials': 'true'
+      };
+      
+      // Clone response and add CORS headers
+      const newResponse = new Response(response.body, {
+        status: response.status,
+        statusText: response.statusText,
+        headers: {
+          ...Object.fromEntries(response.headers.entries()),
+          ...corsHeaders
+        }
+      });
+      
+      return newResponse;
+      
     } catch (err) {
       LOGS.error('Unhandled error', err);
       return new Response(JSON.stringify({ 
@@ -469,7 +547,11 @@ export default {
         requestId: LOGS.getRequestId()
       }), { 
         status: 500,
-        headers: { 'Content-Type': 'application/json' }
+        headers: { 
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': request.headers.get('Origin') || 'http://localhost:3000',
+          'Access-Control-Allow-Credentials': 'true'
+        }
       });
     }
   }

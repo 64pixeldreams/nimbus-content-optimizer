@@ -70,20 +70,29 @@ export class Auth {
     const timer = this.logger.timer('validateSession');
     
     try {
-      // Extract session cookie
+      // Extract session from Cookie header OR X-Session-Token header
+      let sessionToken = null;
+      
+      // Try Cookie header first (for same-domain requests)
       const cookieHeader = request.headers.get('Cookie');
-      if (!cookieHeader) {
-        this.logger.debug('No Cookie header found');
-        timer.end({ found: false });
-        return null;
+      if (cookieHeader) {
+        this.logger.debug('Cookie header found', { cookie: cookieHeader });
+        sessionToken = this.parseSessionCookie(cookieHeader);
+        if (sessionToken) {
+          this.logger.debug('Session found in Cookie header');
+        }
       }
-
-      this.logger.debug('Cookie header', { cookie: cookieHeader });
-
-      // Parse session token from cookies
-      const sessionToken = this.parseSessionCookie(cookieHeader);
+      
+      // Try X-Session-Token header (for cross-domain requests)
       if (!sessionToken) {
-        this.logger.debug('No session token found in cookies');
+        sessionToken = request.headers.get('X-Session-Token');
+        if (sessionToken) {
+          this.logger.debug('Session found in X-Session-Token header');
+        }
+      }
+      
+      if (!sessionToken) {
+        this.logger.debug('No session found in Cookie or X-Session-Token headers');
         timer.end({ found: false });
         return null;
       }

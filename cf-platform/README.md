@@ -50,15 +50,25 @@ Production-ready SaaS backend for the NimbusAI content optimization system. Buil
    - Configuration and extraction rules management
    - DataModel integration with metadata sync
 
-8. **[API Key Management](src/modules/api-key/)** 🔑
-   - Secure generation and storage
-   - Usage tracking and rate limiting
-   - User-scoped key management
+8. **[Pages Module](src/modules/pages/)** 📄
+   - Complete page management with CRUD operations
+   - Content extraction and AI optimization integration
+   - DataModel integration with audit logging
 
-9. **[Unified Datastore](src/modules/datastore/)** 💾
-   - KV and D1 adapters with auth context
-   - Composite key patterns and list operations
-   - Performance optimized with logging integration
+9. **[Audit Logging System](src/modules/logs/)** 📊
+   - Flexible entity indexing with `entity_ids` array
+   - Model hooks for automatic audit trail creation
+   - D1-based queryable activity feeds for dashboard
+
+10. **[API Key Management](src/modules/api-key/)** 🔑
+    - Secure generation and storage
+    - Usage tracking and rate limiting
+    - User-scoped key management
+
+11. **[Unified Datastore](src/modules/datastore/)** 💾
+    - KV and D1 adapters with auth context
+    - Composite key patterns and list operations
+    - Performance optimized with logging integration
 
 ## 🚀 **Quick Start**
 
@@ -105,16 +115,19 @@ cf-platform/
 │   ├── index.js              # Worker entry point + routing
 │   ├── models/               # Business entity definitions
 │   │   ├── user.js          # User model with hooks
-│   │   ├── project.js       # Project model  
-│   │   └── page.js          # Page model
+│   │   ├── project.js       # Project model with audit logging
+│   │   ├── page.js          # Page model with audit logging
+│   │   └── log.js           # Audit log model with entity_ids
 │   ├── modules/             # Core framework modules
 │   │   ├── datamodel/       # ORM with DataProxy lazy loading
 │   │   ├── cloudfunction/   # Unified API framework
 │   │   ├── auth/            # Authentication system
 │   │   ├── user/            # User management
+│   │   ├── project/         # Project management with CRUD
+│   │   ├── pages/           # Page management with CRUD
 │   │   ├── messaging/       # Multi-channel notifications
 │   │   ├── datastore/       # KV/D1 storage abstraction
-│   │   └── logs/            # Context-aware logging
+│   │   └── logs/            # Context-aware logging + audit system
 │   └── routes/              # HTTP endpoint handlers
 ├── tests/                   # Comprehensive test suite
 ├── specs/                   # Technical specifications
@@ -131,6 +144,8 @@ cf-platform/
 - **🔄 Auto Migration** - Database schema updates on deployment
 - **📧 Multi-Channel Messaging** - Email + Slack with template system
 - **🏢 Multi-Tenant Ready** - User isolation and project ownership
+- **📄 Page Management** - Complete CRUD operations with content extraction integration
+- **🔍 Flexible Audit System** - Entity-based indexing for scalable activity tracking
 
 ## 📐 **Design Principles**
 
@@ -150,7 +165,8 @@ See **[DEPLOYMENT.md](DEPLOYMENT.md)** for detailed instructions.
 
 ## 📊 **Current Status: PRODUCTION READY**
 
-- ✅ **Complete SaaS Backend** - User management, auth, projects, APIs
+- ✅ **Complete SaaS Backend** - User management, auth, projects, pages, APIs
+- ✅ **Audit Logging System** - Model hooks with flexible entity indexing
 - ✅ **Comprehensive Testing** - API + unit tests with 90%+ coverage  
 - ✅ **Security Hardened** - Enterprise-grade auth and data protection
 - ✅ **Performance Optimized** - Hybrid storage with lazy loading

@@ -29,10 +29,26 @@ class CFramework {
       requestTimeout: 30000
     };
     
-    // Load existing session
+    // Load existing session and user from localStorage
     this.session = localStorage.getItem(this.config.sessionKey);
     this.user = JSON.parse(localStorage.getItem(this.config.userKey) || 'null');
     this.initialized = true;
+    
+    // Debug session loading
+    console.log('CFramework init - Loading session:', {
+      sessionKey: this.config.sessionKey,
+      userKey: this.config.userKey,
+      sessionFromStorage: this.session,
+      userFromStorage: this.user,
+      localStorageKeys: Object.keys(localStorage),
+      localStorageLength: localStorage.length
+    });
+    
+    // Check each localStorage item
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      console.log(`localStorage[${key}] = ${localStorage.getItem(key)?.substring(0, 50)}...`);
+    }
     
     this._log('CFramework initialized', {
       serverUrl: this.config.serverUrl,
@@ -68,20 +84,23 @@ class CFramework {
       
       const result = await response.json();
       
-      if (result.success) {
-        this.session = result.session_token;
-        this.user = {
-          user_id: result.userId,
-          email: result.email,
-          name: result.name || email.split('@')[0],
-          expires: result.expires
-        };
         
-        localStorage.setItem(this.config.sessionKey, this.session);
-        localStorage.setItem(this.config.userKey, JSON.stringify(this.user));
-        
-        this._log('Login successful', { email, userId: result.userId });
-      }
+        if (result.success) {
+          // Store session manually for cross-domain requests
+          this.session = result.session_token;
+          this.user = {
+            user_id: result.userId,
+            email: result.email,
+            name: result.name || email.split('@')[0],
+            expires: result.expires
+          };
+          
+          localStorage.setItem(this.config.sessionKey, this.session);
+          localStorage.setItem(this.config.userKey, JSON.stringify(this.user));
+          
+          
+          this._log('Login successful', { email, userId: result.userId });
+        }
       
       return result;
       
@@ -121,22 +140,31 @@ class CFramework {
     try {
       this._log(`Running CloudFunction: ${action}`, { action, payload });
       
+      
+      // Hybrid approach: Try cookie first, fallback to manual header
+      const headers = {
+        'Content-Type': 'application/json'
+      };
+      
+      // Add session token as custom header (browsers allow custom headers)
+      if (this.session && this.session !== 'browser-cookie') {
+        headers['X-Session-Token'] = this.session;
+      }
+      
       const response = await fetch(`${this.config.serverUrl}/api/function`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Cookie': `nimbus_session=${this.session}`
-        },
+        headers,
         body: JSON.stringify({ action, payload })
+        // Remove credentials: 'include' for manual cookie handling
       });
+      
       
       const result = await response.json();
       
-      // Handle auth errors
+      // Handle auth errors (DON'T clear session automatically)
       if (result.error?.code === 'AUTHENTICATION_ERROR') {
-        this._log('Session expired', { action });
-        this._clearSession();
-        throw new Error('Session expired - please login again');
+        this._log('Authentication failed', { action });
+        throw new Error('Authentication failed: ' + (result.error?.message || 'Session invalid'));
       }
       
       this._log(`CloudFunction ${action} completed`, { 
@@ -159,9 +187,8 @@ class CFramework {
     const payload = { type, limit };
     if (entityId) payload.entity_id = entityId;
     
-    // Generic log action - each app can implement their own
-    const logAction = `${this.config.appName}.logs` || 'logs';
-    const result = await this.run(logAction, payload);
+    // Use page.logs action (standard across apps)
+    const result = await this.run('page.logs', payload);
     
     // Get business logs from data.logs, not framework logs from result.logs
     return result.data?.logs || result.logs || [];
@@ -171,7 +198,9 @@ class CFramework {
    * User info
    */
   isAuthenticated() {
-    return !!(this.session && this.user);
+    const hasSession = !!this.session;
+    const hasUser = !!this.user;
+    return hasSession && hasUser;
   }
   
   getUser() {

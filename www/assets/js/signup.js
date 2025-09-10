@@ -53,9 +53,7 @@ async function handleSignup(event) {
       
       // Auto-login after signup
       await cf.login(email, password);
-      setTimeout(() => {
-        window.location.href = '/app/dashboard.html';
-      }, 1500);
+      window.location.href = '/app/dashboard.html';
     } else {
       errorDiv.textContent = result.error || 'Signup failed. Please try again.';
       errorDiv.style.display = 'block';

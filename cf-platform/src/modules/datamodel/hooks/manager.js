@@ -13,16 +13,33 @@
  * @param {object} logger - Logger instance
  */
 export async function executeHook(modelDef, hookName, instance, data, env, logger) {
+  console.log('🔧 HOOK MANAGER: executeHook called', {
+    model: modelDef.name,
+    hook: hookName,
+    hasHook: !!modelDef.hooks?.[hookName]
+  });
+  
+  // Also log to the logger so it appears in the response
+  logger?.log('🔧 HOOK MANAGER: executeHook called', {
+    model: modelDef.name,
+    hook: hookName,
+    hasHook: !!modelDef.hooks?.[hookName]
+  });
+  
   if (!modelDef.hooks?.[hookName]) {
+    console.log('🔧 HOOK MANAGER: No hook found, returning');
     return;
   }
   
   const timer = logger?.timer(`hook.${hookName}`);
   
   try {
+    console.log('🔧 HOOK MANAGER: Executing hook...');
     await modelDef.hooks[hookName](instance, data, env, logger);
+    console.log('🔧 HOOK MANAGER: Hook executed successfully');
     timer?.end({ model: modelDef.name, hook: hookName });
   } catch (error) {
+    console.log('🔧 HOOK MANAGER: Hook failed with error:', error);
     logger?.error(`Hook ${hookName} failed`, error);
     timer?.end({ error: true });
     // Don't throw - hooks shouldn't break operations

@@ -10,6 +10,7 @@ document.addEventListener('DOMContentLoaded', () => {
     appName: 'nimbus'
   });
   
+  // Check existing authentication
   // Auto-redirect if already logged in
   cf.autoRedirect();
   
@@ -37,8 +38,16 @@ async function handleLogin(event) {
     const result = await cf.login(email, password);
     
     if (result.success) {
-      window.location.href = '/app/dashboard.html';
+      if (cf.isAuthenticated()) {
+        // Redirect to dashboard
+        window.location.href = '/app/dashboard.html';
+      } else {
+        console.error('Login succeeded but user not authenticated!');
+        errorDiv.textContent = 'Login succeeded but session not stored properly.';
+        errorDiv.style.display = 'block';
+      }
     } else {
+      console.error('Login failed:', result.error);
       errorDiv.textContent = result.error || 'Login failed. Please try again.';
       errorDiv.style.display = 'block';
     }

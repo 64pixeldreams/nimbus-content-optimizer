@@ -88,6 +88,24 @@ export const UserModel = {
         created: instance.get('created_at')
       });
       
+      // Create audit log for user creation
+      try {
+        const { AuditLogger } = await import('../modules/logs/core/audit-logger.js');
+        const auditLogger = new AuditLogger(datastore, logger);
+        await auditLogger.logUserActivity(
+          instance.get('user_id'),
+          'user_created',
+          `${instance.get('name')} created account`,
+          {
+            email: instance.get('email'),
+            name: instance.get('name'),
+            source: 'registration'
+          }
+        );
+      } catch (auditError) {
+        logger?.warn('Failed to create user audit log', auditError);
+      }
+      
       // Send welcome email
       logger?.log('Welcome email queued', { 
         userId: instance.get('user_id'),
