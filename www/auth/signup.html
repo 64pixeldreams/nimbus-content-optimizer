@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Account - NimbusAI</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/assets/css/framework.css" rel="stylesheet">
+</head>
+<body>
+    <div class="create-container">
+        <div class="row w-100 g-0">
+            <!-- Left Side - Marketing Text -->
+            <div class="col-lg-6 create-left d-none d-lg-flex">
+                <div class="text-center">
+                    <h1 class="display-4 fw-bold mb-4">Welcome to NimbusAI</h1>
+                    <p class="lead mb-4">AI-Powered Content Optimization</p>
+                    <div class="row text-center">
+                        <div class="col-4">
+                            <div class="h2">⚡</div>
+                            <p>Fast</p>
+                        </div>
+                        <div class="col-4">
+                            <div class="h2">🎯</div>
+                            <p>Precise</p>
+                        </div>
+                        <div class="col-4">
+                            <div class="h2">🚀</div>
+                            <p>Scalable</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Right Side - Signup Form -->
+            <div class="col-lg-6 create-right">
+                <div class="auth-card">
+                    <!-- Logo (Mobile) -->
+                    <div class="auth-logo d-lg-none">
+                        <a href="https://nimbus.dev">
+                            <h1>NimbusAI</h1>
+                        </a>
+                    </div>
+                    
+                    <h2 class="auth-title">Create your account</h2>
+                    
+                    <div id="error-message" class="alert alert-danger" style="display: none;"></div>
+                    <div id="success-message" class="alert alert-success" style="display: none;"></div>
+                    
+                    <form class="auth-form" onsubmit="handleSignup(event)">
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Email address</label>
+                            <input type="email" class="form-control" id="email" required placeholder="Enter your email">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="name" class="form-label">Full name</label>
+                            <input type="text" class="form-control" id="name" placeholder="Enter your full name">
+                            <div class="form-text">Leave blank to auto-generate from email</div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="password" class="form-label">Password</label>
+                            <input type="password" class="form-control" id="password" required 
+                                   placeholder="Create a strong password" minlength="8">
+                        </div>
+                        
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" id="agreeTerms" required>
+                            <label class="form-check-label" for="agreeTerms">
+                                I agree to the <a href="/legal/terms.html" target="_blank">Terms of Service</a> 
+                                and <a href="/legal/privacy.html" target="_blank">Privacy Policy</a>
+                            </label>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary" id="signup-btn">
+                            <span id="signup-text">Create Account</span>
+                            <span id="signup-spinner" class="spinner-border spinner-border-sm ms-2" style="display: none;"></span>
+                        </button>
+                    </form>
+                    
+                    <!-- Links -->
+                    <div class="auth-links">
+                        <p class="mb-0">
+                            Already have an account? 
+                            <a href="/auth/login.html">Sign in</a>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Footer -->
+    <footer class="framework-footer">
+        <div class="container text-center">
+            <p class="mb-0">© 2025 NimbusAI. All rights reserved.</p>
+        </div>
+    </footer>
+    
+    <!-- Cookie Consent -->
+    <div id="cookie-consent" class="cookie-consent">
+        <div class="container">
+            <div class="d-flex justify-content-between align-items-center">
+                <span>We use cookies to enhance your experience.</span>
+                <div>
+                    <button class="btn btn-sm btn-outline-light me-2" onclick="rejectCookies()">Reject All</button>
+                    <button class="btn btn-sm btn-light" onclick="acceptCookies()">Accept All</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/assets/js/cframework.js"></script>
+    <script src="/assets/js/signup.js"></script>
+</body>
+</html>

@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - NimbusAI</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/assets/css/framework.css" rel="stylesheet">
+</head>
+<body>
+    <!-- Header with Navigation -->
+    <header class="dashboard-header">
+        <div class="container">
+            <div class="d-flex justify-content-between align-items-center">
+                <!-- Logo -->
+                <div class="navbar-brand">
+                    <h3 class="mb-0">🚀 NimbusAI</h3>
+                </div>
+                
+                <!-- User Menu -->
+                <div class="dropdown">
+                    <button class="btn btn-link text-white dropdown-toggle d-flex align-items-center" 
+                            type="button" id="userDropdown" data-bs-toggle="dropdown">
+                        <div class="user-avatar me-2" id="user-avatar">U</div>
+                        <span id="user-name">Loading...</span>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li><a class="dropdown-item" href="/app/profile.html">👤 Profile</a></li>
+                        <li><a class="dropdown-item" href="/app/settings.html">⚙️ Settings</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="#" onclick="handleLogout()">🚪 Sign Out</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </header>
+    
+    <!-- Main Content -->
+    <div class="container mt-4">
+        <!-- Welcome Section -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <h1>Welcome back, <span id="welcome-name">User</span>!</h1>
+                <p class="text-muted">Here's what's happening with your projects.</p>
+            </div>
+        </div>
+        
+        <!-- Stats Cards -->
+        <div class="row mb-4" id="stats-section">
+            <div class="col-md-4">
+                <div class="card framework-card">
+                    <div class="card-body text-center">
+                        <h3 class="text-primary" id="projects-count">-</h3>
+                        <p class="mb-0">Projects</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card framework-card">
+                    <div class="card-body text-center">
+                        <h3 class="text-success" id="pages-count">-</h3>
+                        <p class="mb-0">Pages</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card framework-card">
+                    <div class="card-body text-center">
+                        <h3 class="text-warning" id="processing-count">-</h3>
+                        <p class="mb-0">Processing</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Projects Section -->
+        <div class="row">
+            <div class="col-lg-8">
+                <div class="card framework-card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h4 class="mb-0">📁 Your Projects</h4>
+                        <button class="btn btn-primary btn-sm" onclick="createProject()">+ New Project</button>
+                    </div>
+                    <div class="card-body">
+                        <div id="projects-container">
+                            <div class="loading">
+                                <div class="spinner-border text-primary"></div>
+                                <p>Loading projects...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Activity Feed -->
+            <div class="col-lg-4">
+                <div class="card framework-card">
+                    <div class="card-header">
+                        <h4 class="mb-0">📋 Recent Activity</h4>
+                    </div>
+                    <div class="card-body">
+                        <div id="activity-container">
+                            <div class="loading">
+                                <div class="spinner-border text-primary"></div>
+                                <p>Loading activity...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Footer -->
+    <footer class="framework-footer">
+        <div class="container text-center">
+            <p class="mb-0">© 2025 NimbusAI. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/assets/js/cframework.js"></script>
+    <script src="/assets/js/nimbus.js"></script>
+    <script src="/assets/js/dashboard.js"></script>
+</body>
+</html>

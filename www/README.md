@@ -1,6 +1,7 @@
-# 🌐 NimbusAI Web App Framework
+# 🌐 Clean Web App Framework
 
-**Lightweight, reusable web framework for CloudFunction-based applications**
+**Lightweight, professional framework for CloudFunction-based applications**
+**Clean design, manual branding, separate scripts, reusable across all IPs**
 
 ## 🎯 **Architecture**
 

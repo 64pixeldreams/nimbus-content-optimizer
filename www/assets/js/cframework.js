@@ -228,6 +228,43 @@ class CFramework {
   }
   
   /**
+   * Cookie consent utilities
+   */
+  showCookieConsent() {
+    if (!localStorage.getItem('cookies-accepted')) {
+      const consent = document.getElementById('cookie-consent');
+      if (consent) consent.classList.add('show');
+    }
+  }
+  
+  acceptCookies() {
+    localStorage.setItem('cookies-accepted', 'true');
+    const consent = document.getElementById('cookie-consent');
+    if (consent) consent.classList.remove('show');
+  }
+  
+  rejectCookies() {
+    localStorage.setItem('cookies-accepted', 'false');
+    const consent = document.getElementById('cookie-consent');
+    if (consent) consent.classList.remove('show');
+  }
+  
+  /**
+   * Auto-redirect utilities
+   */
+  autoRedirect() {
+    // Redirect to dashboard if logged in and on auth page
+    if (this.isAuthenticated() && window.location.pathname.includes('/auth/')) {
+      window.location.href = '/app/dashboard.html';
+    }
+    
+    // Redirect to login if not logged in and on app page
+    if (!this.isAuthenticated() && window.location.pathname.includes('/app/')) {
+      window.location.href = '/auth/login.html';
+    }
+  }
+  
+  /**
    * Debug logging
    */
   _log(message, data) {
