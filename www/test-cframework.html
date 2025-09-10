@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CFramework Test</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container mt-5">
+        <h1>🧪 CFramework Test</h1>
+        
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h3>🔧 Framework Status</h3>
+                    </div>
+                    <div class="card-body">
+                        <div id="framework-status">Not initialized</div>
+                        <button class="btn btn-primary mt-2" onclick="initFramework()">Initialize Framework</button>
+                    </div>
+                </div>
+                
+                <div class="card mt-3">
+                    <div class="card-header">
+                        <h3>🔐 Authentication</h3>
+                    </div>
+                    <div class="card-body">
+                        <div id="auth-status">Not authenticated</div>
+                        <div class="mt-2">
+                            <input type="email" id="email" class="form-control mb-2" placeholder="Email" value="nimbus-user-1757447187283@example.com">
+                            <input type="password" id="password" class="form-control mb-2" placeholder="Password" value="TestPassword123!">
+                            <button class="btn btn-success" onclick="testLogin()">Test Login</button>
+                            <button class="btn btn-secondary ms-2" onclick="testLogout()">Logout</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h3>📁 Projects Test</h3>
+                    </div>
+                    <div class="card-body">
+                        <button class="btn btn-info" onclick="testProjects()">Load Projects</button>
+                        <div id="projects-result" class="mt-2"></div>
+                    </div>
+                </div>
+                
+                <div class="card mt-3">
+                    <div class="card-header">
+                        <h3>📄 Pages Test</h3>
+                    </div>
+                    <div class="card-body">
+                        <input type="text" id="project-id" class="form-control mb-2" placeholder="Project ID">
+                        <button class="btn btn-info" onclick="testPages()">Load Pages</button>
+                        <div id="pages-result" class="mt-2"></div>
+                    </div>
+                </div>
+                
+                <div class="card mt-3">
+                    <div class="card-header">
+                        <h3>📋 Logs Test</h3>
+                    </div>
+                    <div class="card-body">
+                        <button class="btn btn-warning" onclick="testLogs()">Load User Logs</button>
+                        <div id="logs-result" class="mt-2"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h3>🔍 Debug Console</h3>
+                    </div>
+                    <div class="card-body">
+                        <div id="debug-console" class="bg-dark text-light p-3" style="height: 200px; overflow-y: auto; font-family: monospace;">
+                            Console output will appear here...
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="assets/js/cframework.js"></script>
+    <script>
+        // Override console.log to show in debug console
+        const originalLog = console.log;
+        const debugConsole = document.getElementById('debug-console');
+        
+        console.log = function(...args) {
+            originalLog.apply(console, args);
+            if (debugConsole) {
+                const message = args.map(arg => 
+                    typeof arg === 'object' ? JSON.stringify(arg, null, 2) : String(arg)
+                ).join(' ');
+                debugConsole.innerHTML += `<div>${new Date().toLocaleTimeString()}: ${message}</div>`;
+                debugConsole.scrollTop = debugConsole.scrollHeight;
+            }
+        };
+        
+        // Test functions
+        function initFramework() {
+            try {
+                cf.init({
+                    serverUrl: 'https://nimbus-platform.martin-598.workers.dev',
+                    appName: 'nimbus',
+                    debug: true
+                });
+                
+                document.getElementById('framework-status').innerHTML = `
+                    <div class="alert alert-success">
+                        ✅ Framework initialized<br>
+                        <small>Server: ${cf.config.serverUrl}<br>
+                        App: ${cf.config.appName}<br>
+                        Session: ${cf.isAuthenticated() ? '✅ Valid' : '❌ None'}</small>
+                    </div>
+                `;
+                
+                updateAuthStatus();
+                
+            } catch (error) {
+                console.error('Init failed:', error);
+                document.getElementById('framework-status').innerHTML = `
+                    <div class="alert alert-danger">❌ Init failed: ${error.message}</div>
+                `;
+            }
+        }
+        
+        function updateAuthStatus() {
+            const authDiv = document.getElementById('auth-status');
+            if (cf.isAuthenticated()) {
+                authDiv.innerHTML = `
+                    <div class="alert alert-success">
+                        ✅ Authenticated as: ${cf.getUserName()}<br>
+                        <small>Email: ${cf.getUser().email}<br>
+                        User ID: ${cf.getUser().user_id}</small>
+                    </div>
+                `;
+            } else {
+                authDiv.innerHTML = `
+                    <div class="alert alert-warning">❌ Not authenticated</div>
+                `;
+            }
+        }
+        
+        async function testLogin() {
+            try {
+                const email = document.getElementById('email').value;
+                const password = document.getElementById('password').value;
+                
+                console.log('Testing login...');
+                const result = await cf.login(email, password);
+                
+                if (result.success) {
+                    console.log('Login successful!', result);
+                    updateAuthStatus();
+                } else {
+                    console.error('Login failed:', result.error);
+                }
+                
+            } catch (error) {
+                console.error('Login error:', error.message);
+            }
+        }
+        
+        async function testLogout() {
+            try {
+                console.log('Testing logout...');
+                await cf.logout();
+                console.log('Logout successful!');
+                updateAuthStatus();
+                
+            } catch (error) {
+                console.error('Logout error:', error.message);
+            }
+        }
+        
+        async function testProjects() {
+            try {
+                console.log('Testing project list...');
+                const projects = await cf.getProjects();
+                console.log('Projects loaded:', projects);
+                
+                document.getElementById('projects-result').innerHTML = `
+                    <div class="alert alert-info">
+                        ✅ Loaded ${projects.length} projects<br>
+                        ${projects.map(p => `<small>• ${p.name} (${p.project_id})</small>`).join('<br>')}
+                    </div>
+                `;
+                
+                // Auto-fill project ID for pages test
+                if (projects.length > 0) {
+                    document.getElementById('project-id').value = projects[0].project_id;
+                }
+                
+            } catch (error) {
+                console.error('Projects error:', error.message);
+                document.getElementById('projects-result').innerHTML = `
+                    <div class="alert alert-danger">❌ Error: ${error.message}</div>
+                `;
+            }
+        }
+        
+        async function testPages() {
+            try {
+                const projectId = document.getElementById('project-id').value;
+                if (!projectId) {
+                    alert('Please enter a project ID');
+                    return;
+                }
+                
+                console.log('Testing page list...', projectId);
+                const pages = await cf.getPages(projectId);
+                console.log('Pages loaded:', pages);
+                
+                document.getElementById('pages-result').innerHTML = `
+                    <div class="alert alert-info">
+                        ✅ Loaded ${pages.length} pages<br>
+                        ${pages.map(p => `<small>• ${p.title} (${p.status})</small>`).join('<br>')}
+                    </div>
+                `;
+                
+            } catch (error) {
+                console.error('Pages error:', error.message);
+                document.getElementById('pages-result').innerHTML = `
+                    <div class="alert alert-danger">❌ Error: ${error.message}</div>
+                `;
+            }
+        }
+        
+        async function testLogs() {
+            try {
+                console.log('Testing user logs...');
+                const logs = await cf.getLogs('user', null, 10);
+                console.log('Logs loaded:', logs);
+                
+                document.getElementById('logs-result').innerHTML = `
+                    <div class="alert alert-info">
+                        ✅ Loaded ${logs.length} log entries<br>
+                        ${logs.slice(0, 3).map(log => `<small>• ${log.message}</small>`).join('<br>')}
+                    </div>
+                `;
+                
+            } catch (error) {
+                console.error('Logs error:', error.message);
+                document.getElementById('logs-result').innerHTML = `
+                    <div class="alert alert-danger">❌ Error: ${error.message}</div>
+                `;
+            }
+        }
+        
+        // Auto-initialize on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('🚀 CFramework Test Page Loaded');
+            console.log('Click "Initialize Framework" to start testing');
+        });
+    </script>
+</body>
+</html>
