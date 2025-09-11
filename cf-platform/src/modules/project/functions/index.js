@@ -6,3 +6,4 @@
 export { projectCreate, projectCreateConfig } from './create.js';
 export { projectList, projectListConfig } from './list.js';
 export { projectGet, projectGetConfig } from './get.js';
+export { projectUpdate, projectUpdateConfig } from './update.js';

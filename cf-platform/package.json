@@ -13,7 +13,9 @@
     "test:datastore": "node tests/test-datastore.js",
     "test:all": "node tests/run-all-tests.js"
   },
-  "dependencies": {},
+  "dependencies": {
+    "node-fetch": "^3.3.2"
+  },
   "devDependencies": {
     "wrangler": "^3.0.0"
   }

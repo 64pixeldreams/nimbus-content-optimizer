@@ -1,5 +1,5 @@
 -- DataModel Generated Schema
--- Generated at: 2025-09-10T19:59:21.012Z
+-- Generated at: 2025-09-11T05:21:29.708Z
 
 -- Table: users
 CREATE TABLE IF NOT EXISTS users (
@@ -24,6 +24,7 @@ CREATE TABLE IF NOT EXISTS project_meta (
   name TEXT NOT NULL,
   domain TEXT NOT NULL,
   status TEXT DEFAULT 'active',
+  stats TEXT DEFAULT '{"total_pages":0,"processing_pages":0,"completed_pages":0,"last_activity":null}',
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   deleted_at TIMESTAMP

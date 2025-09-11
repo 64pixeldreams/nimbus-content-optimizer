@@ -21,7 +21,7 @@ export async function get(requestContext) {
   try {
     // Initialize datastore and register model
     const datastore = new Datastore(env, logger);
-    DataModel.registerModel(PageModel);
+    // Model already registered globally
     
     // Load page
     const page = await DataModel.get('PAGE', datastore, page_id, logger);

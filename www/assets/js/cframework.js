@@ -84,25 +84,27 @@ class CFramework {
       
       const result = await response.json();
       
+      if (result.success) {
+        // Store session manually for cross-domain requests
+        this.session = result.session_token;
+        this.user = {
+          user_id: result.userId,
+          email: result.email,
+          name: result.name || email.split('@')[0],
+          expires: result.expires
+        };
         
-        if (result.success) {
-          // Store session manually for cross-domain requests
-          this.session = result.session_token;
-          this.user = {
-            user_id: result.userId,
-            email: result.email,
-            name: result.name || email.split('@')[0],
-            expires: result.expires
-          };
+        localStorage.setItem(this.config.sessionKey, this.session);
+        localStorage.setItem(this.config.userKey, JSON.stringify(this.user));
           
-          localStorage.setItem(this.config.sessionKey, this.session);
-          localStorage.setItem(this.config.userKey, JSON.stringify(this.user));
-          
-          
-          this._log('Login successful', { email, userId: result.userId });
-        }
-      
-      return result;
+        this._log('Login successful', { email, userId: result.userId });
+        return result;
+      } else {
+        // Login failed
+        const errorMessage = result.error?.message || 'Login failed';
+        this._log('Login failed', { error: errorMessage });
+        throw new Error(errorMessage);
+      }
       
     } catch (error) {
       this._log('Login failed', error);

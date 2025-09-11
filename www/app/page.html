@@ -374,9 +374,9 @@
 				document.getElementById('page-updated').textContent = page.updated_at ? cf.formatRelativeTime(page.updated_at) : 'Unknown';
 				document.getElementById('page-url').textContent = page.url ? (page.url.length > 20 ? page.url.substring(0, 20) + '...' : page.url) : 'No URL';
 				
-				// Load page logs
-				const logs = await nimbus.logs.page(pageId);
-				renderLogs(logs);
+			// Load page logs using nimbus wrapper
+			const logs = await nimbus.logs.page(pageId, 50);
+			renderLogs(logs);
 				
 			} catch (error) {
 				console.error('Failed to load page:', error);
@@ -403,28 +403,161 @@
 				return;
 			}
 			
-			const tableRows = logs.map(log => `
-				<tr>
-					<td><span class="badge bg-${getLogBadgeColor(log.action)}">${log.action}</span></td>
-					<td>${log.message}</td>
-					<td>${log.timestamp ? cf.formatRelativeTime(log.timestamp) : 'Unknown'}</td>
-				</tr>
-			`).join('');
+			const tableRows = logs.map(log => {
+				// Format time in AIVERIE style (HH:MM:SS)
+				const time = new Date(log.timestamp || log.created_at);
+				const timeStr = time.toLocaleTimeString('en-GB', { 
+					hour12: false, 
+					hour: '2-digit', 
+					minute: '2-digit', 
+					second: '2-digit' 
+				});
+				
+				// Truncate user ID like AIVERIE
+				const userId = log.user_id || '-';
+				const truncatedUserId = userId.length > 15 ? 
+					`${userId.substring(0, 8)}...${userId.substring(userId.length - 6)}` : 
+					userId;
+				
+				// Format duration if available
+				const duration = log.duration_ms ? 
+					`${(log.duration_ms / 1000).toFixed(1)}s` : 
+					'';
+				
+				// Make page ID clickable if it's a page
+				const pageId = log.entity_id || '-';
+				const pageLink = pageId.startsWith('page:') ? 
+					`<a href="/app/page.html#${pageId}" class="text-decoration-none text-primary">${pageId}</a>` : 
+					pageId;
+				
+				// Clean action display
+				const actionDisplay = formatActionDisplay(log.action);
+				
+				return `
+					<tr class="log-row" data-log-id="${log.log_id || log.id}" style="cursor: pointer;">
+						<td style="font-family: monospace; font-size: 0.9em; color: #6c757d;">${timeStr}</td>
+						<td style="font-family: monospace; font-size: 0.9em; color: #6c757d;">${truncatedUserId}</td>
+						<td>${actionDisplay}</td>
+						<td style="font-family: monospace; font-size: 0.9em; color: #6c757d;">${duration}</td>
+						<td>${pageLink}</td>
+					</tr>
+					<tr class="log-details" data-log-id="${log.log_id || log.id}" style="display: none;">
+						<td colspan="5" style="padding: 0; border-top: none;">
+							<div class="log-details-content" style="padding: 12px; background-color: #f8f9fa; border-left: 3px solid #007bff;">
+								<div class="row">
+									<div class="col-md-6">
+										<h6 style="margin-bottom: 8px; font-size: 0.9em; color: #495057;">Basic Information</h6>
+										<table class="table table-sm table-borderless mb-0" style="font-size: 0.8em;">
+											<tr><td style="width: 100px; color: #6c757d;"><strong>Message:</strong></td><td>${log.message || '-'}</td></tr>
+											<tr><td style="color: #6c757d;"><strong>User:</strong></td><td style="font-family: monospace;">${log.user_id}</td></tr>
+											${log.duration_ms ? `<tr><td style="color: #6c757d;"><strong>Duration:</strong></td><td>${(log.duration_ms / 1000).toFixed(1)}s</td></tr>` : ''}
+										</table>
+									</div>
+									<div class="col-md-6">
+										<h6 style="margin-bottom: 8px; font-size: 0.9em; color: #495057;">Technical Details</h6>
+										<table class="table table-sm table-borderless mb-0" style="font-size: 0.8em;">
+											<tr><td style="width: 100px; color: #6c757d;"><strong>Action:</strong></td><td style="font-family: monospace;">${log.action}</td></tr>
+											<tr><td style="color: #6c757d;"><strong>Entity:</strong></td><td style="font-family: monospace;">${log.entity_type}:${log.entity_id}</td></tr>
+											<tr><td style="color: #6c757d;"><strong>Level:</strong></td><td><span class="badge bg-${getLogLevelColor(log.level)}">${log.level}</span></td></tr>
+										</table>
+									</div>
+								</div>
+								${log.details && Object.keys(log.details).length > 0 ? `
+									<div class="mt-2">
+										<h6 style="margin-bottom: 6px; font-size: 0.9em; color: #495057;">Additional Details</h6>
+										<pre class="mb-0" style="font-size: 0.75em; background-color: #e9ecef; padding: 8px; border-radius: 4px; max-height: 150px; overflow-y: auto;">${JSON.stringify(log.details, null, 2)}</pre>
+									</div>
+								` : ''}
+							</div>
+						</td>
+					</tr>
+				`;
+			}).join('');
 			
 			container.innerHTML = `
 				<div class="table-responsive">
-					<table class="table table-hover">
-						<thead>
+					<table class="table table-sm table-hover">
+						<thead class="table-light">
 							<tr>
+								<th style="width: 80px;">Time</th>
+								<th style="width: 120px;">User</th>
 								<th>Action</th>
-								<th>Message</th>
-								<th>Time</th>
+								<th style="width: 80px;">Duration</th>
+								<th>Page</th>
 							</tr>
 						</thead>
-						<tbody>${tableRows}</tbody>
+						<tbody>
+							${tableRows}
+						</tbody>
 					</table>
 				</div>
 			`;
+			
+			// Add click handlers for log details
+			addLogClickHandlers(logs);
+		}
+		
+		function formatActionDisplay(action) {
+			const actionMap = {
+				'page_created': 'Page Created',
+				'page_updated': 'Page Updated',
+				'page_status_updated': 'Status Updated',
+				'page_processing_started': 'Processing Started',
+				'page_processing_completed': 'Processing Completed',
+				'page_processing_failed': 'Processing Failed',
+				'page_upload_started': 'Upload Started',
+				'page_upload_completed': 'Upload Completed',
+				'page_upload_failed': 'Upload Failed',
+				'summary_generation_started': 'Summary Generation Started',
+				'summary_generation_completed': 'Summary Generation Completed',
+				'summary_generation_failed': 'Summary Generation Failed'
+			};
+			
+			return actionMap[action] || action.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+		}
+		
+		function addLogClickHandlers(logs) {
+			// Add click handlers for expandable row details
+			document.querySelectorAll('.log-row').forEach(row => {
+				row.addEventListener('click', function() {
+					const logId = this.dataset.logId;
+					toggleLogDetails(logId);
+				});
+			});
+		}
+		
+		function toggleLogDetails(logId) {
+			// Find the details row for this log
+			const detailsRow = document.querySelector(`tr.log-details[data-log-id="${logId}"]`);
+			if (!detailsRow) return;
+			
+			// Toggle visibility
+			if (detailsRow.style.display === 'none') {
+				detailsRow.style.display = '';
+				// Add smooth animation
+				detailsRow.style.opacity = '0';
+				detailsRow.style.transition = 'opacity 0.2s ease-in-out';
+				setTimeout(() => {
+					detailsRow.style.opacity = '1';
+				}, 10);
+			} else {
+				// Smooth fade out
+				detailsRow.style.opacity = '0';
+				detailsRow.style.transition = 'opacity 0.2s ease-in-out';
+				setTimeout(() => {
+					detailsRow.style.display = 'none';
+				}, 200);
+			}
+		}
+		
+		function getLogLevelColor(level) {
+			const colors = {
+				'info': 'primary',
+				'warn': 'warning',
+				'error': 'danger',
+				'success': 'success'
+			};
+			return colors[level] || 'secondary';
 		}
 		
 		function getLogBadgeColor(action) {

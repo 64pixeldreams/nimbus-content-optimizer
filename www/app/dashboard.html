@@ -1,126 +1,249 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - NimbusAI</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="/assets/css/framework.css" rel="stylesheet">
-</head>
-<body>
-    <!-- Header with Navigation -->
-    <header class="dashboard-header">
-        <div class="container">
-            <div class="d-flex justify-content-between align-items-center">
-                <!-- Logo -->
-                <div class="navbar-brand">
-                    <h3 class="mb-0">🚀 NimbusAI</h3>
-                </div>
-                
-                <!-- User Menu -->
-                <div class="dropdown">
-                    <button class="btn btn-link text-white dropdown-toggle d-flex align-items-center" 
-                            type="button" id="userDropdown" data-bs-toggle="dropdown">
-                        <div class="user-avatar me-2" id="user-avatar">U</div>
-                        <span id="user-name">Loading...</span>
-                    </button>
-                    <ul class="dropdown-menu dropdown-menu-end">
-                        <li><a class="dropdown-item" href="/app/profile.html">👤 Profile</a></li>
-                        <li><a class="dropdown-item" href="/app/settings.html">⚙️ Settings</a></li>
-                        <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item" href="#" onclick="handleLogout()">🚪 Sign Out</a></li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-    </header>
-    
-    <!-- Main Content -->
-    <div class="container mt-4">
-        <!-- Welcome Section -->
-        <div class="row mb-4">
-            <div class="col-12">
-                <h1>Welcome back, <span id="welcome-name">User</span>!</h1>
-                <p class="text-muted">Here's what's happening with your projects.</p>
-            </div>
-        </div>
-        
-        <!-- Stats Cards -->
-        <div class="row mb-4" id="stats-section">
-            <div class="col-md-4">
-                <div class="card framework-card">
-                    <div class="card-body text-center">
-                        <h3 class="text-primary" id="projects-count">-</h3>
-                        <p class="mb-0">Projects</p>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="card framework-card">
-                    <div class="card-body text-center">
-                        <h3 class="text-success" id="pages-count">-</h3>
-                        <p class="mb-0">Pages</p>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="card framework-card">
-                    <div class="card-body text-center">
-                        <h3 class="text-warning" id="processing-count">-</h3>
-                        <p class="mb-0">Processing</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Projects Section -->
-        <div class="row">
-            <div class="col-lg-8">
-                <div class="card framework-card">
-                    <div class="card-header d-flex justify-content-between align-items-center">
-                        <h4 class="mb-0">📁 Your Projects</h4>
-                        <button class="btn btn-primary btn-sm" onclick="createProject()">+ New Project</button>
-                    </div>
-                    <div class="card-body">
-                        <div id="projects-container">
-                            <div class="loading">
-                                <div class="spinner-border text-primary"></div>
-                                <p>Loading projects...</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Activity Feed -->
-            <div class="col-lg-4">
-                <div class="card framework-card">
-                    <div class="card-header">
-                        <h4 class="mb-0">📋 Recent Activity</h4>
-                    </div>
-                    <div class="card-body">
-                        <div id="activity-container">
-                            <div class="loading">
-                                <div class="spinner-border text-primary"></div>
-                                <p>Loading activity...</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Footer -->
-    <footer class="framework-footer">
-        <div class="container text-center">
-            <p class="mb-0">© 2025 NimbusAI. All rights reserved.</p>
-        </div>
-    </footer>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="/assets/js/cframework.js"></script>
-    <script src="/assets/js/nimbus.js"></script>
-    <script src="/assets/js/dashboard.js"></script>
+<head>
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+	<meta name="description" content="NimbusAI - Content Optimization Platform">
+	<meta name="author" content="NimbusAI">
+
+	<link rel="preconnect" href="https://fonts.gstatic.com">
+	<link rel="shortcut icon" href="/assets/img/icons/icon-48x48.png" />
+
+	<title>Account Home - NimbusHQ</title>
+
+	<link href="/assets/css/app.css" rel="stylesheet">
+	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+</head>
+
+<body>
+	<div class="wrapper">
+		<!-- Sidebar Navigation -->
+		<nav id="sidebar" class="sidebar js-sidebar">
+			<div class="sidebar-content js-simplebar">
+				<a class="sidebar-brand" href="/app/dashboard.html">
+					<span class="align-middle">NimbusHQ</span>
+				</a>
+
+				<ul class="sidebar-nav">
+					<li class="sidebar-header">
+						Main
+					</li>
+
+					<li class="sidebar-item active">
+						<a class="sidebar-link" href="/app/dashboard.html">
+							<i class="align-middle" data-feather="home"></i> <span class="align-middle">Account Home</span>
+						</a>
+					</li>
+
+					<li class="sidebar-item">
+						<a class="sidebar-link" href="/app/analytics.html">
+							<i class="align-middle" data-feather="bar-chart-2"></i> <span class="align-middle">Analytics</span>
+						</a>
+					</li>
+
+					<li class="sidebar-item">
+						<a class="sidebar-link" href="/app/activity.html">
+							<i class="align-middle" data-feather="activity"></i> <span class="align-middle">Activity</span>
+						</a>
+					</li>
+
+					<li class="sidebar-header">
+						Account
+					</li>
+
+					<li class="sidebar-item">
+						<a class="sidebar-link" href="/app/notifications.html">
+							<i class="align-middle" data-feather="bell"></i> <span class="align-middle">Notifications</span>
+						</a>
+					</li>
+
+					<li class="sidebar-item">
+						<a class="sidebar-link" href="/app/settings.html">
+							<i class="align-middle" data-feather="settings"></i> <span class="align-middle">Settings</span>
+						</a>
+					</li>
+
+					<li class="sidebar-item">
+						<a class="sidebar-link" href="/app/profile.html">
+							<i class="align-middle" data-feather="user"></i> <span class="align-middle">Profile</span>
+						</a>
+					</li>
+				</ul>
+			</div>
+		</nav>
+
+		<!-- Main Content -->
+		<div class="main">
+			<!-- Top Navigation Bar -->
+			<nav class="navbar navbar-expand navbar-light navbar-bg">
+				<a class="sidebar-toggle js-sidebar-toggle">
+					<i class="hamburger align-self-center"></i>
+				</a>
+
+				<div class="navbar-collapse collapse">
+					<ul class="navbar-nav navbar-align">
+						<!-- Notifications -->
+						<li class="nav-item dropdown">
+							<a class="nav-icon dropdown-toggle" href="#" id="alertsDropdown" data-bs-toggle="dropdown">
+								<div class="position-relative">
+									<i class="align-middle" data-feather="bell"></i>
+									<span class="indicator">4</span>
+								</div>
+							</a>
+							<div class="dropdown-menu dropdown-menu-lg dropdown-menu-end py-0" aria-labelledby="alertsDropdown">
+								<div class="dropdown-menu-header">
+									4 New Notifications
+								</div>
+								<div class="list-group">
+									<a href="#" class="list-group-item">
+										<div class="row g-0 align-items-center">
+											<div class="col-2">
+												<i class="text-success" data-feather="check-circle"></i>
+											</div>
+											<div class="col-10">
+												<div class="text-dark">Page optimization completed</div>
+												<div class="text-muted small mt-1">Project: Example.com</div>
+											</div>
+										</div>
+									</a>
+								</div>
+								<div class="dropdown-menu-footer">
+									<a href="/app/notifications.html" class="text-muted">Show all notifications</a>
+								</div>
+							</div>
+						</li>
+
+						<!-- User Menu -->
+						<li class="nav-item dropdown">
+							<a class="nav-icon dropdown-toggle d-inline-block d-sm-none" href="#" data-bs-toggle="dropdown">
+								<i class="align-middle" data-feather="settings"></i>
+							</a>
+
+							<a class="nav-link d-none d-sm-inline-block" href="#" data-bs-toggle="dropdown">
+								<div class="d-flex align-items-center">
+									<div class="avatar bg-primary text-white rounded-circle me-2 d-flex align-items-center justify-content-center" style="width: 32px; height: 32px; flex-shrink: 0;">
+										<i data-feather="user" style="width: 16px; height: 16px;"></i>
+									</div>
+									<span class="text-dark dropdown-toggle" id="user-name">Loading...</span>
+								</div>
+							</a>
+							<div class="dropdown-menu dropdown-menu-end" style="min-width: 250px;">
+								<a class="dropdown-item" href="/app/profile.html"><i class="align-middle me-1" data-feather="user"></i> Profile</a>
+								<a class="dropdown-item" href="/app/settings.html"><i class="align-middle me-1" data-feather="settings"></i> Settings</a>
+								<div class="dropdown-divider"></div>
+								<a class="dropdown-item" href="#" onclick="handleLogout()"><i class="align-middle me-1" data-feather="log-out"></i> Log out</a>
+							</div>
+						</li>
+					</ul>
+				</div>
+			</nav>
+
+			<!-- Page Content -->
+			<main class="content">
+				<div class="container-fluid p-0">
+					<!-- Page Header -->
+					<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3">
+						<div>
+							<div style="font-size: 16px; line-height: 1.5; color: black; font-weight: 600; margin-bottom: 8px;">Account home</div>
+							<h1 class="h2" id="account-title">Loading...</h1>
+						</div>
+						<div class="btn-toolbar mb-2 mb-md-0">
+							<button type="button" class="btn btn-primary" onclick="createProject()">
+								<i data-feather="plus"></i> New Project
+							</button>
+						</div>
+					</div>
+
+					<!-- Stats Row (Simple) -->
+					<div class="row mb-4">
+						<div class="col-md-4">
+							<div class="card">
+								<div class="card-body">
+									<div class="row">
+										<div class="col mt-0">
+											<h5 class="card-title">Projects</h5>
+										</div>
+										<div class="col-auto">
+											<div class="stat text-primary">
+												<i class="align-middle" data-feather="folder"></i>
+											</div>
+										</div>
+									</div>
+									<h1 class="mt-1 mb-3" id="projects-count">-</h1>
+								</div>
+							</div>
+						</div>
+						<div class="col-md-4">
+							<div class="card">
+								<div class="card-body">
+									<div class="row">
+										<div class="col mt-0">
+											<h5 class="card-title">Pages</h5>
+										</div>
+										<div class="col-auto">
+											<div class="stat text-success">
+												<i class="align-middle" data-feather="file-text"></i>
+											</div>
+										</div>
+									</div>
+									<h1 class="mt-1 mb-3" id="pages-count">-</h1>
+								</div>
+							</div>
+						</div>
+						<div class="col-md-4">
+							<div class="card">
+								<div class="card-body">
+									<div class="row">
+										<div class="col mt-0">
+											<h5 class="card-title">Processing</h5>
+										</div>
+										<div class="col-auto">
+											<div class="stat text-warning">
+												<i class="align-middle" data-feather="clock"></i>
+											</div>
+										</div>
+									</div>
+									<h1 class="mt-1 mb-3" id="processing-count">-</h1>
+								</div>
+							</div>
+						</div>
+					</div>
+
+					<!-- Projects Table (Cloudflare Style) -->
+					<div class="row">
+						<div class="col-12">
+							<div class="card">
+								<div class="card-header d-flex justify-content-between align-items-center">
+									<h5 class="card-title mb-0">Projects</h5>
+									<a href="#" onclick="reloadDashboard(); return false;" class="text-muted text-decoration-none" style="font-size: 14px;">
+										<i data-feather="refresh-cw" style="width: 14px; height: 14px;"></i> Reload
+									</a>
+								</div>
+								<div class="card-body">
+									<div id="projects-container">
+										<div class="loading text-center py-4">
+											<div class="spinner-border text-primary"></div>
+											<p class="mt-2">Loading projects...</p>
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</main>
+		</div>
+	</div>
+
+	<!-- AdminKit Core JS -->
+	<script src="/assets/js/adminkit.js"></script>
+	
+	<!-- Your Custom Framework (UNCHANGED) -->
+	<script src="/assets/js/cframework.js"></script>
+	<script src="/assets/js/nimbus.js"></script>
+	<script src="/assets/js/dashboard.js"></script>
+
 </body>
 </html>

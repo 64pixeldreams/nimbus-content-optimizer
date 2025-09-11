@@ -29,11 +29,16 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 async function loadDashboard() {
   try {
-    // Update user info in header
+    // Update user info in header and account title
     const user = cf.getUser();
-    document.getElementById('user-name').textContent = cf.getUserName();
-    document.getElementById('welcome-name').textContent = cf.getUserName();
-    document.getElementById('user-avatar').textContent = cf.getUserName().charAt(0).toUpperCase();
+    const userName = cf.getUserName();
+    const userEmail = user?.email || 'user@example.com';
+    
+    // Truncate long names for top bar display
+    const displayName = userName.length > 12 ? userName.substring(0, 12) + '...' : userName;
+    
+    document.getElementById('user-name').textContent = displayName;
+    document.getElementById('account-title').textContent = `${userEmail}'s account:`;
     
     // Load dashboard data using nimbus
     const data = await nimbus.loadDashboard();
@@ -43,11 +48,8 @@ async function loadDashboard() {
     document.getElementById('pages-count').textContent = data.stats.pageCount;
     document.getElementById('processing-count').textContent = data.stats.processingCount;
     
-    // Render projects
+    // Render projects table (Cloudflare style)
     renderProjects(data.projects);
-    
-    // Render activity feed
-    renderActivity(data.recentActivity);
     
   } catch (error) {
     console.error('Failed to load dashboard:', error);
@@ -67,38 +69,57 @@ function renderProjects(projects) {
   if (projects.length === 0) {
     container.innerHTML = `
       <div class="text-center py-4">
-        <p class="text-muted">No projects yet</p>
-        <button class="btn btn-primary" onclick="createProject()">Create Your First Project</button>
+        <h5>No projects yet</h5>
+        <p class="text-muted">Create your first project to get started</p>
+        <button class="btn btn-primary" onclick="createProject()">
+          <i data-feather="plus"></i> Create Project
+        </button>
       </div>
     `;
     return;
   }
   
-  const projectsHtml = projects.map(project => `
-    <div class="border-bottom pb-3 mb-3">
-      <div class="d-flex justify-content-between align-items-start">
-        <div>
-          <h5 class="mb-1">
-            <a href="/app/project.html?id=${project.project_id}" class="text-decoration-none">
-              ${project.name}
-            </a>
-          </h5>
-          <p class="text-muted mb-1">${project.domain}</p>
-          <small class="text-muted">Created ${cf.formatRelativeTime(project.created_at)}</small>
-        </div>
-        <div class="text-end">
-          <span class="badge bg-${cf.formatStatus(project.status).class}">
-            ${cf.formatStatus(project.status).icon} ${cf.formatStatus(project.status).text}
+  // Create Cloudflare-style table
+  const tableRows = projects.map(project => {
+    const lastActivity = project.updated_at ? 
+      cf.formatRelativeTime(project.updated_at) : 
+      'Never';
+    
+    return `
+      <tr class="project-row" onclick="viewProject('${project.project_id}')" style="cursor: pointer;">
+        <td>
+          <strong>${project.name}</strong>
+        </td>
+        <td>${project.domain}</td>
+        <td>
+          <span class="badge bg-${project.status === 'active' ? 'success' : 'secondary'}">
+            ${project.status}
           </span>
-          <div class="mt-1">
-            <small class="text-muted">${project.page_count || 0} pages</small>
-          </div>
-        </div>
-      </div>
-    </div>
-  `).join('');
+        </td>
+        <td>${project.page_count || 0}</td>
+        <td>${lastActivity}</td>
+      </tr>
+    `;
+  }).join('');
   
-  container.innerHTML = projectsHtml;
+  container.innerHTML = `
+    <div class="table-responsive">
+      <table class="table table-hover">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Domain</th>
+            <th>Status</th>
+            <th>Pages</th>
+            <th>Last Activity</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${tableRows}
+        </tbody>
+      </table>
+    </div>
+  `;
 }
 
 function renderActivity(logs) {
@@ -133,6 +154,39 @@ function getActivityIcon(action) {
     'project_created': '📁'
   };
   return icons[action] || '📋';
+}
+
+function reloadDashboard() {
+  // Get reload link
+  const reloadLink = document.querySelector('[onclick*="reloadDashboard"]');
+  
+  // Disable reload link temporarily
+  reloadLink.style.pointerEvents = 'none';
+  reloadLink.style.opacity = '0.6';
+  
+  // Show loading state in projects container
+  document.getElementById('projects-container').innerHTML = `
+    <div class="text-center py-4">
+      <div class="spinner-border text-primary"></div>
+      <p class="mt-2">Reloading projects...</p>
+    </div>
+  `;
+  
+  // Reload dashboard data
+  loadDashboard().then(() => {
+    // Re-enable reload link after loading completes
+    reloadLink.style.pointerEvents = 'auto';
+    reloadLink.style.opacity = '1';
+  }).catch(() => {
+    // Re-enable reload link even if loading fails
+    reloadLink.style.pointerEvents = 'auto';
+    reloadLink.style.opacity = '1';
+  });
+}
+
+function viewProject(projectId) {
+  // Navigate to project dashboard using hash (works with any server)
+  window.location.href = `/app/project.html#${projectId}`;
 }
 
 function createProject() {

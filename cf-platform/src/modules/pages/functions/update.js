@@ -4,9 +4,11 @@
  */
 
 import { DataModel } from '../../datamodel/index.js';
+import { Datastore } from '../../datastore/index.js';
+import { PageModel } from '../../../models/page.js';
 
 export async function update(requestContext) {
-  const { env, logger, payload, auth, datastore } = requestContext;
+  const { env, logger, payload, auth } = requestContext;
   const { page_id, ...updates } = payload;
 
   if (!page_id) {
@@ -44,15 +46,19 @@ export async function update(requestContext) {
   }
 
   try {
+    // Initialize datastore (model already registered globally)
+    const datastore = new Datastore(env, logger);
+    
     // Load page
     const page = await DataModel.get('PAGE', datastore, page_id, logger);
 
-    // Apply updates
-    for (const [key, value] of Object.entries(filteredUpdates)) {
-      page.set(key, value);
-    }
+    // Set auth context on the page instance for hooks
+    page._authContext = auth;
 
-    // Save changes
+    // Apply updates using the update method to trigger hooks
+    await page.update(filteredUpdates);
+    
+    // CRITICAL: Must call save() to trigger hook execution (like PROJECT model does)
     await page.save();
 
     return {
@@ -73,3 +79,21 @@ export async function update(requestContext) {
     };
   }
 }
+
+/**
+ * CloudFunction configuration
+ */
+export const updateConfig = {
+  auth: true,
+  validation: {
+    page_id: { type: 'string', required: true },
+    title: { type: 'string' },
+    status: { type: 'string' },
+    content: { type: 'string' },
+    optimized_content: { type: 'string' },
+    metadata: { type: 'object' },
+    last_processed: { type: 'string' },
+    processing_time_ms: { type: 'number' },
+    error_message: { type: 'string' }
+  }
+};

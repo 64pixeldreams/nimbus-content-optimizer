@@ -168,6 +168,7 @@ export async function pageLogs(requestContext) {
     // Format logs for display
     const formattedLogs = logs.map(log => ({
       log_id: log.log_id,
+      user_id: log.user_id, // FIXED: Include user_id in API response
       message: log.message,
       action: log.action,
       entity_type: log.entity_type,
@@ -176,7 +177,8 @@ export async function pageLogs(requestContext) {
       details: typeof log.details === 'string' ? JSON.parse(log.details) : (log.details || {}),
       level: log.level,
       project_id: log.project_id,
-      page_id: log.page_id
+      page_id: log.page_id,
+      duration_ms: log.duration_ms // Also include duration for AIVERIE-style display
     }));
     
     logger.log('Logs retrieval completed', { 

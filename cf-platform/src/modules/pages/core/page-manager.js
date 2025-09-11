@@ -13,8 +13,7 @@ export class PageManager {
     this.userId = userId;
     this.logger = LOGS.init('PAGE');
     
-    // Register model
-    DataModel.registerModel(PageModel);
+    // Model already registered globally
   }
   
   /**

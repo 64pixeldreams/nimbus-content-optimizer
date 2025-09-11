@@ -37,7 +37,7 @@ const nimbus = {
     
     async get(pageId) {
       const result = await cf.run('page.get', { page_id: pageId });
-      return result.data?.page || result.page;
+      return result.data?.data || result.data?.page || result.page;
     },
     
     async create(projectId, pageData) {
@@ -81,40 +81,36 @@ const nimbus = {
   
   async loadDashboard() {
     try {
-      // Load projects first
+      // Load projects with stats (single API call!)
       const projects = await this.projects.list();
       
-      // Load all pages for the user (across all projects)
-      let allPages = [];
+      // Calculate totals from project stats (no additional API calls!)
       let totalPages = 0;
       let processingPages = 0;
       
-      try {
-        // Get all pages for each project
-        for (const project of projects) {
-          try {
-            const pages = await this.pages.list(project.project_id);
-            project.page_count = pages.length;
-            project.pages = pages;
-            allPages = allPages.concat(pages);
-          } catch (pageError) {
-            console.warn(`Could not load pages for project ${project.project_id}:`, pageError.message);
-            project.page_count = 0;
-            project.pages = [];
+      projects.forEach(project => {
+        // Parse stats field (comes as JSON string from D1)
+        let stats = { total_pages: 0, processing_pages: 0, completed_pages: 0 };
+        if (project.stats) {
+          if (typeof project.stats === 'string') {
+            try {
+              stats = JSON.parse(project.stats);
+            } catch (e) {
+              console.warn('Failed to parse project stats:', e);
+            }
+          } else if (typeof project.stats === 'object') {
+            stats = project.stats;
           }
         }
         
-        totalPages = allPages.length;
-        processingPages = allPages.filter(p => p.status === 'processing').length;
+        project.page_count = stats.total_pages;
+        totalPages += stats.total_pages;
+        processingPages += stats.processing_pages;
         
-      } catch (pageError) {
-        console.warn('Could not load pages:', pageError.message);
-        // Set default counts
-        projects.forEach(project => {
-          project.page_count = 0;
-          project.pages = [];
-        });
-      }
+        // For backward compatibility, set pages array to empty
+        // Individual project pages will load pages when needed
+        project.pages = [];
+      });
       
       // Try to load logs, but don't fail if it doesn't work
       let recentLogs = [];

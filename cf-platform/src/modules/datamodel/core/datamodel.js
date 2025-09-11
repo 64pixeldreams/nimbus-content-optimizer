@@ -213,7 +213,8 @@ export class DataModel {
       
       // Determine if create or update
       const isCreate = this.isNewRecord;
-      const changes = this.getChanges();
+      const changes = this._pendingChanges || this.getChanges();
+      
       
       // Execute before hook
       if (isCreate) {
@@ -262,20 +263,19 @@ export class DataModel {
         }
       }
       
-      // Update state
+      // Execute after hook BEFORE updating originalData
+      if (isCreate) {
+        await executeHook(this.modelDef, 'afterCreate', this, null, this.datastore.env, this.logger, this._authContext);
+      } else {
+        await executeHook(this.modelDef, 'afterUpdate', this, changes, this.datastore.env, this.logger, this._authContext);
+      }
+      
+      // Update state AFTER hooks are executed
       this.originalData = { ...this.data };
       this.isNewRecord = false;
       
-      // Execute after hook
-      if (isCreate) {
-        console.log('🔧 DATAMODEL: Calling afterCreate hook for', this.modelName);
-        await executeHook(this.modelDef, 'afterCreate', this, null, this.datastore.env, this.logger);
-        console.log('🔧 DATAMODEL: afterCreate hook completed for', this.modelName);
-      } else {
-        console.log('🔧 DATAMODEL: Calling afterUpdate hook for', this.modelName);
-        await executeHook(this.modelDef, 'afterUpdate', this, changes, this.datastore.env, this.logger);
-        console.log('🔧 DATAMODEL: afterUpdate hook completed for', this.modelName);
-      }
+      // Clear pending changes after hooks
+      this._pendingChanges = null;
       
       timer?.end({ id, action: isCreate ? 'create' : 'update' });
       return this;
@@ -431,6 +431,9 @@ export class DataModel {
     const timer = this.logger?.timer('update');
     
     try {
+      // Store the changes for hooks - this is what was missing!
+      this._pendingChanges = { ...changes };
+      
       // Apply changes
       Object.assign(this.data, changes);
       

@@ -58,3 +58,5 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Make config globally available
 window.platformConfig = platformConfig;
+
+

@@ -11,50 +11,10 @@
 	<link rel="preconnect" href="https://fonts.gstatic.com">
 	<link rel="shortcut icon" href="/assets/img/icons/icon-48x48.png" />
 
-	<title>Project Activity - NimbusHQ</title>
+	<title>Analytics - NimbusHQ</title>
 
 	<link href="/assets/css/app.css" rel="stylesheet">
 	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
-	
-	<!-- Bootstrap 5 Breadcrumb Styles -->
-	<style>
-		.breadcrumb {
-			display: flex;
-			flex-wrap: wrap;
-			padding: 0;
-			margin-bottom: 1rem;
-			list-style: none;
-		}
-		
-		.breadcrumb-item {
-			display: flex;
-		}
-		
-		.breadcrumb-item + .breadcrumb-item {
-			padding-left: 0.5rem;
-		}
-		
-		.breadcrumb-item + .breadcrumb-item::before {
-			display: inline-block;
-			padding-right: 0.5rem;
-			color: #6c757d;
-			content: "/";
-		}
-		
-		.breadcrumb-item > a {
-			color: #0d6efd;
-			text-decoration: none;
-		}
-		
-		.breadcrumb-item > a:hover {
-			color: #0a58ca;
-			text-decoration: underline;
-		}
-		
-		.breadcrumb-item.active {
-			color: #6c757d;
-		}
-	</style>
 </head>
 
 <body>
@@ -77,34 +37,15 @@
 						</a>
 					</li>
 
-					<li class="sidebar-item">
-						<a class="sidebar-link" href="#" id="project-link">
-							<i class="align-middle" data-feather="folder"></i> <span class="align-middle" id="sidebar-project-name">Project</span>
-						</a>
-					</li>
-
-					<!-- Project Sub-Navigation -->
-					<li class="sidebar-item">
-						<a class="sidebar-link" href="#" id="project-dashboard-link">
-							<i class="align-middle" data-feather="grid"></i> <span class="align-middle">Dashboard</span>
-						</a>
-					</li>
-
 					<li class="sidebar-item active">
-						<a class="sidebar-link" href="#">
-							<i class="align-middle" data-feather="activity"></i> <span class="align-middle">Activity</span>
-						</a>
-					</li>
-
-					<li class="sidebar-item">
-						<a class="sidebar-link" href="#" id="project-analytics-link">
+						<a class="sidebar-link" href="/app/analytics.html">
 							<i class="align-middle" data-feather="bar-chart-2"></i> <span class="align-middle">Analytics</span>
 						</a>
 					</li>
 
 					<li class="sidebar-item">
-						<a class="sidebar-link" href="#" id="project-settings-link">
-							<i class="align-middle" data-feather="settings"></i> <span class="align-middle">Settings</span>
+						<a class="sidebar-link" href="/app/activity.html">
+							<i class="align-middle" data-feather="activity"></i> <span class="align-middle">Activity</span>
 						</a>
 					</li>
 
@@ -202,40 +143,84 @@
 			<!-- Page Content -->
 			<main class="content">
 				<div class="container-fluid p-0">
-					<!-- Breadcrumb Navigation -->
-					<nav aria-label="breadcrumb" class="pt-3 pb-2">
-						<ol class="breadcrumb mb-0">
-							<li class="breadcrumb-item"><a href="/app/dashboard.html">Account Home</a></li>
-							<li class="breadcrumb-item"><a href="#" id="project-breadcrumb-link">Project</a></li>
-							<li class="breadcrumb-item active" aria-current="page">Activity</li>
-						</ol>
-					</nav>
-
 					<!-- Page Header -->
-					<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-2 pb-2 mb-3">
+					<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3">
 						<div>
-							<div style="font-size: 16px; line-height: 1.5; color: black; font-weight: 600; margin-bottom: 8px;">Project Activity</div>
-							<h1 class="h2" id="project-title">Loading...</h1>
-						</div>
-						<div class="btn-toolbar mb-2 mb-md-0">
-							<a href="#" onclick="reloadActivity(); return false;" class="text-muted text-decoration-none" style="font-size: 14px;">
-								<i data-feather="refresh-cw" style="width: 14px; height: 14px;"></i> Reload
-							</a>
+							<div style="font-size: 16px; line-height: 1.5; color: black; font-weight: 600; margin-bottom: 8px;">Analytics</div>
+							<h1 class="h2" id="account-title">Loading...</h1>
 						</div>
 					</div>
 
-					<!-- Activity Logs -->
+					<!-- Stats Row (Same as dashboard) -->
+					<div class="row mb-4">
+						<div class="col-md-4">
+							<div class="card">
+								<div class="card-body">
+									<div class="row">
+										<div class="col mt-0">
+											<h5 class="card-title">Projects</h5>
+										</div>
+										<div class="col-auto">
+											<div class="stat text-primary">
+												<i class="align-middle" data-feather="folder"></i>
+											</div>
+										</div>
+									</div>
+									<h1 class="mt-1 mb-3" id="projects-count">-</h1>
+								</div>
+							</div>
+						</div>
+						<div class="col-md-4">
+							<div class="card">
+								<div class="card-body">
+									<div class="row">
+										<div class="col mt-0">
+											<h5 class="card-title">Pages</h5>
+										</div>
+										<div class="col-auto">
+											<div class="stat text-success">
+												<i class="align-middle" data-feather="file-text"></i>
+											</div>
+										</div>
+									</div>
+									<h1 class="mt-1 mb-3" id="pages-count">-</h1>
+								</div>
+							</div>
+						</div>
+						<div class="col-md-4">
+							<div class="card">
+								<div class="card-body">
+									<div class="row">
+										<div class="col mt-0">
+											<h5 class="card-title">Processing</h5>
+										</div>
+										<div class="col-auto">
+											<div class="stat text-warning">
+												<i class="align-middle" data-feather="clock"></i>
+											</div>
+										</div>
+									</div>
+									<h1 class="mt-1 mb-3" id="processing-count">-</h1>
+								</div>
+							</div>
+						</div>
+					</div>
+
+					<!-- User Analytics/Logs Table (AIVERIE Style) -->
 					<div class="row">
 						<div class="col-12">
 							<div class="card">
-								<div class="card-header">
-									<h5 class="card-title mb-0">Project Activity Log</h5>
+								<div class="card-header d-flex justify-content-between align-items-center">
+									<h5 class="card-title mb-0">User Analytics & Logs</h5>
+									<a href="#" onclick="reloadAnalytics(); return false;" class="text-muted text-decoration-none" style="font-size: 14px;">
+										<i data-feather="refresh-cw" style="width: 14px; height: 14px;"></i> Reload
+									</a>
 								</div>
 								<div class="card-body">
-									<div id="activity-container">
+									<div id="analytics-container">
 										<div class="loading text-center py-4">
 											<div class="spinner-border text-primary"></div>
-											<p class="mt-2">Loading activity...</p>
+											<p class="mt-2">Loading analytics...</p>
 										</div>
 									</div>
 								</div>
@@ -250,86 +235,85 @@
 	<!-- AdminKit Core JS -->
 	<script src="/assets/js/adminkit.js"></script>
 	
-	<!-- Your Custom Framework (UNCHANGED) -->
+	<!-- Your Custom Framework -->
 	<script src="/assets/js/cframework.js"></script>
 	<script src="/assets/js/nimbus.js"></script>
+
 	<script>
-		// Universal setup (same for all pages)
-		document.addEventListener('DOMContentLoaded', async () => {
+		// Initialize CFramework and load analytics
+		document.addEventListener('DOMContentLoaded', async function() {
+			console.log('🔍 ANALYTICS PAGE: Script starting...');
+			
+			// Initialize CFramework with config
 			cf.init({
 				serverUrl: 'https://nimbus-platform.martin-598.workers.dev',
 				appName: 'nimbus'
 			});
 			
+			// Check authentication
 			if (!cf.isAuthenticated()) {
-				window.location.href = '/auth/login.html';
+				console.log('❌ ANALYTICS PAGE: Not authenticated, redirecting to login');
+				window.location.href = '/login.html';
 				return;
 			}
 			
-			// Load user info
-			const userName = cf.getUserName();
-			const displayName = userName.length > 12 ? userName.substring(0, 12) + '...' : userName;
-			document.getElementById('user-name').textContent = displayName;
+			console.log('✅ ANALYTICS PAGE: Authenticated, loading analytics');
 			
-			// Get project ID from hash
-			const projectId = window.location.hash.substring(1);
-			if (!projectId) {
-				window.location.href = '/app/dashboard.html';
-				return;
+			// Update user display
+			const user = cf.getUser();
+			if (user) {
+				document.getElementById('user-name').textContent = cf.getUserName();
+				document.getElementById('account-title').textContent = `${user.email}'s analytics:`;
 			}
 			
-			// Set up navigation links
-			setupNavigation(projectId);
+			// Load dashboard stats (same as dashboard)
+			await loadDashboardStats();
 			
-			// Load project data and activity
-			await loadProjectActivity(projectId);
+			// Load user analytics/logs
+			await loadAnalytics();
 		});
-		
-		function setupNavigation(projectId) {
-			// Set up project navigation links
-			document.getElementById('project-link').href = `/app/project.html#${projectId}`;
-			document.getElementById('project-dashboard-link').href = `/app/project.html#${projectId}`;
-			document.getElementById('project-analytics-link').href = `/app/project/analytics.html#${projectId}`;
-			document.getElementById('project-settings-link').href = `/app/project/settings.html#${projectId}`;
-			
-			// Set up breadcrumb link
-			document.getElementById('project-breadcrumb-link').href = `/app/project.html#${projectId}`;
-		}
-		
-		async function loadProjectActivity(projectId) {
+
+		async function loadDashboardStats() {
 			try {
-				// Load project info
-				const project = await nimbus.projects.get(projectId);
-				if (!project) throw new Error('Project not found');
+				console.log('📊 Loading dashboard stats...');
 				
-				// Update UI
-				document.getElementById('project-title').textContent = `${project.name}'s activity:`;
-				document.getElementById('sidebar-project-name').textContent = project.name;
+				// Use the same nimbus.loadDashboard() method as the main dashboard
+				const data = await nimbus.loadDashboard();
 				
-				// Load project activity logs
-				const logs = await nimbus.logs.project(projectId, 50);
-				renderActivity(logs);
+				// Update display with the same stats calculation
+				document.getElementById('projects-count').textContent = data.stats.projectCount;
+				document.getElementById('pages-count').textContent = data.stats.pageCount;
+				document.getElementById('processing-count').textContent = data.stats.processingCount;
 				
+				console.log('✅ Dashboard stats loaded:', data.stats);
 			} catch (error) {
-				console.error('Failed to load project activity:', error);
-				document.getElementById('activity-container').innerHTML = `
-					<div class="alert alert-danger">
-						<h5>Error Loading Activity</h5>
-						<p>${error.message}</p>
-						<a href="/app/dashboard.html" class="btn btn-primary">Back to Dashboard</a>
-					</div>
-				`;
+				console.error('❌ Failed to load dashboard stats:', error);
 			}
 		}
-		
-		function renderActivity(logs) {
-			const container = document.getElementById('activity-container');
+
+		async function loadAnalytics() {
+			try {
+				console.log('📈 Loading user analytics...');
+				
+				// Get user logs for analytics using nimbus wrapper
+				const logs = await nimbus.logs.user(100);
+				
+				console.log('✅ Analytics loaded:', logs.length, 'logs');
+				renderAnalytics(logs);
+			} catch (error) {
+				console.error('❌ Analytics loading failed:', error);
+				renderAnalyticsError();
+			}
+		}
+
+		function renderAnalytics(logs) {
+			const container = document.getElementById('analytics-container');
 			
 			if (logs.length === 0) {
 				container.innerHTML = `
 					<div class="text-center py-4">
-						<h5>No activity yet</h5>
-						<p class="text-muted">Activity will appear here as pages are created and updated</p>
+						<h5>No analytics data yet</h5>
+						<p class="text-muted">Analytics data will appear here as you use the platform</p>
 					</div>
 				`;
 				return;
@@ -356,11 +340,15 @@
 					`${(log.duration_ms / 1000).toFixed(1)}s` : 
 					'';
 				
-				// Make page ID clickable if it's a page
-				const pageId = log.entity_id || '-';
-				const pageLink = pageId.startsWith('page:') ? 
-					`<a href="/app/page.html#${pageId}" class="text-decoration-none text-primary">${pageId}</a>` : 
-					pageId;
+				// Make entity ID clickable based on type
+				const entityId = log.entity_id || '-';
+				let entityLink = entityId;
+				
+				if (entityId.startsWith('page:')) {
+					entityLink = `<a href="/app/page.html#${entityId}" class="text-decoration-none text-primary">${entityId}</a>`;
+				} else if (entityId.startsWith('project:')) {
+					entityLink = `<a href="/app/project.html#${entityId}" class="text-decoration-none text-primary">${entityId}</a>`;
+				}
 				
 				// Clean action display
 				const actionDisplay = formatActionDisplay(log.action);
@@ -371,7 +359,7 @@
 						<td style="font-family: monospace; font-size: 0.9em; color: #6c757d;">${truncatedUserId}</td>
 						<td>${actionDisplay}</td>
 						<td style="font-family: monospace; font-size: 0.9em; color: #6c757d;">${duration}</td>
-						<td>${pageLink}</td>
+						<td>${entityLink}</td>
 					</tr>
 					<tr class="log-details" data-log-id="${log.log_id || log.id}" style="display: none;">
 						<td colspan="5" style="padding: 0; border-top: none;">
@@ -415,7 +403,7 @@
 								<th style="width: 120px;">User</th>
 								<th>Action</th>
 								<th style="width: 80px;">Duration</th>
-								<th>Page</th>
+								<th>Entity</th>
 							</tr>
 						</thead>
 						<tbody>
@@ -428,9 +416,19 @@
 			// Add click handlers for log details
 			addLogClickHandlers(logs);
 		}
-		
+
+		function renderAnalyticsError() {
+			const container = document.getElementById('analytics-container');
+			container.innerHTML = `
+				<div class="text-center py-4">
+					<h5>Failed to load analytics</h5>
+					<p class="text-muted">Please try refreshing the page</p>
+					<button class="btn btn-primary" onclick="loadAnalytics()">Retry</button>
+				</div>
+			`;
+		}
+
 		function formatActionDisplay(action) {
-			// Convert technical action names to human-readable format
 			const actionMap = {
 				'page_created': 'Page Created',
 				'page_updated': 'Page Updated',
@@ -441,6 +439,10 @@
 				'page_upload_started': 'Upload Started',
 				'page_upload_completed': 'Upload Completed',
 				'page_upload_failed': 'Upload Failed',
+				'project_created': 'Project Created',
+				'project_updated': 'Project Updated',
+				'user_login': 'User Login',
+				'user_logout': 'User Logout',
 				'summary_generation_started': 'Summary Generation Started',
 				'summary_generation_completed': 'Summary Generation Completed',
 				'summary_generation_failed': 'Summary Generation Failed'
@@ -488,50 +490,30 @@
 				'info': 'primary',
 				'warn': 'warning',
 				'error': 'danger',
-				'debug': 'secondary'
+				'success': 'success'
 			};
 			return colors[level] || 'secondary';
 		}
-		
-		function getActivityIcon(action) {
-			const icons = {
-				'page_created': 'plus',
-				'page_status_undefined': 'refresh-cw',
-				'project_created': 'folder-plus',
-				'user_login': 'log-in',
-				'default': 'activity'
-			};
-			return icons[action] || icons.default;
-		}
-		
-		function getActivityColor(action) {
-			const colors = {
-				'page_created': 'success',
-				'page_status_undefined': 'warning',
-				'project_created': 'info',
-				'user_login': 'primary',
-				'default': 'secondary'
-			};
-			return colors[action] || colors.default;
-		}
-		
-		function reloadActivity() {
+
+		async function reloadAnalytics() {
 			// Show loading state
-			document.getElementById('activity-container').innerHTML = `
-				<div class="text-center py-4">
+			document.getElementById('analytics-container').innerHTML = `
+				<div class="loading text-center py-4">
 					<div class="spinner-border text-primary"></div>
-					<p class="mt-2">Reloading activity...</p>
+					<p class="mt-2">Reloading analytics...</p>
 				</div>
 			`;
 			
-			// Reload activity data
-			const projectId = window.location.hash.substring(1);
-			if (projectId) {
-				loadProjectActivity(projectId);
-			}
+			// Reload both stats and analytics
+			await loadDashboardStats();
+			await loadAnalytics();
 		}
-		
-		async function handleLogout() { await cf.logout(); window.location.href = '/auth/login.html'; }
+
+		// Logout function
+		async function handleLogout() {
+			await cf.logout();
+			window.location.href = '/login.html';
+		}
 	</script>
 
 </body>

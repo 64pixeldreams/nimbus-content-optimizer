@@ -140,7 +140,7 @@ export const PageModel = {
         const auditLogger = new AuditLogger(datastore, logger);
         
         await auditLogger.logPageActivity(
-          instance.get('user_id'),
+          instance.get('user_id') || 'system',
           instance.get('page_id'),
           instance.get('project_id'),
           'page_created',
@@ -171,40 +171,58 @@ export const PageModel = {
       }
     },
     
-    afterUpdate: async (instance, changes, env, logger) => {
+    afterUpdate: async (instance, changes, env, logger, context) => {
       // Create audit log for status changes
       if (changes.status) {
         try {
+          
           const { Datastore } = await import('../modules/datastore/index.js');
           const { AuditLogger } = await import('../modules/logs/core/audit-logger.js');
           
           const datastore = new Datastore(env, logger);
           const auditLogger = new AuditLogger(datastore, logger);
           
-          // Get old and new status values - try multiple sources for old status
-          const oldStatus = instance.originalData?.status || 
-                           instance.data?.status || 
-                           (instance.data && typeof instance.data === 'object' ? instance.data.status : null) ||
-                           'pending'; // Default to pending if we can't find old status
+          // Get the authenticated user ID from context or instance
+          const userId = context?.user_id || 
+                        instance.get('user_id') || 
+                        instance.get('created_by') ||
+                        'system';
+          
+          // Get old and new status values - use the changes object properly
+          const oldStatus = instance.originalData?.status || 'pending';
           const newStatus = changes.status;
           
-          // Use the new improved logging method
-          await auditLogger.logPageActivity(
-            instance.get('user_id'),
-            instance.get('page_id'),
-            instance.get('project_id'),
-            `page_status_updated`,
-            `Page status updated: ${oldStatus} → ${newStatus}`,
-            {
-              url: instance.get('url'),
-              title: instance.get('title'),
-              old_status: oldStatus,
-              new_status: newStatus,
-              status_change: `${oldStatus} → ${newStatus}`
-            }
-          );
+          logger?.log('🔧 PAGE HOOK: Status values', {
+            oldStatus,
+            newStatus,
+            userId,
+            willLog: oldStatus !== newStatus
+          });
+          
+          // Only log if status actually changed
+          if (oldStatus !== newStatus) {
+            logger?.log('🔧 PAGE HOOK: Creating audit log...');
+            // Use the new improved logging method with proper formatting
+            await auditLogger.logPageActivity(
+              userId,
+              instance.get('page_id'),
+              instance.get('project_id'),
+              'page_status_updated',
+              `Page status updated: ${oldStatus} → ${newStatus}`,
+              {
+                url: instance.get('url'),
+                title: instance.get('title'),
+                old_status: oldStatus,
+                new_status: newStatus,
+                status_change: `${oldStatus} → ${newStatus}`
+              }
+            );
+            logger?.log('🔧 PAGE HOOK: Audit log created successfully');
+          } else {
+            logger?.log('🔧 PAGE HOOK: Status unchanged, skipping audit log');
+          }
         } catch (auditError) {
-          logger?.warn('Failed to create page status audit log', auditError);
+          logger?.error('🔧 PAGE HOOK: Failed to create page status audit log', auditError);
         }
       }
       
