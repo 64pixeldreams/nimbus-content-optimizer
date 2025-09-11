@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+	<meta name="description" content="NimbusAI - Content Optimization Platform">
+	<meta name="author" content="NimbusAI">
+
+	<link rel="preconnect" href="https://fonts.gstatic.com">
+	<link rel="shortcut icon" href="/assets/img/icons/icon-48x48.png" />
+
+	<title>Project Dashboard - NimbusHQ</title>
+
+	<link href="/assets/css/app.css" rel="stylesheet">
+	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+	
+	<!-- Bootstrap 5 Breadcrumb Styles -->
+	<style>
+		.breadcrumb {
+			display: flex;
+			flex-wrap: wrap;
+			padding: 0;
+			margin-bottom: 1rem;
+			list-style: none;
+		}
+		
+		.breadcrumb-item {
+			display: flex;
+		}
+		
+		.breadcrumb-item + .breadcrumb-item {
+			padding-left: 0.5rem;
+		}
+		
+		.breadcrumb-item + .breadcrumb-item::before {
+			display: inline-block;
+			padding-right: 0.5rem;
+			color: #6c757d;
+			content: "/";
+		}
+		
+		.breadcrumb-item > a {
+			color: #0d6efd;
+			text-decoration: none;
+		}
+		
+		.breadcrumb-item > a:hover {
+			color: #0a58ca;
+			text-decoration: underline;
+		}
+		
+		.breadcrumb-item.active {
+			color: #6c757d;
+		}
+	</style>
+</head>
+
+<body>
+	<div class="wrapper">
+		<!-- Sidebar Navigation -->
+		<nav id="sidebar" class="sidebar js-sidebar">
+			<div class="sidebar-content js-simplebar">
+				<a class="sidebar-brand" href="/app/dashboard.html">
+					<span class="align-middle">NimbusHQ</span>
+				</a>
+
+				<ul class="sidebar-nav">
+					<li class="sidebar-header">
+						Main
+					</li>
+
+					<li class="sidebar-item">
+						<a class="sidebar-link" href="/app/dashboard.html">
+							<i class="align-middle" data-feather="home"></i> <span class="align-middle">Account Home</span>
+						</a>
+					</li>
+
+					<li class="sidebar-item">
+						<a class="sidebar-link" href="#" id="project-link">
+							<i class="align-middle" data-feather="folder"></i> <span class="align-middle" id="sidebar-project-name">Project</span>
+						</a>
+					</li>
+
+					<!-- Project Sub-Navigation -->
+					<li class="sidebar-item active">
+						<a class="sidebar-link" href="#">
+							<i class="align-middle" data-feather="grid"></i> <span class="align-middle">Dashboard</span>
+						</a>
+					</li>
+
+					<li class="sidebar-item">
+						<a class="sidebar-link" href="#" id="project-activity-link">
+							<i class="align-middle" data-feather="activity"></i> <span class="align-middle">Activity</span>
+						</a>
+					</li>
+
+					<li class="sidebar-item">
+						<a class="sidebar-link" href="#" id="project-analytics-link">
+							<i class="align-middle" data-feather="bar-chart-2"></i> <span class="align-middle">Analytics</span>
+						</a>
+					</li>
+
+					<li class="sidebar-item">
+						<a class="sidebar-link" href="#" id="project-settings-link">
+							<i class="align-middle" data-feather="settings"></i> <span class="align-middle">Settings</span>
+						</a>
+					</li>
+
+					<li class="sidebar-header">
+						Account
+					</li>
+
+					<li class="sidebar-item">
+						<a class="sidebar-link" href="/app/notifications.html">
+							<i class="align-middle" data-feather="bell"></i> <span class="align-middle">Notifications</span>
+						</a>
+					</li>
+
+					<li class="sidebar-item">
+						<a class="sidebar-link" href="/app/settings.html">
+							<i class="align-middle" data-feather="settings"></i> <span class="align-middle">Settings</span>
+						</a>
+					</li>
+
+					<li class="sidebar-item">
+						<a class="sidebar-link" href="/app/profile.html">
+							<i class="align-middle" data-feather="user"></i> <span class="align-middle">Profile</span>
+						</a>
+					</li>
+				</ul>
+			</div>
+		</nav>
+
+		<!-- Main Content -->
+		<div class="main">
+			<!-- Top Navigation Bar -->
+			<nav class="navbar navbar-expand navbar-light navbar-bg">
+				<a class="sidebar-toggle js-sidebar-toggle">
+					<i class="hamburger align-self-center"></i>
+				</a>
+
+				<div class="navbar-collapse collapse">
+					<ul class="navbar-nav navbar-align">
+						<!-- Notifications -->
+						<li class="nav-item dropdown">
+							<a class="nav-icon dropdown-toggle" href="#" id="alertsDropdown" data-bs-toggle="dropdown">
+								<div class="position-relative">
+									<i class="align-middle" data-feather="bell"></i>
+									<span class="indicator">4</span>
+								</div>
+							</a>
+							<div class="dropdown-menu dropdown-menu-lg dropdown-menu-end py-0" aria-labelledby="alertsDropdown">
+								<div class="dropdown-menu-header">
+									4 New Notifications
+								</div>
+								<div class="list-group">
+									<a href="#" class="list-group-item">
+										<div class="row g-0 align-items-center">
+											<div class="col-2">
+												<i class="text-success" data-feather="check-circle"></i>
+											</div>
+											<div class="col-10">
+												<div class="text-dark">Page optimization completed</div>
+												<div class="text-muted small mt-1">Project: Example.com</div>
+											</div>
+										</div>
+									</a>
+								</div>
+								<div class="dropdown-menu-footer">
+									<a href="/app/notifications.html" class="text-muted">Show all notifications</a>
+								</div>
+							</div>
+						</li>
+
+						<!-- User Menu -->
+						<li class="nav-item dropdown">
+							<a class="nav-icon dropdown-toggle d-inline-block d-sm-none" href="#" data-bs-toggle="dropdown">
+								<i class="align-middle" data-feather="settings"></i>
+							</a>
+
+							<a class="nav-link d-none d-sm-inline-block" href="#" data-bs-toggle="dropdown">
+								<div class="d-flex align-items-center">
+									<div class="avatar bg-primary text-white rounded-circle me-2 d-flex align-items-center justify-content-center" style="width: 32px; height: 32px; flex-shrink: 0;">
+										<i data-feather="user" style="width: 16px; height: 16px;"></i>
+									</div>
+									<span class="text-dark dropdown-toggle" id="user-name">Loading...</span>
+								</div>
+							</a>
+							<div class="dropdown-menu dropdown-menu-end" style="min-width: 250px;">
+								<a class="dropdown-item" href="/app/profile.html"><i class="align-middle me-1" data-feather="user"></i> Profile</a>
+								<a class="dropdown-item" href="/app/settings.html"><i class="align-middle me-1" data-feather="settings"></i> Settings</a>
+								<div class="dropdown-divider"></div>
+								<a class="dropdown-item" href="#" onclick="handleLogout()"><i class="align-middle me-1" data-feather="log-out"></i> Log out</a>
+							</div>
+						</li>
+					</ul>
+				</div>
+			</nav>
+
+			<!-- Page Content -->
+			<main class="content">
+				<div class="container-fluid p-0">
+					<!-- Breadcrumb Navigation -->
+					<nav aria-label="breadcrumb" class="pt-3 pb-2">
+						<ol class="breadcrumb mb-0">
+							<li class="breadcrumb-item"><a href="/app/dashboard.html">Account Home</a></li>
+							<li class="breadcrumb-item active" aria-current="page">Project</li>
+						</ol>
+					</nav>
+
+					<!-- Page Header -->
+					<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-2 pb-2 mb-3">
+						<div>
+							<div style="font-size: 16px; line-height: 1.5; color: black; font-weight: 600; margin-bottom: 8px;">Project home</div>
+							<h1 class="h2" id="project-title">Loading...</h1>
+						</div>
+						<div class="btn-toolbar mb-2 mb-md-0">
+							<button type="button" class="btn btn-primary" onclick="uploadPages()">
+								<i data-feather="upload"></i> Upload Pages
+							</button>
+						</div>
+					</div>
+
+					<!-- Stats Row (Simple) -->
+					<div class="row mb-4">
+						<div class="col-md-4">
+							<div class="card">
+								<div class="card-body">
+									<div class="row">
+										<div class="col mt-0">
+											<h5 class="card-title">Pages</h5>
+										</div>
+										<div class="col-auto">
+											<div class="stat text-primary">
+												<i class="align-middle" data-feather="file-text"></i>
+											</div>
+										</div>
+									</div>
+									<h1 class="mt-1 mb-3" id="total-pages-count">-</h1>
+								</div>
+							</div>
+						</div>
+						<div class="col-md-4">
+							<div class="card">
+								<div class="card-body">
+									<div class="row">
+										<div class="col mt-0">
+											<h5 class="card-title">Complete</h5>
+										</div>
+										<div class="col-auto">
+											<div class="stat text-success">
+												<i class="align-middle" data-feather="check-circle"></i>
+											</div>
+										</div>
+									</div>
+									<h1 class="mt-1 mb-3" id="complete-pages-count">-</h1>
+								</div>
+							</div>
+						</div>
+						<div class="col-md-4">
+							<div class="card">
+								<div class="card-body">
+									<div class="row">
+										<div class="col mt-0">
+											<h5 class="card-title">Processing</h5>
+										</div>
+										<div class="col-auto">
+											<div class="stat text-warning">
+												<i class="align-middle" data-feather="clock"></i>
+											</div>
+										</div>
+									</div>
+									<h1 class="mt-1 mb-3" id="processing-count">-</h1>
+								</div>
+							</div>
+						</div>
+					</div>
+
+					<!-- Projects Table (Cloudflare Style) -->
+					<div class="row">
+						<div class="col-12">
+							<div class="card">
+								<div class="card-header d-flex justify-content-between align-items-center">
+									<h5 class="card-title mb-0">Pages</h5>
+									<a href="#" onclick="reloadProject(); return false;" class="text-muted text-decoration-none" style="font-size: 14px;">
+										<i data-feather="refresh-cw" style="width: 14px; height: 14px;"></i> Reload
+									</a>
+								</div>
+								<div class="card-body">
+									<div id="pages-container">
+										<div class="loading text-center py-4">
+											<div class="spinner-border text-primary"></div>
+											<p class="mt-2">Loading projects...</p>
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</main>
+		</div>
+	</div>
+
+	<!-- AdminKit Core JS -->
+	<script src="/assets/js/adminkit.js"></script>
+	
+	<!-- Your Custom Framework (UNCHANGED) -->
+	<script src="/assets/js/cframework.js"></script>
+	<script src="/assets/js/nimbus.js"></script>
+	<script>
+		// Universal setup (same for all pages)
+		document.addEventListener('DOMContentLoaded', async () => {
+			cf.init({
+				serverUrl: 'https://nimbus-platform.martin-598.workers.dev',
+				appName: 'nimbus'
+			});
+			
+			if (!cf.isAuthenticated()) {
+				window.location.href = '/auth/login.html';
+				return;
+			}
+			
+			// Load user info
+			const userName = cf.getUserName();
+			const displayName = userName.length > 12 ? userName.substring(0, 12) + '...' : userName;
+			document.getElementById('user-name').textContent = displayName;
+			
+			// Get project ID from hash
+			const projectId = window.location.hash.substring(1);
+			if (!projectId) {
+				window.location.href = '/app/dashboard.html';
+				return;
+			}
+			
+			// Set up navigation links
+			setupNavigation(projectId);
+			
+			// Load project data
+			await loadProjectData(projectId);
+		});
+		
+		function setupNavigation(projectId) {
+			// Set up project navigation links
+			document.getElementById('project-link').href = `/app/project.html#${projectId}`;
+			document.getElementById('project-activity-link').href = `/app/project/activity.html#${projectId}`;
+			document.getElementById('project-analytics-link').href = `/app/project/analytics.html#${projectId}`;
+			document.getElementById('project-settings-link').href = `/app/project/settings.html#${projectId}`;
+		}
+		
+		async function loadProjectData(projectId) {
+			try {
+				// Load project with stats (optimized - single API call)
+				const project = await nimbus.projects.get(projectId);
+				if (!project) throw new Error('Project not found');
+				
+				// Update UI
+				document.getElementById('project-title').textContent = `${project.name}'s dashboard:`;
+				document.getElementById('sidebar-project-name').textContent = project.name;
+				
+				// Parse project stats (comes as JSON string from D1)
+				let stats = { total_pages: 0, processing_pages: 0, completed_pages: 0 };
+				if (project.stats) {
+					if (typeof project.stats === 'string') {
+						try {
+							stats = JSON.parse(project.stats);
+						} catch (e) {
+							console.warn('Failed to parse project stats:', e);
+						}
+					} else if (typeof project.stats === 'object') {
+						stats = project.stats;
+					}
+				}
+				
+				// Update stats from project data (fast!)
+				document.getElementById('total-pages-count').textContent = stats.total_pages;
+				document.getElementById('complete-pages-count').textContent = stats.completed_pages;
+				document.getElementById('processing-count').textContent = stats.processing_pages;
+				
+				// Load pages for the table (only if we have pages)
+				if (stats.total_pages > 0) {
+					const pages = await nimbus.pages.list(projectId);
+					renderPages(pages);
+				} else {
+					renderPages([]);
+				}
+				
+			} catch (error) {
+				console.error('Failed to load project:', error);
+				document.getElementById('pages-container').innerHTML = `
+					<div class="alert alert-danger">
+						<h5>Error Loading Project</h5>
+						<p>${error.message}</p>
+						<a href="/app/dashboard.html" class="btn btn-primary">Back to Dashboard</a>
+					</div>
+				`;
+			}
+		}
+		
+		function renderPages(pages) {
+			const container = document.getElementById('pages-container');
+			
+			if (pages.length === 0) {
+				container.innerHTML = `
+					<div class="text-center py-4">
+						<h5>No pages yet</h5>
+						<p class="text-muted">Upload pages to get started</p>
+						<button class="btn btn-primary" onclick="uploadPages()">Upload Pages</button>
+					</div>
+				`;
+				return;
+			}
+			
+			const tableRows = pages.map(page => `
+				<tr onclick="viewPage('${page.page_id}')" style="cursor: pointer;">
+					<td><strong>${page.title || 'Untitled'}</strong></td>
+					<td>${page.url || '-'}</td>
+					<td><span class="badge bg-${page.status === 'complete' ? 'success' : page.status === 'processing' ? 'warning' : 'secondary'}">${page.status}</span></td>
+					<td>${page.updated_at ? cf.formatRelativeTime(page.updated_at) : 'Never'}</td>
+				</tr>
+			`).join('');
+			
+			container.innerHTML = `
+				<div class="table-responsive">
+					<table class="table table-hover">
+						<thead>
+							<tr>
+								<th>Title</th>
+								<th>URL</th>
+								<th>Status</th>
+								<th>Last Activity</th>
+							</tr>
+						</thead>
+						<tbody>${tableRows}</tbody>
+					</table>
+				</div>
+			`;
+		}
+		
+		function reloadProject() {
+			// Get reload link
+			const reloadLink = document.querySelector('[onclick*="reloadProject"]');
+			
+			// Disable reload link temporarily
+			reloadLink.style.pointerEvents = 'none';
+			reloadLink.style.opacity = '0.6';
+			
+			// Show loading state in pages container
+			document.getElementById('pages-container').innerHTML = `
+				<div class="text-center py-4">
+					<div class="spinner-border text-primary"></div>
+					<p class="mt-2">Reloading project data...</p>
+				</div>
+			`;
+			
+			// Reset stats to loading state
+			document.getElementById('total-pages-count').textContent = '-';
+			document.getElementById('complete-pages-count').textContent = '-';
+			document.getElementById('processing-count').textContent = '-';
+			
+			// Reload project data
+			const projectId = window.location.hash.substring(1);
+			if (projectId) {
+				loadProjectData(projectId).then(() => {
+					// Re-enable reload link after loading completes
+					reloadLink.style.pointerEvents = 'auto';
+					reloadLink.style.opacity = '1';
+				}).catch(() => {
+					// Re-enable reload link even if loading fails
+					reloadLink.style.pointerEvents = 'auto';
+					reloadLink.style.opacity = '1';
+				});
+			} else {
+				// Re-enable reload link if no project ID
+				reloadLink.style.pointerEvents = 'auto';
+				reloadLink.style.opacity = '1';
+			}
+		}
+		
+		function uploadPages() { alert('Upload pages coming soon!'); }
+		function viewPage(pageId) { 
+			// Navigate to page view using hash (works with any server)
+			window.location.href = `/app/page.html#${pageId}`;
+		}
+		async function handleLogout() { await cf.logout(); window.location.href = '/auth/login.html'; }
+	</script>
+
+</body>
+</html>

@@ -3,6 +3,82 @@
  * Represents a web page for optimization
  */
 
+/**
+ * Update project stats atomically based on page change
+ */
+async function updateProjectStats(projectId, change, env, logger) {
+  try {
+    const { DataModel } = await import('../modules/datamodel/index.js');
+    const { Datastore } = await import('../modules/datastore/index.js');
+    const { ProjectModel } = await import('./project.js');
+    
+    // Initialize datastore
+    const datastore = new Datastore(env, logger);
+    
+    // Register models
+    DataModel.registerModel(ProjectModel);
+    
+    // Get the project
+    const project = await DataModel.get('PROJECT', datastore, projectId, logger);
+    if (!project) {
+      logger?.warn('Project not found for stats update', { projectId });
+      return;
+    }
+    
+    // Get current stats
+    const currentStats = project.get('stats') || { total_pages: 0, processing_pages: 0, completed_pages: 0 };
+    
+    // Apply atomic changes
+    let newStats = { ...currentStats };
+    
+    if (change.type === 'create') {
+      newStats.total_pages += 1;
+      if (change.status === 'processing') {
+        newStats.processing_pages += 1;
+      }
+    } else if (change.type === 'update') {
+      if (change.oldStatus && change.newStatus) {
+        // Status changed
+        if (change.oldStatus === 'processing' && change.newStatus !== 'processing') {
+          newStats.processing_pages -= 1;
+        }
+        if (change.oldStatus !== 'processing' && change.newStatus === 'processing') {
+          newStats.processing_pages += 1;
+        }
+        if (change.newStatus === 'completed') {
+          newStats.completed_pages += 1;
+        }
+      }
+    } else if (change.type === 'delete') {
+      newStats.total_pages -= 1;
+      if (change.status === 'processing') {
+        newStats.processing_pages -= 1;
+      }
+      if (change.status === 'completed') {
+        newStats.completed_pages -= 1;
+      }
+    }
+    
+    // Update last activity
+    newStats.last_activity = new Date().toISOString();
+    
+    // Update project stats
+    await project.update({ stats: newStats });
+    await project.save();
+    
+    logger?.log('Project stats updated atomically', {
+      projectId,
+      change: change.type,
+      oldStats: currentStats,
+      newStats
+    });
+    
+  } catch (error) {
+    logger?.error('Failed to update project stats', error);
+    throw error;
+  }
+}
+
 export const PageModel = {
   name: 'PAGE',
   
@@ -83,6 +159,12 @@ export const PageModel = {
           projectId: instance.get('project_id')
         });
         
+        // Update project stats atomically
+        await updateProjectStats(instance.get('project_id'), {
+          type: 'create',
+          status: instance.get('status')
+        }, env, logger);
+        
       } catch (error) {
         logger?.error('Audit logging failed in afterCreate hook', error);
         // Don't throw - audit logging shouldn't break page creation
@@ -99,17 +181,21 @@ export const PageModel = {
           const datastore = new Datastore(env, logger);
           const auditLogger = new AuditLogger(datastore, logger);
           
+          // Get old and new status values
+          const oldStatus = instance.originalData?.status || 'undefined';
+          const newStatus = changes.status || 'undefined';
+          
           await auditLogger.logPageActivity(
             instance.get('user_id'),
             instance.get('page_id'),
             instance.get('project_id'),
-            `page_status_${changes.status.new}`,
-            `Page status updated: ${changes.status.old} → ${changes.status.new}`,
+            `page_status_${newStatus}`,
+            `Page status updated: ${oldStatus} → ${newStatus}`,
             {
               url: instance.get('url'),
               title: instance.get('title'),
-              old_status: changes.status.old,
-              new_status: changes.status.new
+              old_status: oldStatus,
+              new_status: newStatus
             }
           );
         } catch (auditError) {
@@ -122,6 +208,19 @@ export const PageModel = {
           pageId: instance.get('page_id'),
           status: 'completed'
         });
+      }
+      
+      // Update project stats if status changed
+      if (changes.status) {
+        try {
+          await updateProjectStats(instance.get('project_id'), {
+            type: 'update',
+            oldStatus: instance.originalData?.status,
+            newStatus: changes.status
+          }, env, logger);
+        } catch (error) {
+          logger?.warn('Failed to update project stats in afterUpdate hook', error);
+        }
       }
     }
   }

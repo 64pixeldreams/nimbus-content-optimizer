@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+	<meta name="description" content="NimbusAI - Content Optimization Platform">
+	<meta name="author" content="NimbusAI">
+
+	<link rel="preconnect" href="https://fonts.gstatic.com">
+	<link rel="shortcut icon" href="/assets/img/icons/icon-48x48.png" />
+
+	<title>Project Analytics - NimbusHQ</title>
+
+	<link href="/assets/css/app.css" rel="stylesheet">
+	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+	
+	<!-- Bootstrap 5 Breadcrumb Styles -->
+	<style>
+		.breadcrumb {
+			display: flex;
+			flex-wrap: wrap;
+			padding: 0;
+			margin-bottom: 1rem;
+			list-style: none;
+		}
+		
+		.breadcrumb-item {
+			display: flex;
+		}
+		
+		.breadcrumb-item + .breadcrumb-item {
+			padding-left: 0.5rem;
+		}
+		
+		.breadcrumb-item + .breadcrumb-item::before {
+			display: inline-block;
+			padding-right: 0.5rem;
+			color: #6c757d;
+			content: "/";
+		}
+		
+		.breadcrumb-item > a {
+			color: #0d6efd;
+			text-decoration: none;
+		}
+		
+		.breadcrumb-item > a:hover {
+			color: #0a58ca;
+			text-decoration: underline;
+		}
+		
+		.breadcrumb-item.active {
+			color: #6c757d;
+		}
+	</style>
+</head>
+
+<body>
+	<div class="wrapper">
+		<!-- Sidebar Navigation -->
+		<nav id="sidebar" class="sidebar js-sidebar">
+			<div class="sidebar-content js-simplebar">
+				<a class="sidebar-brand" href="/app/dashboard.html">
+					<span class="align-middle">NimbusHQ</span>
+				</a>
+
+				<ul class="sidebar-nav">
+					<li class="sidebar-header">
+						Main
+					</li>
+
+					<li class="sidebar-item">
+						<a class="sidebar-link" href="/app/dashboard.html">
+							<i class="align-middle" data-feather="home"></i> <span class="align-middle">Account Home</span>
+						</a>
+					</li>
+
+					<li class="sidebar-item">
+						<a class="sidebar-link" href="#" id="project-link">
+							<i class="align-middle" data-feather="folder"></i> <span class="align-middle" id="sidebar-project-name">Project</span>
+						</a>
+					</li>
+
+					<!-- Project Sub-Navigation -->
+					<li class="sidebar-item">
+						<a class="sidebar-link" href="#" id="project-dashboard-link">
+							<i class="align-middle" data-feather="grid"></i> <span class="align-middle">Dashboard</span>
+						</a>
+					</li>
+
+					<li class="sidebar-item">
+						<a class="sidebar-link" href="#" id="project-activity-link">
+							<i class="align-middle" data-feather="activity"></i> <span class="align-middle">Activity</span>
+						</a>
+					</li>
+
+					<li class="sidebar-item active">
+						<a class="sidebar-link" href="#">
+							<i class="align-middle" data-feather="bar-chart-2"></i> <span class="align-middle">Analytics</span>
+						</a>
+					</li>
+
+					<li class="sidebar-item">
+						<a class="sidebar-link" href="#" id="project-settings-link">
+							<i class="align-middle" data-feather="settings"></i> <span class="align-middle">Settings</span>
+						</a>
+					</li>
+
+					<li class="sidebar-header">
+						Account
+					</li>
+
+					<li class="sidebar-item">
+						<a class="sidebar-link" href="/app/notifications.html">
+							<i class="align-middle" data-feather="bell"></i> <span class="align-middle">Notifications</span>
+						</a>
+					</li>
+
+					<li class="sidebar-item">
+						<a class="sidebar-link" href="/app/settings.html">
+							<i class="align-middle" data-feather="settings"></i> <span class="align-middle">Settings</span>
+						</a>
+					</li>
+
+					<li class="sidebar-item">
+						<a class="sidebar-link" href="/app/profile.html">
+							<i class="align-middle" data-feather="user"></i> <span class="align-middle">Profile</span>
+						</a>
+					</li>
+				</ul>
+			</div>
+		</nav>
+
+		<!-- Main Content -->
+		<div class="main">
+			<!-- Top Navigation Bar -->
+			<nav class="navbar navbar-expand navbar-light navbar-bg">
+				<a class="sidebar-toggle js-sidebar-toggle">
+					<i class="hamburger align-self-center"></i>
+				</a>
+
+				<div class="navbar-collapse collapse">
+					<ul class="navbar-nav navbar-align">
+						<!-- Notifications -->
+						<li class="nav-item dropdown">
+							<a class="nav-icon dropdown-toggle" href="#" id="alertsDropdown" data-bs-toggle="dropdown">
+								<div class="position-relative">
+									<i class="align-middle" data-feather="bell"></i>
+									<span class="indicator">4</span>
+								</div>
+							</a>
+							<div class="dropdown-menu dropdown-menu-lg dropdown-menu-end py-0" aria-labelledby="alertsDropdown">
+								<div class="dropdown-menu-header">
+									4 New Notifications
+								</div>
+								<div class="list-group">
+									<a href="#" class="list-group-item">
+										<div class="row g-0 align-items-center">
+											<div class="col-2">
+												<i class="text-success" data-feather="check-circle"></i>
+											</div>
+											<div class="col-10">
+												<div class="text-dark">Page optimization completed</div>
+												<div class="text-muted small mt-1">Project: Example.com</div>
+											</div>
+										</div>
+									</a>
+								</div>
+								<div class="dropdown-menu-footer">
+									<a href="/app/notifications.html" class="text-muted">Show all notifications</a>
+								</div>
+							</div>
+						</li>
+
+						<!-- User Menu -->
+						<li class="nav-item dropdown">
+							<a class="nav-icon dropdown-toggle d-inline-block d-sm-none" href="#" data-bs-toggle="dropdown">
+								<i class="align-middle" data-feather="settings"></i>
+							</a>
+
+							<a class="nav-link d-none d-sm-inline-block" href="#" data-bs-toggle="dropdown">
+								<div class="d-flex align-items-center">
+									<div class="avatar bg-primary text-white rounded-circle me-2 d-flex align-items-center justify-content-center" style="width: 32px; height: 32px; flex-shrink: 0;">
+										<i data-feather="user" style="width: 16px; height: 16px;"></i>
+									</div>
+									<span class="text-dark dropdown-toggle" id="user-name">Loading...</span>
+								</div>
+							</a>
+							<div class="dropdown-menu dropdown-menu-end" style="min-width: 250px;">
+								<a class="dropdown-item" href="/app/profile.html"><i class="align-middle me-1" data-feather="user"></i> Profile</a>
+								<a class="dropdown-item" href="/app/settings.html"><i class="align-middle me-1" data-feather="settings"></i> Settings</a>
+								<div class="dropdown-divider"></div>
+								<a class="dropdown-item" href="#" onclick="handleLogout()"><i class="align-middle me-1" data-feather="log-out"></i> Log out</a>
+							</div>
+						</li>
+					</ul>
+				</div>
+			</nav>
+
+			<!-- Page Content -->
+			<main class="content">
+				<div class="container-fluid p-0">
+					<!-- Breadcrumb Navigation -->
+					<nav aria-label="breadcrumb" class="pt-3 pb-2">
+						<ol class="breadcrumb mb-0">
+							<li class="breadcrumb-item"><a href="/app/dashboard.html">Account Home</a></li>
+							<li class="breadcrumb-item"><a href="#" id="project-breadcrumb-link">Project</a></li>
+							<li class="breadcrumb-item active" aria-current="page">Analytics</li>
+						</ol>
+					</nav>
+
+					<!-- Page Header -->
+					<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-2 pb-2 mb-3">
+						<div>
+							<div style="font-size: 16px; line-height: 1.5; color: black; font-weight: 600; margin-bottom: 8px;">Project Analytics</div>
+							<h1 class="h2" id="project-title">Loading...</h1>
+						</div>
+					</div>
+
+					<!-- Analytics Content -->
+					<div class="row">
+						<div class="col-12">
+							<div class="card">
+								<div class="card-header">
+									<h5 class="card-title mb-0">Analytics Dashboard</h5>
+								</div>
+								<div class="card-body">
+									<div id="analytics-container">
+										<div class="text-center py-5">
+											<div class="mb-3">
+												<i data-feather="bar-chart-2" style="width: 48px; height: 48px;" class="text-muted"></i>
+											</div>
+											<h5>Analytics Coming Soon</h5>
+											<p class="text-muted">Advanced analytics and reporting features will be available here.</p>
+											<div class="mt-4">
+												<span class="badge bg-secondary me-2">Performance Metrics</span>
+												<span class="badge bg-secondary me-2">Optimization Stats</span>
+												<span class="badge bg-secondary me-2">Before/After Comparisons</span>
+												<span class="badge bg-secondary">Growth Analytics</span>
+											</div>
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</main>
+		</div>
+	</div>
+
+	<!-- AdminKit Core JS -->
+	<script src="/assets/js/adminkit.js"></script>
+	
+	<!-- Your Custom Framework (UNCHANGED) -->
+	<script src="/assets/js/cframework.js"></script>
+	<script src="/assets/js/nimbus.js"></script>
+	<script>
+		// Universal setup (same for all pages)
+		document.addEventListener('DOMContentLoaded', async () => {
+			cf.init({
+				serverUrl: 'https://nimbus-platform.martin-598.workers.dev',
+				appName: 'nimbus'
+			});
+			
+			if (!cf.isAuthenticated()) {
+				window.location.href = '/auth/login.html';
+				return;
+			}
+			
+			// Load user info
+			const userName = cf.getUserName();
+			const displayName = userName.length > 12 ? userName.substring(0, 12) + '...' : userName;
+			document.getElementById('user-name').textContent = displayName;
+			
+			// Get project ID from hash
+			const projectId = window.location.hash.substring(1);
+			if (!projectId) {
+				window.location.href = '/app/dashboard.html';
+				return;
+			}
+			
+			// Set up navigation links
+			setupNavigation(projectId);
+			
+			// Load project data
+			await loadProjectInfo(projectId);
+		});
+		
+		function setupNavigation(projectId) {
+			// Set up project navigation links
+			document.getElementById('project-link').href = `/app/project.html#${projectId}`;
+			document.getElementById('project-dashboard-link').href = `/app/project.html#${projectId}`;
+			document.getElementById('project-activity-link').href = `/app/project/activity.html#${projectId}`;
+			document.getElementById('project-settings-link').href = `/app/project/settings.html#${projectId}`;
+			
+			// Set up breadcrumb link
+			document.getElementById('project-breadcrumb-link').href = `/app/project.html#${projectId}`;
+		}
+		
+		async function loadProjectInfo(projectId) {
+			try {
+				// Load project info
+				const project = await nimbus.projects.get(projectId);
+				if (!project) throw new Error('Project not found');
+				
+				// Update UI
+				document.getElementById('project-title').textContent = `${project.name}'s analytics:`;
+				document.getElementById('sidebar-project-name').textContent = project.name;
+				
+			} catch (error) {
+				console.error('Failed to load project:', error);
+				document.getElementById('analytics-container').innerHTML = `
+					<div class="alert alert-danger">
+						<h5>Error Loading Project</h5>
+						<p>${error.message}</p>
+						<a href="/app/dashboard.html" class="btn btn-primary">Back to Dashboard</a>
+					</div>
+				`;
+			}
+		}
+		
+		async function handleLogout() { await cf.logout(); window.location.href = '/auth/login.html'; }
+	</script>
+
+</body>
+</html>

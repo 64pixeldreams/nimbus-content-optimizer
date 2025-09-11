@@ -291,6 +291,62 @@ router.post('/api/function', async (request, env) => {
         validation: {}
       });
       
+      // Register auth.login function
+      cloudFunction.define('auth.login', async (requestContext) => {
+        const { env, logger, payload } = requestContext;
+        
+        try {
+          const { email, password } = payload;
+          logger.log('Auth login started', { email });
+          
+          // Import login logic
+          const { getPasswordHash, verifyPassword } = await import('./modules/auth/utils/passwords.js');
+          const { createSession } = await import('./modules/auth/utils/sessions.js');
+          
+          // Get password hash
+          const passwordData = await getPasswordHash(env, email.toLowerCase(), logger);
+          if (!passwordData) {
+            throw new Error('Invalid credentials');
+          }
+          
+          // Verify password
+          const isValid = await verifyPassword(password, passwordData.hash);
+          if (!isValid) {
+            throw new Error('Invalid credentials');
+          }
+          
+          // Create session
+          const session = await createSession(env, passwordData.user_id, email, null, logger);
+          
+          logger.log('Auth login successful', { userId: passwordData.user_id });
+          
+          return {
+            success: true,
+            userId: passwordData.user_id,
+            session_token: session.token,
+            expires: session.expires,
+            user: {
+              user_id: passwordData.user_id,
+              email: email,
+              name: email.split('@')[0]
+            }
+          };
+          
+        } catch (error) {
+          logger.error('Auth login failed', error);
+          return { 
+            success: false, 
+            error: error.message
+          };
+        }
+      }, {
+        auth: false,
+        validation: {
+          email: { type: 'string', required: true },
+          password: { type: 'string', required: true }
+        }
+      });
+      
       // Register login debug function
       cloudFunction.define('debug.login', async (requestContext) => {
         const { env, logger, payload } = requestContext;
@@ -363,17 +419,20 @@ router.post('/api/function', async (request, env) => {
       });
       
       // Register project CloudFunctions
-      const { projectCreate, projectCreateConfig, projectList, projectListConfig, projectGet, projectGetConfig } = await import('./modules/project/functions/index.js');
+      const { projectCreate, projectCreateConfig, projectList, projectListConfig, projectGet, projectGetConfig, projectUpdate, projectUpdateConfig } = await import('./modules/project/functions/index.js');
       
       cloudFunction.define('project.create', projectCreate, projectCreateConfig);
       cloudFunction.define('project.list', projectList, projectListConfig);
       cloudFunction.define('project.get', projectGet, projectGetConfig);
+      cloudFunction.define('project.update', projectUpdate, projectUpdateConfig);
       
       // Register pages CloudFunctions
-      const { pageCreate, pageCreateConfig, pageList, pageListConfig, pageLogs, pageLogsConfig } = await import('./modules/pages/functions/index.js');
+      const { pageCreate, pageCreateConfig, pageList, pageListConfig, pageGet, pageGetConfig, pageUpdate, pageUpdateConfig, pageLogs, pageLogsConfig } = await import('./modules/pages/functions/index.js');
       
       cloudFunction.define('page.create', pageCreate, pageCreateConfig);
       cloudFunction.define('page.list', pageList, pageListConfig);
+      cloudFunction.define('page.get', pageGet, pageGetConfig);
+      cloudFunction.define('page.update', pageUpdate, pageUpdateConfig);
       cloudFunction.define('page.logs', pageLogs, pageLogsConfig);
       
       // Register session debug function

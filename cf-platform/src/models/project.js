@@ -27,7 +27,19 @@ export const ProjectModel = {
     optimization_settings: { type: 'json', validation: 'object' },
     
     // Settings
-    settings: { type: 'json', default: {}, validation: 'object' }
+    settings: { type: 'json', default: {}, validation: 'object' },
+    
+    // Performance Stats (for dashboard)
+    stats: { 
+      type: 'json', 
+      default: {
+        total_pages: 0,
+        processing_pages: 0,
+        completed_pages: 0,
+        last_activity: null
+      }, 
+      validation: 'object' 
+    }
   },
   
   kv: {
@@ -43,6 +55,7 @@ export const ProjectModel = {
       'name',
       'domain',
       'status',
+      'stats',
       'created_at',
       'updated_at',
       'deleted_at'

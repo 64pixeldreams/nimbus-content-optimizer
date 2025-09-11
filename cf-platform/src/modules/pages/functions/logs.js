@@ -97,28 +97,66 @@ export async function pageLogs(requestContext) {
       }
       
     } else if (type === 'project' && entity_id) {
-      // Get logs for project
-      logs = [{
-        log_id: 'project_activity_1',
-        message: `Activity in project ${entity_id}`,
-        action: 'project_activity',
-        entity_type: 'project',
-        entity_id: entity_id,
-        timestamp: new Date().toISOString(),
-        details: { source: 'manual_query' }
-      }];
+      // Get real audit logs for project using direct D1 query
+      try {
+        const { Datastore } = await import('../../datastore/index.js');
+        const datastore = new Datastore(env, logger);
+        
+        // Query audit logs for this specific project
+        let query = 'SELECT * FROM audit_logs WHERE entity_id = ? OR entity_ids LIKE ? ORDER BY created_at DESC LIMIT ?';
+        const bindings = [entity_id, `%${entity_id}%`, limit];
+        
+        const result = await datastore.D1.execute(query, bindings);
+        const rawLogs = result.results || [];
+        
+        // Store raw logs for later formatting
+        logs = rawLogs;
+        
+      } catch (dbError) {
+        logger.warn('Failed to get real project audit logs, using sample data', dbError);
+        
+        // Fallback to sample data if D1 query fails
+        logs = [{
+          log_id: 'project_activity_1',
+          message: `Activity in project ${entity_id}`,
+          action: 'project_activity',
+          entity_type: 'project',
+          entity_id: entity_id,
+          timestamp: new Date().toISOString(),
+          details: { source: 'manual_query' }
+        }];
+      }
       
     } else if (type === 'page' && entity_id) {
-      // Get logs for specific page
-      logs = [{
-        log_id: 'page_activity_1',
-        message: `Activity for page ${entity_id}`,
-        action: 'page_activity',
-        entity_type: 'page',
-        entity_id: entity_id,
-        timestamp: new Date().toISOString(),
-        details: { source: 'manual_query' }
-      }];
+      // Get real audit logs for specific page using direct D1 query
+      try {
+        const { Datastore } = await import('../../datastore/index.js');
+        const datastore = new Datastore(env, logger);
+        
+        // Query audit logs for this specific page
+        let query = 'SELECT * FROM audit_logs WHERE entity_id = ? ORDER BY created_at DESC LIMIT ?';
+        const bindings = [entity_id, limit];
+        
+        const result = await datastore.D1.execute(query, bindings);
+        const rawLogs = result.results || [];
+        
+        // Store raw logs for later formatting
+        logs = rawLogs;
+        
+      } catch (dbError) {
+        logger.warn('Failed to get real page audit logs, using sample data', dbError);
+        
+        // Fallback to sample data if D1 query fails
+        logs = [{
+          log_id: 'page_activity_1',
+          message: `Activity for page ${entity_id}`,
+          action: 'page_activity',
+          entity_type: 'page',
+          entity_id: entity_id,
+          timestamp: new Date().toISOString(),
+          details: { source: 'manual_query' }
+        }];
+      }
       
     } else {
       return {

@@ -1,12 +1,14 @@
 /**
  * Get Page Function
- * Retrieves a page by ID with full content
+ * Retrieves a single page by ID
  */
 
 import { DataModel } from '../../datamodel/index.js';
+import { Datastore } from '../../datastore/index.js';
+import { PageModel } from '../../../models/page.js';
 
 export async function get(requestContext) {
-  const { env, logger, payload, auth, datastore } = requestContext;
+  const { env, logger, payload, auth } = requestContext;
   const { page_id } = payload;
 
   if (!page_id) {
@@ -17,6 +19,10 @@ export async function get(requestContext) {
   }
 
   try {
+    // Initialize datastore and register model
+    const datastore = new Datastore(env, logger);
+    DataModel.registerModel(PageModel);
+    
     // Load page
     const page = await DataModel.get('PAGE', datastore, page_id, logger);
 
@@ -24,19 +30,19 @@ export async function get(requestContext) {
       success: true,
       data: {
         page_id: page.get('page_id'),
-        project_id: page.get('project_id'),
-        url: page.get('url'),
         title: page.get('title'),
+        url: page.get('url'),
         status: page.get('status'),
         content: page.get('content'),
-        extracted_data: page.get('extracted_data'),
         optimized_content: page.get('optimized_content'),
         metadata: page.get('metadata'),
+        project_id: page.get('project_id'),
+        user_id: page.get('user_id'),
+        created_at: page.get('created_at'),
+        updated_at: page.get('updated_at'),
         last_processed: page.get('last_processed'),
         processing_time_ms: page.get('processing_time_ms'),
-        error_message: page.get('error_message'),
-        created_at: page.get('created_at'),
-        updated_at: page.get('updated_at')
+        error_message: page.get('error_message')
       }
     };
 
@@ -48,3 +54,13 @@ export async function get(requestContext) {
     };
   }
 }
+
+/**
+ * CloudFunction configuration
+ */
+export const getConfig = {
+  auth: true,
+  validation: {
+    page_id: { type: 'string', required: true }
+  }
+};
