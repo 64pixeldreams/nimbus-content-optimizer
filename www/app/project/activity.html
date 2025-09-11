@@ -336,38 +336,159 @@
 			}
 			
 			const tableRows = logs.map(log => {
+				// Format time in AIVERIE style (HH:MM:SS)
+				const time = new Date(log.timestamp || log.created_at);
+				const timeStr = time.toLocaleTimeString('en-GB', { 
+					hour12: false, 
+					hour: '2-digit', 
+					minute: '2-digit', 
+					second: '2-digit' 
+				});
+				
+				// Truncate user ID like AIVERIE
+				const userId = log.user_id || '-';
+				const truncatedUserId = userId.length > 15 ? 
+					`${userId.substring(0, 8)}...${userId.substring(userId.length - 6)}` : 
+					userId;
+				
+				// Format duration if available
+				const duration = log.duration_ms ? 
+					`${(log.duration_ms / 1000).toFixed(1)}s` : 
+					'';
+				
+				// Make page ID clickable if it's a page
 				const pageId = log.entity_id || '-';
 				const pageLink = pageId.startsWith('page:') ? 
-					`<a href="/app/page.html#${pageId}" class="text-decoration-none">${pageId}</a>` : 
+					`<a href="/app/page.html#${pageId}" class="text-decoration-none text-primary">${pageId}</a>` : 
 					pageId;
 				
+				// Clean action display
+				const actionDisplay = formatActionDisplay(log.action);
+				
 				return `
-					<tr>
-						<td><span class="badge bg-${getActivityColor(log.action)}">${log.action}</span></td>
-						<td>${log.message || '-'}</td>
+					<tr class="log-row" data-log-id="${log.log_id || log.id}" style="cursor: pointer;">
+						<td style="font-family: monospace; font-size: 0.9em; color: #6c757d;">${timeStr}</td>
+						<td style="font-family: monospace; font-size: 0.9em; color: #6c757d;">${truncatedUserId}</td>
+						<td>${actionDisplay}</td>
+						<td style="font-family: monospace; font-size: 0.9em; color: #6c757d;">${duration}</td>
 						<td>${pageLink}</td>
-						<td>${log.user_id || '-'}</td>
-						<td>${cf.formatRelativeTime(log.timestamp || log.created_at)}</td>
 					</tr>
 				`;
 			}).join('');
 			
 			container.innerHTML = `
 				<div class="table-responsive">
-					<table class="table table-hover">
-						<thead>
+					<table class="table table-sm table-hover">
+						<thead class="table-light">
 							<tr>
+								<th style="width: 80px;">Time</th>
+								<th style="width: 120px;">User</th>
 								<th>Action</th>
-								<th>Message</th>
-								<th>Page ID</th>
-								<th>User ID</th>
-								<th>Time</th>
+								<th style="width: 80px;">Duration</th>
+								<th>Page</th>
 							</tr>
 						</thead>
-						<tbody>${tableRows}</tbody>
+						<tbody>
+							${tableRows}
+						</tbody>
 					</table>
 				</div>
 			`;
+			
+			// Add click handlers for log details
+			addLogClickHandlers(logs);
+		}
+		
+		function formatActionDisplay(action) {
+			// Convert technical action names to human-readable format
+			const actionMap = {
+				'page_created': 'Page Created',
+				'page_updated': 'Page Updated',
+				'page_status_updated': 'Status Updated',
+				'page_processing_started': 'Processing Started',
+				'page_processing_completed': 'Processing Completed',
+				'page_processing_failed': 'Processing Failed',
+				'page_upload_started': 'Upload Started',
+				'page_upload_completed': 'Upload Completed',
+				'page_upload_failed': 'Upload Failed',
+				'summary_generation_started': 'Summary Generation Started',
+				'summary_generation_completed': 'Summary Generation Completed',
+				'summary_generation_failed': 'Summary Generation Failed'
+			};
+			
+			return actionMap[action] || action.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+		}
+		
+		function addLogClickHandlers(logs) {
+			// Add click handlers for log detail drill-down
+			document.querySelectorAll('.log-row').forEach(row => {
+				row.addEventListener('click', function() {
+					const logId = this.dataset.logId;
+					const log = logs.find(l => (l.log_id || l.id) === logId);
+					if (log) {
+						showLogDetails(log);
+					}
+				});
+			});
+		}
+		
+		function showLogDetails(log) {
+			// Create modal or expandable details view
+			const detailsHtml = `
+				<div class="modal fade" id="logDetailsModal" tabindex="-1">
+					<div class="modal-dialog modal-lg">
+						<div class="modal-content">
+							<div class="modal-header">
+								<h5 class="modal-title">Log Details</h5>
+								<button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+							</div>
+							<div class="modal-body">
+								<div class="row">
+									<div class="col-md-6">
+										<h6>Basic Information</h6>
+										<table class="table table-sm">
+											<tr><td><strong>Time:</strong></td><td>${new Date(log.timestamp || log.created_at).toLocaleString()}</td></tr>
+											<tr><td><strong>User:</strong></td><td>${log.user_id}</td></tr>
+											<tr><td><strong>Action:</strong></td><td>${log.action}</td></tr>
+											<tr><td><strong>Message:</strong></td><td>${log.message}</td></tr>
+											${log.duration_ms ? `<tr><td><strong>Duration:</strong></td><td>${(log.duration_ms / 1000).toFixed(1)}s</td></tr>` : ''}
+										</table>
+									</div>
+									<div class="col-md-6">
+										<h6>Technical Details</h6>
+										<table class="table table-sm">
+											<tr><td><strong>Log ID:</strong></td><td style="font-family: monospace; font-size: 0.8em;">${log.log_id || log.id}</td></tr>
+											<tr><td><strong>Entity Type:</strong></td><td>${log.entity_type}</td></tr>
+											<tr><td><strong>Entity ID:</strong></td><td style="font-family: monospace; font-size: 0.8em;">${log.entity_id}</td></tr>
+											<tr><td><strong>Level:</strong></td><td>${log.level}</td></tr>
+										</table>
+									</div>
+								</div>
+								${log.details && Object.keys(log.details).length > 0 ? `
+									<h6>Additional Details</h6>
+									<pre class="bg-light p-3" style="font-size: 0.8em;">${JSON.stringify(log.details, null, 2)}</pre>
+								` : ''}
+							</div>
+							<div class="modal-footer">
+								<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+							</div>
+						</div>
+					</div>
+				</div>
+			`;
+			
+			// Remove existing modal if any
+			const existingModal = document.getElementById('logDetailsModal');
+			if (existingModal) {
+				existingModal.remove();
+			}
+			
+			// Add new modal to body
+			document.body.insertAdjacentHTML('beforeend', detailsHtml);
+			
+			// Show modal
+			const modal = new bootstrap.Modal(document.getElementById('logDetailsModal'));
+			modal.show();
 		}
 		
 		function getActivityIcon(action) {

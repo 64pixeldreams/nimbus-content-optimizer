@@ -181,21 +181,26 @@ export const PageModel = {
           const datastore = new Datastore(env, logger);
           const auditLogger = new AuditLogger(datastore, logger);
           
-          // Get old and new status values
-          const oldStatus = instance.originalData?.status || 'undefined';
-          const newStatus = changes.status || 'undefined';
+          // Get old and new status values - try multiple sources for old status
+          const oldStatus = instance.originalData?.status || 
+                           instance.data?.status || 
+                           (instance.data && typeof instance.data === 'object' ? instance.data.status : null) ||
+                           'pending'; // Default to pending if we can't find old status
+          const newStatus = changes.status;
           
+          // Use the new improved logging method
           await auditLogger.logPageActivity(
             instance.get('user_id'),
             instance.get('page_id'),
             instance.get('project_id'),
-            `page_status_${newStatus}`,
+            `page_status_updated`,
             `Page status updated: ${oldStatus} → ${newStatus}`,
             {
               url: instance.get('url'),
               title: instance.get('title'),
               old_status: oldStatus,
-              new_status: newStatus
+              new_status: newStatus,
+              status_change: `${oldStatus} → ${newStatus}`
             }
           );
         } catch (auditError) {
