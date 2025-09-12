@@ -245,7 +245,10 @@
 			console.log('🔍 ACTIVITY PAGE: Script starting...');
 			
 			// Initialize CFramework
-			await cf.init();
+			cf.init({
+				serverUrl: 'https://nimbus-platform.martin-598.workers.dev',
+				appName: 'nimbus'
+			});
 			
 			// Check authentication
 			if (!cf.isAuthenticated()) {
@@ -268,35 +271,24 @@
 			
 			// Load activity logs
 			await loadActivity();
+			
+			// Load notifications
+			await loadNotifications();
 		});
 
 		async function loadDashboardStats() {
 			try {
 				console.log('📊 Loading dashboard stats...');
 				
-				// Get projects
-				const projectsResult = await nimbus.getProjects();
-				if (projectsResult.success && projectsResult.projects) {
-					const projects = projectsResult.projects;
-					
-					// Calculate stats
-					let totalPages = 0;
-					let processingPages = 0;
-					
-					projects.forEach(project => {
-						if (project.stats) {
-							totalPages += project.stats.total_pages || 0;
-							processingPages += project.stats.processing_pages || 0;
-						}
-					});
-					
-					// Update display
-					document.getElementById('projects-count').textContent = projects.length;
-					document.getElementById('pages-count').textContent = totalPages;
-					document.getElementById('processing-count').textContent = processingPages;
-					
-					console.log('✅ Dashboard stats loaded:', { projects: projects.length, pages: totalPages, processing: processingPages });
-				}
+				// Use nimbus.loadDashboard() for consistent stats
+				const data = await nimbus.loadDashboard();
+				
+				// Update display with stats
+				document.getElementById('projects-count').textContent = data.stats.total_projects;
+				document.getElementById('pages-count').textContent = data.stats.total_pages;
+				document.getElementById('processing-count').textContent = data.stats.processing_pages;
+				
+				console.log('✅ Dashboard stats loaded:', data.stats);
 			} catch (error) {
 				console.error('❌ Failed to load dashboard stats:', error);
 			}
@@ -306,22 +298,11 @@
 			try {
 				console.log('📋 Loading user activity...');
 				
-				// Get user logs
-				const result = await cf.apiCall('/api/function', {
-					action: 'page.logs',
-					data: {
-						type: 'user',
-						limit: 100
-					}
-				});
+				// Use nimbus.logs.user() for user activity feed
+				const logs = await nimbus.logs.user(100);
 				
-				if (result.success && result.logs) {
-					console.log('✅ Activity loaded:', result.logs.length, 'logs');
-					renderActivity(result.logs);
-				} else {
-					console.error('❌ Failed to load activity:', result.error || 'Unknown error');
-					renderActivityError();
-				}
+				console.log('✅ Activity loaded:', logs.length, 'logs');
+				renderActivity(logs);
 			} catch (error) {
 				console.error('❌ Activity loading failed:', error);
 				renderActivityError();
@@ -535,6 +516,60 @@
 		async function handleLogout() {
 			await cf.logout();
 			window.location.href = '/login.html';
+		}
+
+		// Smart Notification functions with caching (EXACT copy from dashboard.js)
+		async function loadNotifications(forceRefresh = false) {
+			console.log(`🔔 Loading notifications...`);
+			
+			// Use centralized CFramework method
+			const result = await cf.loadAndRenderNotifications(forceRefresh);
+			
+			if (result.success) {
+				console.log(`✅ Notifications loaded: ${result.notifications.length}`);
+				
+				// Update header with count info
+				const header = document.getElementById('notifications-header');
+				const unseenCount = result.notifications.filter(n => !n.seen).length;
+				const totalCount = result.notifications.length;
+				
+				if (unseenCount > 0) {
+					header.innerHTML = `${unseenCount} New Notification${unseenCount === 1 ? '' : 's'} (${totalCount} total)`;
+				} else {
+					header.innerHTML = `No new notifications (${totalCount} total)`;
+				}
+			} else {
+				console.error('❌ Failed to load notifications:', result.error);
+			}
+		}
+
+		async function markNotificationSeen(notificationId) {
+			try {
+				console.log('🔔 Marking notification as seen:', notificationId);
+				
+				// Mark as seen using smart CFramework (auto-updates cache)
+				await cf.markNotificationSeen(notificationId);
+				
+				// Reload notifications to update the UI (will use updated cache)
+				await loadNotifications();
+				
+				console.log('✅ Notification marked as seen and UI updated');
+			} catch (error) {
+				console.error('❌ Error marking notification as seen:', error);
+			}
+		}
+
+		async function refreshNotificationsOnOpen() {
+			// Only refresh if it's been more than 30 seconds since last check
+			const timeSinceLastCheck = Date.now() - (cf._notificationCache?.lastFetch || 0);
+			const shouldRefresh = timeSinceLastCheck > 30000; // 30 seconds
+			
+			if (shouldRefresh) {
+				console.log('🔄 Refreshing notifications on dropdown open');
+				await loadNotifications(true); // Force refresh
+			} else {
+				console.log('🔔 Using cached notifications (recent)');
+			}
 		}
 	</script>
 

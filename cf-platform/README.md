@@ -13,7 +13,7 @@ Production-ready SaaS backend for the NimbusAI content optimization system. Buil
 1. **[DataModel Framework](src/modules/datamodel/)** 🏆
    - ORM with KV (full objects) + D1 (metadata) hybrid storage
    - DataProxy lazy loading for optimal performance
-   - Auto table creation and schema migration
+   - **Auto table creation and schema migration** ⚠️ [See Auto-Schema Guide](#-auto-schema-system)
    - Built-in auth, validation, hooks, and soft deletes
 
 2. **[CloudFunction API](src/modules/cloudfunction/)** 🎯
@@ -69,6 +69,52 @@ Production-ready SaaS backend for the NimbusAI content optimization system. Buil
     - KV and D1 adapters with auth context
     - Composite key patterns and list operations
     - Performance optimized with logging integration
+
+## 🔧 **Auto-Schema System**
+
+**⚠️ CRITICAL: Always run after adding new models or changing D1 schemas!**
+
+The DataModel framework automatically creates and updates D1 database tables from model definitions. This eliminates manual SQL migrations.
+
+### 📋 **When to Run Auto-Schema:**
+- ✅ After adding a new model (e.g., `NotificationModel`)
+- ✅ After changing a model's `d1.syncFields` 
+- ✅ After modifying field definitions that sync to D1
+- ✅ After deploying schema changes to production
+
+### 🚀 **How to Run Auto-Schema:**
+
+**Option 1: Using Test Script (Recommended)**
+```bash
+# Create and run the initialization script
+node test-initialize-db.js
+```
+
+**Option 2: Direct API Call**
+```bash
+curl -X POST https://your-worker.workers.dev/api/function \
+  -H "Content-Type: application/json" \
+  -d '{"action": "system.initialize", "data": {}}'
+```
+
+**Option 3: From Frontend**
+```javascript
+const result = await cf.run('system.initialize', {});
+```
+
+### 📊 **What It Does:**
+- 🔍 **Scans** all registered models with `d1.table` configuration
+- 🏗️ **Creates** missing D1 tables using model field definitions
+- ✅ **Skips** existing tables (safe to run multiple times)
+- 📝 **Logs** detailed results (tables checked/created)
+
+### 🎯 **Example Output:**
+```
+✅ Database initialization successful!
+- Tables checked: 5
+- Tables created: 1 (notifications)
+- Duration: 1.14s
+```
 
 ## 🚀 **Quick Start**
 

@@ -38,7 +38,8 @@ export class KVAdapter {
       'EMAIL': this.env.NIMBUS_EMAILS,
       'LIST': this.env.NIMBUS_LISTS,
       'LOG': this.env.NIMBUS_CACHE,  // Logs stored in cache namespace
-      'VERIFY': this.env.NIMBUS_CACHE  // Verification tokens stored in cache namespace
+      'VERIFY': this.env.NIMBUS_CACHE,  // Verification tokens stored in cache namespace
+      'NOTIFICATION': this.env.NIMBUS_CACHE  // Notifications stored in cache namespace
     };
     
     if (!mapping[className]) {

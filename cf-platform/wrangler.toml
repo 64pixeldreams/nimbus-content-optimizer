@@ -54,13 +54,19 @@ database_id = "6f6dae5e-2aac-40f2-bcde-d58c1b58fe4c"
 ENVIRONMENT = "development"
 APP_URL = "https://nimbus-platform.martin-598.workers.dev"
 SLACK_WEBHOOK_URL = "https://hooks.slack.com/services/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"
-MAILERSEND_API_KEY = "mlsn.91015172ff88c7581d808d07107ff88081c9117f5849b0e3bf0c830788175e73"
+MAILERSEND_API_KEY = "mlsn.7b94dac93202ee776bd02479af158d6fc17adacdfa3aa8ff86def3817e412cd6"
+DEFAULT_FROM_EMAIL = "martin@nimbus360.io"
+DEFAULT_FROM_NAME = "Martin Webb"
+APP_NAME = "NimbusHQ"
 
 # Production environment variables
 [env.production.vars]
 ENVIRONMENT = "production"
 OPENAI_API_KEY = "your-openai-key"
-MAILERSEND_API_KEY = "your-mailersend-key"
+MAILERSEND_API_KEY = "mlsn.7b94dac93202ee776bd02479af158d6fc17adacdfa3aa8ff86def3817e412cd6"
+DEFAULT_FROM_EMAIL = "martin@nimbus360.io"
+DEFAULT_FROM_NAME = "Martin Webb"
+APP_NAME = "NimbusHQ"
 
 # Staging environment variables
 [env.staging.vars]

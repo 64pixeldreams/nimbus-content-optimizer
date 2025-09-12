@@ -8,7 +8,8 @@
 const VALID_CLASSES = [
   'USER', 'PROJECT', 'PAGE', 'APIKEY',
   'SESSION', 'CACHE', 'EMAIL', 'LOG',
-  'BATCH', 'STATUS', 'QUEUE', 'LIST', 'VERIFY'
+  'BATCH', 'STATUS', 'QUEUE', 'LIST', 'VERIFY',
+  'NOTIFICATION'
 ];
 
 /**

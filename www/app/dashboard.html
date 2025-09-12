@@ -86,28 +86,21 @@
 					<ul class="navbar-nav navbar-align">
 						<!-- Notifications -->
 						<li class="nav-item dropdown">
-							<a class="nav-icon dropdown-toggle" href="#" id="alertsDropdown" data-bs-toggle="dropdown">
+							<a class="nav-icon dropdown-toggle" href="#" id="alertsDropdown" data-bs-toggle="dropdown" onclick="refreshNotificationsOnOpen()">
 								<div class="position-relative">
 									<i class="align-middle" data-feather="bell"></i>
-									<span class="indicator">4</span>
+									<span class="indicator" id="notification-count" style="display: none;">0</span>
 								</div>
 							</a>
 							<div class="dropdown-menu dropdown-menu-lg dropdown-menu-end py-0" aria-labelledby="alertsDropdown">
-								<div class="dropdown-menu-header">
-									4 New Notifications
+								<div class="dropdown-menu-header" id="notifications-header">
+									<div class="spinner-border spinner-border-sm" role="status">
+										<span class="visually-hidden">Loading...</span>
+									</div>
+									Loading notifications...
 								</div>
-								<div class="list-group">
-									<a href="#" class="list-group-item">
-										<div class="row g-0 align-items-center">
-											<div class="col-2">
-												<i class="text-success" data-feather="check-circle"></i>
-											</div>
-											<div class="col-10">
-												<div class="text-dark">Page optimization completed</div>
-												<div class="text-muted small mt-1">Project: Example.com</div>
-											</div>
-										</div>
-									</a>
+								<div class="list-group" id="notifications-list">
+									<!-- Notifications will be loaded here -->
 								</div>
 								<div class="dropdown-menu-footer">
 									<a href="/app/notifications.html" class="text-muted">Show all notifications</a>
@@ -217,9 +210,15 @@
 							<div class="card">
 								<div class="card-header d-flex justify-content-between align-items-center">
 									<h5 class="card-title mb-0">Projects</h5>
-									<a href="#" onclick="reloadDashboard(); return false;" class="text-muted text-decoration-none" style="font-size: 14px;">
-										<i data-feather="refresh-cw" style="width: 14px; height: 14px;"></i> Reload
-									</a>
+									<div>
+										<button type="button" class="btn btn-outline-primary btn-sm me-2" onclick="testIntentSystem()" id="test-intent-btn">
+											<i data-feather="bell" style="width: 16px; height: 16px;"></i>
+											Test Notifications
+										</button>
+										<a href="#" onclick="reloadDashboard(); return false;" class="text-muted text-decoration-none" style="font-size: 14px;">
+											<i data-feather="refresh-cw" style="width: 14px; height: 14px;"></i> Reload
+										</a>
+									</div>
 								</div>
 								<div class="card-body">
 									<div id="projects-container">

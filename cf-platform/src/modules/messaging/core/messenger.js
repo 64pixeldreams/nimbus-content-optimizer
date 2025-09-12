@@ -151,12 +151,16 @@ export class Messenger {
   _validateEmailParams(params) {
     const { to, from, subject, html } = params;
     
-    if (!validateEmail(to)) {
-      throw new Error(`Invalid recipient email: ${to}`);
+    // Handle both string and object formats for email addresses
+    const toEmail = typeof to === 'string' ? to : to?.email;
+    const fromEmail = typeof from === 'string' ? from : from?.email;
+    
+    if (!validateEmail(toEmail)) {
+      throw new Error(`Invalid recipient email: ${toEmail}`);
     }
     
-    if (!validateEmail(from)) {
-      throw new Error(`Invalid sender email: ${from}`);
+    if (!validateEmail(fromEmail)) {
+      throw new Error(`Invalid sender email: ${fromEmail}`);
     }
 
     if (!subject || !subject.trim()) {
@@ -244,8 +248,8 @@ export class Messenger {
       const mergedData = mergeTemplateData(template, data, this.env);
 
       // Extract email details
-      const from = options.from || template.from.email || this.env.DEFAULT_FROM_EMAIL;
-      const subject = mergedData.subject || template.subject;
+      const from = options.from || mergedData.from.email || this.env.DEFAULT_FROM_EMAIL;
+      const subject = mergedData.subject;
       const html = mergedData.html;
       const text = mergedData.text;
 

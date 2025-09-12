@@ -23,6 +23,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     return;
   }
   
+  // Enable debug mode to see intent logs
+  cf.debug = true;
+  
+  
   // Load dashboard data
   await loadDashboard();
 });
@@ -50,6 +54,9 @@ async function loadDashboard() {
     
     // Render projects table (Cloudflare style)
     renderProjects(data.projects);
+    
+    // Load notifications
+    await loadNotifications();
     
   } catch (error) {
     console.error('Failed to load dashboard:', error);
@@ -215,8 +222,200 @@ function showError(message) {
   container.insertBefore(errorDiv, container.firstChild);
 }
 
+// Smart Notification functions with caching
+async function loadNotifications(forceRefresh = false) {
+  console.log(`🔔 Loading notifications...`);
+  
+  // Use centralized CFramework method
+  const result = await cf.loadAndRenderNotifications(forceRefresh);
+  
+  if (result.success) {
+    console.log(`✅ Notifications loaded: ${result.notifications.length}`);
+    
+    // Update header with count info
+    const header = document.getElementById('notifications-header');
+    const unseenCount = result.notifications.filter(n => !n.seen).length;
+    const totalCount = result.notifications.length;
+    
+    if (unseenCount > 0) {
+      header.innerHTML = `${unseenCount} New Notification${unseenCount === 1 ? '' : 's'} (${totalCount} total)`;
+    } else {
+      header.innerHTML = `No new notifications (${totalCount} total)`;
+    }
+  } else {
+    console.error('❌ Failed to load notifications:', result.error);
+  }
+}
+
+function renderNotifications(notifications) {
+  const container = document.getElementById('notifications-list');
+  
+  if (notifications.length === 0) {
+    container.innerHTML = `
+      <div class="list-group-item text-center py-3">
+        <div class="text-muted">No notifications yet</div>
+        <small class="text-muted">You'll see updates here when things happen</small>
+      </div>
+    `;
+    return;
+  }
+  
+  container.innerHTML = notifications.map(notification => {
+    const isUnseen = !notification.seen;
+    const timeAgo = cf.formatRelativeTime(notification.created_at);
+    
+    // Get icon based on notification type
+    const iconMap = {
+      'test_notification': 'check-circle',
+      'batch_upload_complete': 'upload',
+      'page_processed': 'zap',
+      'project_created': 'folder-plus',
+      'default': 'bell'
+    };
+    const icon = iconMap[notification.type] || iconMap.default;
+    
+    return `
+      <a href="${notification.action_url || '#'}" 
+         class="list-group-item ${isUnseen ? 'bg-light' : ''}" 
+         onclick="markNotificationSeen('${notification.notification_id}')">
+        <div class="row g-0 align-items-center">
+          <div class="col-2">
+            <i class="text-primary" data-feather="${icon}"></i>
+          </div>
+          <div class="col-10">
+            <div class="text-dark">${notification.title}</div>
+            <div class="text-muted small mt-1">${notification.message}</div>
+            <div class="text-muted small">${timeAgo}</div>
+          </div>
+        </div>
+      </a>
+    `;
+  }).join('');
+  
+  // Re-initialize Feather icons for the new content
+  if (typeof feather !== 'undefined') {
+    feather.replace();
+  }
+}
+
+function showNotificationError() {
+  const header = document.getElementById('notifications-header');
+  const container = document.getElementById('notifications-list');
+  
+  header.innerHTML = 'Error loading notifications';
+  container.innerHTML = `
+    <div class="list-group-item text-center py-3">
+      <div class="text-danger">Failed to load notifications</div>
+      <small class="text-muted">Please try refreshing the page</small>
+    </div>
+  `;
+}
+
+async function markNotificationSeen(notificationId) {
+  try {
+    console.log('🔔 Marking notification as seen:', notificationId);
+    
+    // Mark as seen using smart CFramework (auto-updates cache)
+    await cf.markNotificationSeen(notificationId);
+    
+    // Reload notifications to update the UI (will use updated cache)
+    await loadNotifications();
+    
+    console.log('✅ Notification marked as seen and UI updated');
+  } catch (error) {
+    console.error('❌ Failed to mark notification as seen:', error);
+  }
+}
+
+// Smart notification refresh on dropdown open
+async function refreshNotificationsOnOpen() {
+  // Only refresh if it's been more than 30 seconds since last check
+  const timeSinceLastCheck = Date.now() - (cf._notificationCache?.lastFetch || 0);
+  const shouldRefresh = timeSinceLastCheck > 30000; // 30 seconds
+  
+  if (shouldRefresh) {
+    console.log('🔄 Refreshing notifications on dropdown open');
+    await loadNotifications(true); // Force refresh
+  } else {
+    console.log('🔔 Using cached notifications (recent)');
+  }
+}
+
+// Intent System Test Function
+async function testIntentSystem() {
+  const button = document.getElementById('test-intent-btn');
+  const originalText = button.innerHTML;
+  
+  try {
+    // 1. Set button to loading state
+    button.disabled = true;
+    button.innerHTML = '<div class="spinner-border spinner-border-sm me-2" role="status"></div>Processing...';
+    
+    console.log('🧪 Starting intent system test...');
+    
+    // 2. Set intent for test notification (expecting it in 5 seconds)
+    console.log('🔔 Setting test intent (10 seconds, check every 2s)');
+    cf.setNotificationIntent('test_notification', 10 * 1000, 2 * 1000);
+    
+    // 3. Wait 5 seconds, then create notification
+    setTimeout(async () => {
+      try {
+        console.log('🚀 Creating test notification...');
+        
+        await cf.notify(
+          'Intent system test completed successfully! The notification appeared because we were checking every 2 seconds.',
+          'Test Complete! 🎉',
+          'test_notification'
+        );
+        
+        // Force a notification refresh after a brief delay to account for D1 propagation
+        setTimeout(() => {
+          console.log('🔄 Force refreshing notifications after creation...');
+          loadNotifications(true);
+        }, 1000);
+        
+        console.log('✅ Test notification created');
+        
+        // Reset button after notification is created
+        setTimeout(() => {
+          if (button.disabled) {
+            button.disabled = false;
+            button.innerHTML = originalText;
+            // Re-initialize feather icons
+            if (typeof feather !== 'undefined') {
+              feather.replace();
+            }
+          }
+        }, 1000);
+        
+      } catch (error) {
+        console.error('❌ Failed to create test notification:', error);
+        button.disabled = false;
+        button.innerHTML = originalText;
+        if (typeof feather !== 'undefined') {
+          feather.replace();
+        }
+      }
+    }, 5000);
+    
+    console.log('⏰ Test notification will appear in 5 seconds...');
+    console.log('💡 Watch the notification bell - it should appear automatically!');
+    
+  } catch (error) {
+    console.error('❌ Intent test failed:', error);
+    button.disabled = false;
+    button.innerHTML = originalText;
+    if (typeof feather !== 'undefined') {
+      feather.replace();
+    }
+  }
+}
+
 // Global functions for HTML
 window.handleLogout = handleLogout;
 window.createProject = createProject;
 window.acceptCookies = cf.acceptCookies.bind(cf);
 window.rejectCookies = cf.rejectCookies.bind(cf);
+window.markNotificationSeen = markNotificationSeen;
+window.refreshNotificationsOnOpen = refreshNotificationsOnOpen;
+window.testIntentSystem = testIntentSystem;

@@ -466,7 +466,28 @@ export class DataModel {
 
   /**
    * Initialize database tables for all registered models
-   * Call this on app startup
+   * 
+   * ⚠️  IMPORTANT: Call this after adding new models or changing D1 schemas!
+   * 
+   * This method:
+   * - Auto-creates D1 tables from model definitions
+   * - Updates existing tables if schema changes
+   * - Only affects models with d1.table configuration
+   * 
+   * Usage:
+   * 1. Register new model: DataModel.registerModel(MyModel)
+   * 2. Deploy worker: npx wrangler deploy
+   * 3. Initialize tables: Call system.initialize CloudFunction
+   * 
+   * CloudFunction call:
+   * POST /api/function
+   * { "action": "system.initialize", "data": {} }
+   * 
+   * Or use test script: node test-initialize-db.js
+   * 
+   * @param {object} datastore - Datastore instance
+   * @param {object} logger - Logger instance
+   * @returns {Promise<object>} Initialization result
    */
   static async initialize(datastore, logger) {
     return await initializeDatabase(modelRegistry, datastore, logger);

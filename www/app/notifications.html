@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+	<meta name="description" content="NimbusAI - Content Optimization Platform">
+	<meta name="author" content="NimbusAI">
+
+	<link rel="preconnect" href="https://fonts.gstatic.com">
+	<link rel="shortcut icon" href="/assets/img/icons/icon-48x48.png" />
+
+	<title>Notifications - NimbusHQ</title>
+
+	<link href="/assets/css/app.css" rel="stylesheet">
+	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+	
+	<!-- Bootstrap 5 Breadcrumb Styles -->
+	<style>
+		.breadcrumb {
+			display: flex;
+			flex-wrap: wrap;
+			padding: 0;
+			margin-bottom: 1rem;
+			list-style: none;
+		}
+		
+		.breadcrumb-item {
+			display: flex;
+		}
+		
+		.breadcrumb-item + .breadcrumb-item {
+			padding-left: 0.5rem;
+		}
+		
+		.breadcrumb-item + .breadcrumb-item::before {
+			display: inline-block;
+			padding-right: 0.5rem;
+			color: #6c757d;
+			content: "/";
+		}
+		
+		.breadcrumb-item > a {
+			color: #0d6efd;
+			text-decoration: none;
+		}
+		
+		.breadcrumb-item > a:hover {
+			color: #0a58ca;
+		}
+	</style>
+</head>
+
+<body>
+	<div class="wrapper">
+		<!-- Sidebar Navigation -->
+		<nav id="sidebar" class="sidebar js-sidebar">
+			<div class="sidebar-content js-simplebar">
+				<a class="sidebar-brand" href="/app/dashboard.html">
+					<span class="align-middle">NimbusHQ</span>
+				</a>
+
+				<ul class="sidebar-nav">
+					<li class="sidebar-header">
+						Main
+					</li>
+
+					<li class="sidebar-item">
+						<a class="sidebar-link" href="/app/dashboard.html">
+							<i class="align-middle" data-feather="home"></i> <span class="align-middle">Account Home</span>
+						</a>
+					</li>
+
+					<li class="sidebar-item">
+						<a class="sidebar-link" href="/app/analytics.html">
+							<i class="align-middle" data-feather="bar-chart-2"></i> <span class="align-middle">Analytics</span>
+						</a>
+					</li>
+
+					<li class="sidebar-item">
+						<a class="sidebar-link" href="/app/activity.html">
+							<i class="align-middle" data-feather="activity"></i> <span class="align-middle">Activity</span>
+						</a>
+					</li>
+
+					<li class="sidebar-item active">
+						<a class="sidebar-link" href="/app/notifications.html">
+							<i class="align-middle" data-feather="bell"></i> <span class="align-middle">Notifications</span>
+						</a>
+					</li>
+
+					<li class="sidebar-header">
+						Account
+					</li>
+
+					<li class="sidebar-item">
+						<a class="sidebar-link" href="/app/profile.html">
+							<i class="align-middle" data-feather="user"></i> <span class="align-middle">Profile</span>
+						</a>
+					</li>
+
+					<li class="sidebar-item">
+						<a class="sidebar-link" href="/app/settings.html">
+							<i class="align-middle" data-feather="settings"></i> <span class="align-middle">Settings</span>
+						</a>
+					</li>
+				</ul>
+			</div>
+		</nav>
+
+		<div class="main">
+			<!-- Top Navigation -->
+			<nav class="navbar navbar-expand navbar-light navbar-bg">
+				<a class="sidebar-toggle js-sidebar-toggle">
+					<i class="hamburger align-self-center"></i>
+				</a>
+
+				<div class="navbar-collapse collapse">
+					<ul class="navbar-nav navbar-align">
+						<!-- User Menu -->
+						<li class="nav-item dropdown">
+							<a class="nav-icon dropdown-toggle d-inline-block d-sm-none" href="#" data-bs-toggle="dropdown">
+								<i class="align-middle" data-feather="settings"></i>
+							</a>
+
+							<a class="nav-link d-none d-sm-inline-block" href="#" data-bs-toggle="dropdown">
+								<div class="d-flex align-items-center">
+									<div class="avatar bg-primary text-white rounded-circle me-2 d-flex align-items-center justify-content-center" style="width: 32px; height: 32px; flex-shrink: 0;">
+										<i data-feather="user" style="width: 16px; height: 16px;"></i>
+									</div>
+									<span class="text-dark dropdown-toggle" id="user-name">Loading...</span>
+								</div>
+							</a>
+							<div class="dropdown-menu dropdown-menu-end" style="min-width: 250px;">
+								<a class="dropdown-item" href="/app/profile.html"><i class="align-middle me-1" data-feather="user"></i> Profile</a>
+								<a class="dropdown-item" href="/app/settings.html"><i class="align-middle me-1" data-feather="settings"></i> Settings</a>
+								<div class="dropdown-divider"></div>
+								<a class="dropdown-item" href="#" onclick="handleLogout()"><i class="align-middle me-1" data-feather="log-out"></i> Log out</a>
+							</div>
+						</li>
+					</ul>
+				</div>
+			</nav>
+
+			<!-- Page Content -->
+			<main class="content">
+				<div class="container-fluid p-0">
+					<!-- Breadcrumb Navigation -->
+					<nav aria-label="breadcrumb" class="pt-3 pb-2">
+						<ol class="breadcrumb mb-0">
+							<li class="breadcrumb-item"><a href="/app/dashboard.html">Account Home</a></li>
+							<li class="breadcrumb-item active" aria-current="page">Notifications</li>
+						</ol>
+					</nav>
+
+					<!-- Page Header -->
+					<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-2 pb-2 mb-3">
+						<div>
+							<div style="font-size: 16px; line-height: 1.5; color: black; font-weight: 600; margin-bottom: 8px;">Account notifications</div>
+							<h1 class="h2">All Notifications</h1>
+						</div>
+						<div class="btn-toolbar mb-2 mb-md-0">
+							<button type="button" class="btn btn-outline-primary me-2" onclick="markAllNotificationsSeen()">
+								<i data-feather="check"></i> Mark All Seen
+							</button>
+							<button type="button" class="btn btn-outline-secondary" onclick="loadAllNotifications(true)">
+								<i data-feather="refresh-cw"></i> Refresh
+							</button>
+						</div>
+					</div>
+
+					<!-- Notifications List -->
+					<div class="row">
+						<div class="col-12">
+							<div class="card">
+								<div class="card-header d-flex justify-content-between align-items-center">
+									<h5 class="card-title mb-0">Notifications</h5>
+									<div class="text-muted" id="notifications-summary">
+										<span id="total-count">0</span> total, <span id="unread-count">0</span> unread
+									</div>
+								</div>
+								<div class="card-body">
+									<div id="notifications-container">
+										<div class="loading text-center py-4">
+											<div class="spinner-border text-primary"></div>
+											<p class="mt-2">Loading notifications...</p>
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</main>
+		</div>
+	</div>
+
+	<!-- AdminKit Core JS -->
+	<script src="/assets/js/adminkit.js"></script>
+	
+	<!-- Your Custom Framework -->
+	<script src="/assets/js/cframework.js"></script>
+	<script src="/assets/js/nimbus.js"></script>
+	<script>
+		// Universal setup
+		document.addEventListener('DOMContentLoaded', async () => {
+			cf.init({
+				serverUrl: 'https://nimbus-platform.martin-598.workers.dev',
+				appName: 'nimbus'
+			});
+			
+			if (!cf.isAuthenticated()) {
+				window.location.href = '/auth/login.html';
+				return;
+			}
+			
+			// Load user info
+			const userName = cf.getUserName();
+			const displayName = userName.length > 12 ? userName.substring(0, 12) + '...' : userName;
+			document.getElementById('user-name').textContent = displayName;
+			
+			// Load all notifications
+			await loadAllNotifications();
+		});
+
+		async function loadAllNotifications(forceRefresh = false) {
+			try {
+				console.log('🔔 Loading all notifications...');
+				
+				// Get more notifications for the full page (up to 50)
+				const result = await cf.listNotifications(50, forceRefresh);
+				
+				if (result.success && result.data) {
+					const notifications = result.data.notifications || [];
+					console.log(`✅ Loaded ${notifications.length} notifications`);
+					
+					renderAllNotifications(notifications);
+					updateNotificationSummary(notifications);
+				} else {
+					console.error('❌ Failed to load notifications:', result);
+					showNotificationError();
+				}
+			} catch (error) {
+				console.error('❌ Error loading notifications:', error);
+				showNotificationError();
+			}
+		}
+
+		function renderAllNotifications(notifications) {
+			const container = document.getElementById('notifications-container');
+			
+			if (notifications.length === 0) {
+				container.innerHTML = `
+					<div class="text-center py-5">
+						<div class="text-muted mb-3">
+							<i data-feather="bell-off" style="width: 48px; height: 48px;"></i>
+						</div>
+						<h5>No notifications yet</h5>
+						<p class="text-muted">You'll see updates here when things happen in your account</p>
+					</div>
+				`;
+				return;
+			}
+
+			// Group notifications by date
+			const grouped = groupNotificationsByDate(notifications);
+			
+			let html = '';
+			for (const [date, dayNotifications] of Object.entries(grouped)) {
+				html += `
+					<div class="mb-4">
+						<h6 class="text-muted mb-3">${date}</h6>
+						<div class="list-group">
+				`;
+				
+				dayNotifications.forEach(notification => {
+					const timeAgo = cf.formatTimeAgo(notification.created_at);
+					const iconClass = cf.getNotificationIcon(notification.type);
+					const isUnread = !notification.seen;
+					
+					html += `
+						<div class="list-group-item ${isUnread ? 'bg-light' : ''}" style="cursor: pointer;" onclick="markNotificationSeen('${notification.notification_id}')">
+							<div class="d-flex align-items-start">
+								<div class="me-3">
+									<i class="${iconClass}" data-feather="bell"></i>
+								</div>
+								<div class="flex-grow-1">
+									<div class="d-flex justify-content-between align-items-start">
+										<div>
+											<h6 class="mb-1 ${isUnread ? 'fw-bold' : ''}">${notification.title || 'Notification'}</h6>
+											<p class="mb-1 text-muted">${notification.message}</p>
+										</div>
+										<div class="text-muted small ms-3">
+											${timeAgo}
+										</div>
+									</div>
+									${isUnread ? '<div class="badge bg-primary mt-2">New</div>' : ''}
+								</div>
+							</div>
+						</div>
+					`;
+				});
+				
+				html += `
+						</div>
+					</div>
+				`;
+			}
+
+			container.innerHTML = html;
+
+			// Re-initialize feather icons
+			if (typeof feather !== 'undefined') {
+				feather.replace();
+			}
+		}
+
+		function groupNotificationsByDate(notifications) {
+			const groups = {};
+			
+			notifications.forEach(notification => {
+				const date = new Date(notification.created_at);
+				const dateStr = date.toLocaleDateString('en-US', { 
+					weekday: 'long', 
+					year: 'numeric', 
+					month: 'long', 
+					day: 'numeric' 
+				});
+				
+				if (!groups[dateStr]) {
+					groups[dateStr] = [];
+				}
+				groups[dateStr].push(notification);
+			});
+			
+			return groups;
+		}
+
+		function updateNotificationSummary(notifications) {
+			const totalCount = notifications.length;
+			const unreadCount = notifications.filter(n => !n.seen).length;
+			
+			document.getElementById('total-count').textContent = totalCount;
+			document.getElementById('unread-count').textContent = unreadCount;
+		}
+
+		function showNotificationError() {
+			const container = document.getElementById('notifications-container');
+			container.innerHTML = `
+				<div class="text-center py-5">
+					<div class="text-danger mb-3">
+						<i data-feather="alert-circle" style="width: 48px; height: 48px;"></i>
+					</div>
+					<h5>Failed to load notifications</h5>
+					<p class="text-muted">Please try refreshing the page</p>
+					<button class="btn btn-primary" onclick="loadAllNotifications(true)">Try Again</button>
+				</div>
+			`;
+			
+			if (typeof feather !== 'undefined') {
+				feather.replace();
+			}
+		}
+
+		async function markNotificationSeen(notificationId) {
+			try {
+				console.log('🔔 Marking notification as seen:', notificationId);
+				
+				// Mark as seen using CFramework
+				await cf.markNotificationSeen(notificationId);
+				
+				// Reload notifications to update the UI
+				await loadAllNotifications();
+				
+				console.log('✅ Notification marked as seen');
+			} catch (error) {
+				console.error('❌ Error marking notification as seen:', error);
+			}
+		}
+
+		async function markAllNotificationsSeen() {
+			try {
+				console.log('🔔 Marking all notifications as seen...');
+				
+				// Get current notifications
+				const result = await cf.listNotifications(50, false);
+				if (!result.success || !result.data) {
+					throw new Error('Failed to load notifications');
+				}
+				
+				const unreadNotifications = result.data.notifications.filter(n => !n.seen);
+				
+				if (unreadNotifications.length === 0) {
+					alert('All notifications are already marked as seen!');
+					return;
+				}
+				
+				// Mark each unread notification as seen
+				const promises = unreadNotifications.map(notification => 
+					cf.markNotificationSeen(notification.notification_id)
+				);
+				
+				await Promise.all(promises);
+				
+				// Reload to show updated state
+				await loadAllNotifications();
+				
+				console.log(`✅ Marked ${unreadNotifications.length} notifications as seen`);
+				alert(`Marked ${unreadNotifications.length} notifications as seen!`);
+				
+			} catch (error) {
+				console.error('❌ Error marking all notifications as seen:', error);
+				alert('Failed to mark notifications as seen. Please try again.');
+			}
+		}
+
+		async function handleLogout() {
+			await cf.logout();
+			window.location.href = '/auth/login.html';
+		}
+	</script>
+
+</body>
+</html>

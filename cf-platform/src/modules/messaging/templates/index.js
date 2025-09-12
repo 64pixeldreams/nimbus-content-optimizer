@@ -6,6 +6,7 @@ import { passwordResetTemplate } from './password-reset.js';
 import { welcomeTemplate } from './welcome.js';
 import { verificationTemplate } from './verification.js';
 import { apiKeyTemplate } from './api-key.js';
+import { notificationTemplate } from './notification.js';
 
 // Slack templates
 import { slackAlertTemplate } from './slack/alert.js';
@@ -19,6 +20,7 @@ const templates = {
   'welcome': welcomeTemplate,
   'verification': verificationTemplate,
   'api-key': apiKeyTemplate,
+  'notification': notificationTemplate,
   
   // Slack templates
   'slack-alert': slackAlertTemplate,

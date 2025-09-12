@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Intent System Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .intent-demo { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        button { margin: 5px; padding: 10px 15px; }
+        .log { background: #f5f5f5; padding: 10px; margin: 10px 0; border-radius: 3px; font-family: monospace; }
+        .active-intents { background: #e8f5e9; padding: 10px; margin: 10px 0; border-radius: 3px; }
+    </style>
+</head>
+<body>
+    <h1>🧠 CFramework Intent System Test</h1>
+    
+    <div class="intent-demo">
+        <h3>📤 File Upload Scenario</h3>
+        <p>Simulate uploading files and expecting notifications</p>
+        <button onclick="simulateFileUpload()">Upload Files (10 min intent)</button>
+        <button onclick="simulateBatchUpload()">Batch Upload (15 min intent)</button>
+    </div>
+    
+    <div class="intent-demo">
+        <h3>⚡ Processing Scenario</h3>
+        <p>Simulate processing operations</p>
+        <button onclick="simulateProcessing()">Start Processing (8 min intent)</button>
+        <button onclick="simulateOptimization()">Start Optimization (12 min intent)</button>
+    </div>
+    
+    <div class="intent-demo">
+        <h3>🔧 Intent Management</h3>
+        <button onclick="showActiveIntents()">Show Active Intents</button>
+        <button onclick="clearAllIntents()">Clear All Intents</button>
+        <button onclick="createTestNotification()">Create Test Notification</button>
+    </div>
+    
+    <div id="active-intents" class="active-intents" style="display: none;">
+        <h4>Active Intents:</h4>
+        <div id="intents-list"></div>
+    </div>
+    
+    <div id="log-output" class="log">
+        <strong>Console Output:</strong><br>
+        <div id="log-content"></div>
+    </div>
+
+    <!-- Include CFramework -->
+    <script src="/assets/js/cframework.js"></script>
+    
+    <script>
+        // Initialize CFramework with debug enabled
+        cf.init({
+            serverUrl: 'https://nimbus-platform.martin-598.workers.dev',
+            appName: 'nimbus',
+            debug: true
+        });
+        
+        // Override console.log to show in UI
+        const originalLog = console.log;
+        console.log = function(...args) {
+            originalLog.apply(console, args);
+            
+            const logContent = document.getElementById('log-content');
+            const logEntry = document.createElement('div');
+            logEntry.textContent = args.join(' ');
+            logEntry.style.marginBottom = '5px';
+            logContent.appendChild(logEntry);
+            
+            // Keep only last 10 log entries
+            while (logContent.children.length > 10) {
+                logContent.removeChild(logContent.firstChild);
+            }
+        };
+        
+        // Intent simulation functions
+        function simulateFileUpload() {
+            console.log('🔔 Setting file upload intent (10 minutes, check every 30s)');
+            cf.setNotificationIntent('file_upload', 10 * 60 * 1000, 30 * 1000);
+            showActiveIntents();
+        }
+        
+        function simulateBatchUpload() {
+            console.log('🔔 Setting batch upload intent (15 minutes, check every 45s)');
+            cf.setNotificationIntent('batch_upload', 15 * 60 * 1000, 45 * 1000);
+            showActiveIntents();
+        }
+        
+        function simulateProcessing() {
+            console.log('🔔 Setting processing intent (8 minutes, check every 20s)');
+            cf.setNotificationIntent('processing', 8 * 60 * 1000, 20 * 1000);
+            showActiveIntents();
+        }
+        
+        function simulateOptimization() {
+            console.log('🔔 Setting optimization intent (12 minutes, check every 40s)');
+            cf.setNotificationIntent('optimization', 12 * 60 * 1000, 40 * 1000);
+            showActiveIntents();
+        }
+        
+        function showActiveIntents() {
+            const intents = cf.getActiveIntents();
+            const container = document.getElementById('active-intents');
+            const list = document.getElementById('intents-list');
+            
+            if (intents.length === 0) {
+                container.style.display = 'none';
+                console.log('📋 No active intents');
+                return;
+            }
+            
+            container.style.display = 'block';
+            list.innerHTML = '';
+            
+            intents.forEach(intent => {
+                const div = document.createElement('div');
+                const timeRemaining = Math.round(intent.timeRemaining / 1000);
+                const checkInterval = Math.round(intent.checkInterval / 1000);
+                
+                div.innerHTML = `
+                    <strong>${intent.name}</strong> - 
+                    ${timeRemaining}s remaining, 
+                    checking every ${checkInterval}s
+                    <button onclick="cf.clearNotificationIntent('${intent.name}'); showActiveIntents();" style="margin-left: 10px; font-size: 12px;">Clear</button>
+                `;
+                list.appendChild(div);
+            });
+            
+            console.log(`📋 Active intents: ${intents.map(i => i.name).join(', ')}`);
+        }
+        
+        function clearAllIntents() {
+            cf.clearAllNotificationIntents();
+            showActiveIntents();
+            console.log('🧹 All intents cleared');
+        }
+        
+        async function createTestNotification() {
+            try {
+                console.log('🔔 Creating test notification...');
+                await cf.createNotification({
+                    type: 'batch_upload_complete',
+                    title: 'Upload Complete! 🎉',
+                    message: 'Your batch upload has finished processing',
+                    action_url: '/app/dashboard.html'
+                });
+                console.log('✅ Test notification created');
+            } catch (error) {
+                console.error('❌ Failed to create notification:', error.message);
+            }
+        }
+        
+        // Auto-refresh active intents every 5 seconds
+        setInterval(showActiveIntents, 5000);
+        
+        console.log('🚀 Intent system test page loaded');
+        console.log('💡 Try setting intents and watch the console for automatic notification checks');
+    </script>
+</body>
+</html>

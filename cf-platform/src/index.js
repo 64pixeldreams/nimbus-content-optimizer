@@ -13,6 +13,7 @@ import { UserModel } from './models/user.js';
 import { ProjectModel } from './models/project.js';
 import { PageModel } from './models/page.js';
 import { LogModel } from './models/log.js';
+import { NotificationModel } from './models/notification.js';
 
 // Auth routes
 import { login } from './routes/auth/login.js';
@@ -42,6 +43,7 @@ DataModel.registerModel(UserModel);
 DataModel.registerModel(ProjectModel);
 DataModel.registerModel(PageModel);
 DataModel.registerModel(LogModel);
+DataModel.registerModel(NotificationModel);
 
 // Health check
 router.get('/health', (request, env) => {
@@ -73,6 +75,9 @@ router.post('/api/function', async (request, env) => {
       cloudFunction = new CloudFunction(env);
       
       // Register system initialization function
+      // 🔧 AUTO-SCHEMA SYSTEM: Creates D1 tables from model definitions
+      // Call this after adding new models or changing schemas:
+      // POST /api/function { "action": "system.initialize", "data": {} }
       cloudFunction.define('system.initialize', async (requestContext) => {
         const { env, logger } = requestContext;
         const datastore = new Datastore(env, logger);
@@ -434,6 +439,21 @@ router.post('/api/function', async (request, env) => {
       cloudFunction.define('page.get', pageGet, pageGetConfig);
       cloudFunction.define('page.update', pageUpdate, pageUpdateConfig);
       cloudFunction.define('page.logs', pageLogs, pageLogsConfig);
+      
+      // Register notification CloudFunctions
+      const { notificationCreate, notificationCreateConfig, notificationList, notificationListConfig, notificationMarkSeen, notificationMarkSeenConfig } = await import('./modules/notifications/functions/index.js');
+      
+      cloudFunction.define('notification.create', notificationCreate, notificationCreateConfig);
+      cloudFunction.define('notification.list', notificationList, notificationListConfig);
+      cloudFunction.define('notification.mark_seen', notificationMarkSeen, notificationMarkSeenConfig);
+      
+      // Register messaging functions
+      const { sendTestEmail, sendTestEmailConfig } = await import('./modules/messaging/functions/index.js');
+      cloudFunction.define('email.test', sendTestEmail, sendTestEmailConfig);
+      
+      // Register webhook functions
+      const { testWebhook, testWebhookConfig } = await import('./modules/webhooks/functions/index.js');
+      cloudFunction.define('webhook.test', testWebhook, testWebhookConfig);
       
       // Register session debug function
       cloudFunction.define('debug.session', async (requestContext) => {

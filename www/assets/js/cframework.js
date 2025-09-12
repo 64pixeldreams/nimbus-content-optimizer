@@ -246,6 +246,642 @@ class CFramework {
     return `${days}d ago`;
   }
   
+  /**
+   * Smart Notification System with Caching
+   */
+  
+  // Smart Notification Cache with Intent System
+  _notificationCache = {
+    data: null,
+    lastFetch: 0,
+    storageKey: null,
+    
+    // Default intervals
+    defaultInterval: 5 * 60 * 1000,  // 5 minutes default
+    fastInterval: 30 * 1000,         // 30 seconds when expecting notifications
+    
+    // Intent management
+    intents: new Map(),              // Active intents: Map<intentName, intentConfig>
+    intentStorageKey: null,          // localStorage key for intents
+    intentCheckTimer: null,          // Timer for checking notifications during intents
+    
+    // Current effective interval (calculated from active intents)
+    currentInterval: 5 * 60 * 1000
+  };
+  
+  _initNotificationCache() {
+    if (!this._notificationCache.storageKey) {
+      this._notificationCache.storageKey = `${this.config.appName}_notifications`;
+      this._notificationCache.intentStorageKey = `${this.config.appName}_notification_intents`;
+    }
+    
+    // Load notification cache from localStorage
+    try {
+      const cached = localStorage.getItem(this._notificationCache.storageKey);
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (parsed.timestamp && (Date.now() - parsed.timestamp) < this._notificationCache.defaultInterval) {
+          this._notificationCache.data = parsed.data;
+          this._notificationCache.lastFetch = parsed.timestamp;
+          this._log('Loaded notifications from cache', { count: parsed.data?.length || 0 });
+        }
+      }
+    } catch (error) {
+      this._log('Failed to load notification cache', { error: error.message });
+    }
+    
+    // Load and restore active intents from localStorage
+    this._loadIntentsFromStorage();
+    
+    // Calculate current interval based on active intents
+    this._updateCurrentInterval();
+    
+    // Start intent checking if we have active intents
+    if (this._notificationCache.intents.size > 0) {
+      this._startIntentChecking();
+    }
+  }
+  
+  async listNotifications(limit = 20, forceRefresh = false) {
+    // Initialize cache if needed
+    if (!this._notificationCache.storageKey) {
+      this._initNotificationCache();
+    }
+    
+    const now = Date.now();
+    const timeSinceLastFetch = now - this._notificationCache.lastFetch;
+    const shouldRefresh = forceRefresh || 
+                         !this._notificationCache.data || 
+                         timeSinceLastFetch > this._notificationCache.currentInterval;
+    
+    if (!shouldRefresh) {
+      this._log('Using cached notifications', { 
+        age: Math.round(timeSinceLastFetch / 1000) + 's',
+        count: this._notificationCache.data?.length || 0 
+      });
+      return {
+        success: true,
+        data: {
+          notifications: this._notificationCache.data || [],
+          count: this._notificationCache.data?.length || 0,
+          fromCache: true
+        }
+      };
+    }
+    
+    // Fetch fresh data
+    this._log('Fetching fresh notifications', { 
+      reason: forceRefresh ? 'forced' : 'expired',
+      age: Math.round(timeSinceLastFetch / 1000) + 's'
+    });
+    
+    try {
+      const result = await this.run('notification.list', { limit });
+      
+      if (result.success && result.data) {
+        // Update cache
+        this._notificationCache.data = result.data.notifications || [];
+        this._notificationCache.lastFetch = now;
+        
+        // Save to localStorage
+        try {
+          localStorage.setItem(this._notificationCache.storageKey, JSON.stringify({
+            data: this._notificationCache.data,
+            timestamp: now
+          }));
+        } catch (error) {
+          this._log('Failed to save notification cache', { error: error.message });
+        }
+        
+        this._log('Notification cache updated', { 
+          count: this._notificationCache.data.length,
+          fresh: true 
+        });
+      }
+      
+      return result;
+    } catch (error) {
+      // Return cached data if available, even if stale
+      if (this._notificationCache.data) {
+        this._log('API failed, using stale cache', { error: error.message });
+        return {
+          success: true,
+          data: {
+            notifications: this._notificationCache.data,
+            count: this._notificationCache.data.length,
+            fromCache: true,
+            stale: true
+          }
+        };
+      }
+      throw error;
+    }
+  }
+  
+  async markNotificationSeen(notificationId) {
+    try {
+      const result = await this.run('notification.mark_seen', { notification_id: notificationId });
+      
+      if (result.success) {
+        // Update cache immediately - remove the seen notification
+        if (this._notificationCache.data) {
+          this._notificationCache.data = this._notificationCache.data.filter(
+            n => n.notification_id !== notificationId
+          );
+          
+          // Update localStorage
+          try {
+            localStorage.setItem(this._notificationCache.storageKey, JSON.stringify({
+              data: this._notificationCache.data,
+              timestamp: this._notificationCache.lastFetch
+            }));
+          } catch (error) {
+            this._log('Failed to update notification cache after mark seen', { error: error.message });
+          }
+          
+          this._log('Notification marked as seen and removed from cache', { 
+            notificationId,
+            remaining: this._notificationCache.data.length 
+          });
+          
+          // Check if this notification fulfills any intents and clear them
+          this._checkIntentFulfillment(notificationId);
+        }
+      }
+      
+      return result;
+    } catch (error) {
+      this._log('Failed to mark notification as seen', { notificationId, error: error.message });
+      throw error;
+    }
+  }
+  
+  async createNotification(data) {
+    const result = await this.run('notification.create', data);
+    
+    // Invalidate cache when new notification is created
+    if (result.success) {
+      this._notificationCache.data = null;
+      this._notificationCache.lastFetch = 0;
+      try {
+        localStorage.removeItem(this._notificationCache.storageKey);
+        this._log('Notification cache cleared from localStorage');
+      } catch (error) {
+        this._log('Failed to clear notification cache', { error: error.message });
+      }
+      this._log('Notification cache invalidated after creation');
+    }
+    
+    return result;
+  }
+  
+  /**
+   * Simple notification helper - creates a basic notification for current user
+   * @param {string} message - Notification message
+   * @param {string} title - Optional title (defaults to "Notification")
+   * @param {string} type - Optional type (defaults to "info")
+   */
+  async notify(message, title = "Notification", type = "info") {
+    return await this.createNotification({
+      type: type,
+      title: title,
+      message: message,
+      action_url: window.location.pathname || '/app/dashboard.html',
+      metadata: {
+        source: 'cf.notify',
+        page: window.location.pathname,
+        timestamp: new Date().toISOString()
+      }
+    });
+  }
+  
+  // Utility method to force refresh notifications
+  async refreshNotifications(limit = 10) {
+    return await this.listNotifications(limit, true);
+  }
+
+  // Centralized notification rendering methods
+  renderNotifications(notifications, containerId = 'notifications-list') {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    
+    // Update header first
+    this.updateNotificationHeader(notifications);
+    
+    if (notifications.length === 0) {
+      container.innerHTML = `
+        <div class="list-group-item text-center py-3">
+          <div class="text-muted">No notifications yet</div>
+          <small class="text-muted">You'll see updates here when things happen</small>
+        </div>
+      `;
+      return;
+    }
+
+    // Limit dropdown to 5 notifications, but show total count
+    const displayNotifications = notifications.slice(0, 5);
+    const totalCount = notifications.length;
+    
+    container.innerHTML = displayNotifications.map(notification => {
+      const timeAgo = this.formatTimeAgo(notification.created_at);
+      const iconClass = this.getNotificationIcon(notification.type);
+      const isUnread = !notification.seen;
+      
+      return `
+        <div class="list-group-item ${isUnread ? 'bg-light' : ''}" style="cursor: pointer;" onclick="cf.markNotificationSeen('${notification.notification_id}')">
+          <div class="row g-0 align-items-center">
+            <div class="col-2">
+              <i class="${iconClass}" data-feather="bell"></i>
+            </div>
+            <div class="col-10">
+              <div class="text-dark fw-bold">${notification.title || 'Notification'}</div>
+              <div class="text-muted small mt-1">${notification.message}</div>
+              <div class="text-muted small">${timeAgo}</div>
+            </div>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    // Re-initialize feather icons
+    if (typeof feather !== 'undefined') {
+      feather.replace();
+    }
+  }
+
+  updateNotificationCount(notifications, countElementId = 'notification-count') {
+    const countElement = document.getElementById(countElementId);
+    if (!countElement) return;
+    
+    const unreadCount = notifications.filter(n => !n.seen).length;
+    
+    if (unreadCount > 0) {
+      countElement.textContent = unreadCount;
+      countElement.style.display = 'block';
+    } else {
+      countElement.style.display = 'none';
+    }
+  }
+
+  updateNotificationHeader(notifications, headerId = 'notifications-header') {
+    const header = document.getElementById(headerId);
+    if (!header) return;
+    
+    const unreadCount = notifications.filter(n => !n.seen).length;
+    const totalCount = notifications.length;
+    
+    if (unreadCount > 0) {
+      header.innerHTML = `${unreadCount} New Notification${unreadCount === 1 ? '' : 's'} (${totalCount} total)`;
+    } else {
+      header.innerHTML = `No new notifications (${totalCount} total)`;
+    }
+  }
+
+  showNotificationError(containerId = 'notifications-list', headerId = 'notifications-header') {
+    const header = document.getElementById(headerId);
+    const container = document.getElementById(containerId);
+    
+    if (header) header.innerHTML = 'Error loading notifications';
+    if (container) {
+      container.innerHTML = `
+        <div class="list-group-item text-center py-3">
+          <div class="text-danger">Failed to load notifications</div>
+          <small class="text-muted">Please try refreshing the page</small>
+        </div>
+      `;
+    }
+  }
+
+  formatTimeAgo(timestamp) {
+    const now = new Date();
+    const time = new Date(timestamp);
+    const diffMs = now - time;
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+
+    if (diffMins < 1) return 'Just now';
+    if (diffMins < 60) return `${diffMins}m ago`;
+    if (diffHours < 24) return `${diffHours}h ago`;
+    return `${diffDays}d ago`;
+  }
+
+  getNotificationIcon(type) {
+    const icons = {
+      success: 'text-success',
+      error: 'text-danger',
+      warning: 'text-warning',
+      info: 'text-info'
+    };
+    return icons[type] || 'text-primary';
+  }
+  
+  // Get cached notification count without API call
+  getCachedNotificationCount() {
+    return this._notificationCache.data?.length || 0;
+  }
+
+  // Simple method for pages to load and render notifications
+  async loadAndRenderNotifications(forceRefresh = false) {
+    try {
+      const result = await this.listNotifications(20, forceRefresh);
+      
+      if (result.success && result.data) {
+        const notifications = result.data.notifications || [];
+        this.renderNotifications(notifications);
+        this.updateNotificationCount(notifications);
+        return { success: true, notifications };
+      } else {
+        this.showNotificationError();
+        return { success: false, error: result.error };
+      }
+    } catch (error) {
+      this.showNotificationError();
+      return { success: false, error: error.message };
+    }
+  }
+  
+  /**
+   * Intent-Based Notification Management
+   * Allows apps to set expectations for notifications, adjusting check frequency
+   */
+  
+  /**
+   * Set a notification intent - tells the system to check more frequently
+   * @param {string} intentName - Unique name for this intent (e.g., 'file_upload', 'batch_process')
+   * @param {number} duration - How long to maintain this intent (milliseconds)
+   * @param {number} checkInterval - How often to check during this intent (milliseconds, optional)
+   */
+  setNotificationIntent(intentName, duration, checkInterval = null) {
+    if (!intentName || !duration) {
+      throw new Error('Intent name and duration are required');
+    }
+    
+    // Initialize cache if needed
+    if (!this._notificationCache.storageKey) {
+      this._initNotificationCache();
+    }
+    
+    const now = Date.now();
+    const intent = {
+      name: intentName,
+      createdAt: now,
+      expiresAt: now + duration,
+      checkInterval: checkInterval || this._notificationCache.fastInterval,
+      duration: duration
+    };
+    
+    // Store intent
+    this._notificationCache.intents.set(intentName, intent);
+    
+    // Save to localStorage
+    this._saveIntentsToStorage();
+    
+    // Update current interval
+    this._updateCurrentInterval();
+    
+    // Start or restart intent checking
+    this._startIntentChecking();
+    
+    this._log('Notification intent set', { 
+      intent: intentName, 
+      duration: Math.round(duration / 1000) + 's',
+      checkInterval: Math.round(intent.checkInterval / 1000) + 's',
+      activeIntents: this._notificationCache.intents.size,
+      currentInterval: Math.round(this._notificationCache.currentInterval / 1000) + 's'
+    });
+  }
+  
+  /**
+   * Clear a specific notification intent
+   * @param {string} intentName - Name of intent to clear
+   */
+  clearNotificationIntent(intentName) {
+    if (this._notificationCache.intents.has(intentName)) {
+      this._notificationCache.intents.delete(intentName);
+      this._saveIntentsToStorage();
+      this._updateCurrentInterval();
+      
+      this._log('Notification intent cleared', { 
+        intent: intentName,
+        remainingIntents: this._notificationCache.intents.size
+      });
+      
+      // Stop checking if no more intents
+      if (this._notificationCache.intents.size === 0) {
+        this._stopIntentChecking();
+      }
+    }
+  }
+  
+  /**
+   * Clear all notification intents
+   */
+  clearAllNotificationIntents() {
+    const count = this._notificationCache.intents.size;
+    this._notificationCache.intents.clear();
+    this._saveIntentsToStorage();
+    this._updateCurrentInterval();
+    this._stopIntentChecking();
+    
+    this._log('All notification intents cleared', { clearedCount: count });
+  }
+  
+  /**
+   * Get currently active intents
+   * @returns {Array} Array of active intent objects
+   */
+  getActiveIntents() {
+    const now = Date.now();
+    const active = [];
+    
+    for (const [name, intent] of this._notificationCache.intents) {
+      if (intent.expiresAt > now) {
+        active.push({
+          name: intent.name,
+          timeRemaining: intent.expiresAt - now,
+          checkInterval: intent.checkInterval,
+          createdAt: intent.createdAt
+        });
+      }
+    }
+    
+    return active;
+  }
+  
+  /**
+   * Internal Intent Management Methods
+   */
+  
+  _loadIntentsFromStorage() {
+    try {
+      const stored = localStorage.getItem(this._notificationCache.intentStorageKey);
+      if (stored) {
+        const intents = JSON.parse(stored);
+        const now = Date.now();
+        let loadedCount = 0;
+        
+        // Restore non-expired intents
+        for (const [name, intent] of Object.entries(intents)) {
+          if (intent.expiresAt > now) {
+            this._notificationCache.intents.set(name, intent);
+            loadedCount++;
+          }
+        }
+        
+        if (loadedCount > 0) {
+          this._log('Loaded notification intents from storage', { count: loadedCount });
+        }
+      }
+    } catch (error) {
+      this._log('Failed to load notification intents from storage', { error: error.message });
+    }
+  }
+  
+  _saveIntentsToStorage() {
+    try {
+      const intentsObj = {};
+      for (const [name, intent] of this._notificationCache.intents) {
+        intentsObj[name] = intent;
+      }
+      localStorage.setItem(this._notificationCache.intentStorageKey, JSON.stringify(intentsObj));
+    } catch (error) {
+      this._log('Failed to save notification intents to storage', { error: error.message });
+    }
+  }
+  
+  _updateCurrentInterval() {
+    const now = Date.now();
+    let fastestInterval = this._notificationCache.defaultInterval;
+    
+    // Find the fastest check interval from active intents
+    for (const [name, intent] of this._notificationCache.intents) {
+      if (intent.expiresAt > now && intent.checkInterval < fastestInterval) {
+        fastestInterval = intent.checkInterval;
+      }
+    }
+    
+    this._notificationCache.currentInterval = fastestInterval;
+    
+    this._log('Updated notification check interval', { 
+      interval: Math.round(fastestInterval / 1000) + 's',
+      activeIntents: this._notificationCache.intents.size
+    });
+  }
+  
+  _startIntentChecking() {
+    // Clear existing timer
+    this._stopIntentChecking();
+    
+    // Start new timer with current interval (use actual interval, not capped at 60s)
+    this._notificationCache.intentCheckTimer = setInterval(() => {
+      this._checkIntentExpiration();
+    }, this._notificationCache.currentInterval);
+    
+    this._log('Started intent-based notification checking', { 
+      interval: Math.round(this._notificationCache.currentInterval / 1000) + 's'
+    });
+  }
+  
+  _stopIntentChecking() {
+    if (this._notificationCache.intentCheckTimer) {
+      clearInterval(this._notificationCache.intentCheckTimer);
+      this._notificationCache.intentCheckTimer = null;
+      this._log('Stopped intent-based notification checking');
+    }
+  }
+  
+  _checkIntentExpiration() {
+    const now = Date.now();
+    let expiredCount = 0;
+    
+    this._log('Intent check triggered', { 
+      activeIntents: this._notificationCache.intents.size,
+      timestamp: new Date().toISOString()
+    });
+    
+    // Remove expired intents
+    for (const [name, intent] of this._notificationCache.intents) {
+      if (intent.expiresAt <= now) {
+        this._notificationCache.intents.delete(name);
+        expiredCount++;
+        this._log('Notification intent expired', { intent: name });
+      }
+    }
+    
+    if (expiredCount > 0) {
+      this._saveIntentsToStorage();
+      this._updateCurrentInterval();
+      
+      // Stop checking if no more intents
+      if (this._notificationCache.intents.size === 0) {
+        this._stopIntentChecking();
+        this._log('All intents expired, returning to normal checking');
+      }
+    }
+    
+    // Trigger notification check if we have active intents
+    if (this._notificationCache.intents.size > 0) {
+      this._log('Triggering intent-based notification check');
+      this.listNotifications(20, true).catch(error => {
+        this._log('Intent-based notification check failed - clearing cache', { error: error.message });
+        // Clear cache on failure so next reload will fetch fresh data
+        this._notificationCache.data = null;
+        this._notificationCache.lastFetch = 0;
+        if (this._notificationCache.storageKey) {
+          localStorage.removeItem(this._notificationCache.storageKey);
+        }
+      });
+    }
+  }
+  
+  _checkIntentFulfillment(notificationId) {
+    // This is where apps can customize intent clearing logic
+    // For now, we'll implement basic type-based clearing
+    
+    // Get the notification that was just seen
+    const seenNotification = this._notificationCache.data?.find(n => n.notification_id === notificationId);
+    if (!seenNotification) return;
+    
+    const notificationType = seenNotification.type;
+    let clearedIntents = [];
+    
+    // Basic intent clearing based on notification type
+    // Apps can override this logic by calling clearNotificationIntent() manually
+    for (const [intentName, intent] of this._notificationCache.intents) {
+      let shouldClear = false;
+      
+      // Simple matching: if notification type contains intent name or vice versa
+      if (notificationType.includes(intentName) || intentName.includes(notificationType)) {
+        shouldClear = true;
+      }
+      
+      // Common patterns
+      if (notificationType === 'batch_upload_complete' && intentName.includes('upload')) {
+        shouldClear = true;
+      }
+      if (notificationType === 'processing_complete' && intentName.includes('process')) {
+        shouldClear = true;
+      }
+      
+      if (shouldClear) {
+        clearedIntents.push(intentName);
+      }
+    }
+    
+    // Clear matched intents
+    clearedIntents.forEach(intentName => {
+      this.clearNotificationIntent(intentName);
+    });
+    
+    if (clearedIntents.length > 0) {
+      this._log('Intents cleared due to notification fulfillment', { 
+        notificationType,
+        clearedIntents 
+      });
+    }
+  }
+  
   formatStatus(status) {
     const statusMap = {
       'pending': { class: 'warning', icon: '⏳', text: 'Pending' },
