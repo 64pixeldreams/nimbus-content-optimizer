@@ -8,3 +8,4 @@ export { ProjectModel } from './project.js';
 export { LogModel } from './log.js';
 export { UserModel } from './user.js';
 export { NotificationModel } from './notification.js';
+export { WebhookConfigModel } from './webhook-config.js';

@@ -42,7 +42,11 @@ export async function get(requestContext) {
         updated_at: page.get('updated_at'),
         last_processed: page.get('last_processed'),
         processing_time_ms: page.get('processing_time_ms'),
-        error_message: page.get('error_message')
+        error_message: page.get('error_message'),
+        
+        // CRITICAL: Include the full extracted data from KV
+        extracted_data: page.get('extracted_data'),
+        live_url: page.get('live_url')
       }
     };
 

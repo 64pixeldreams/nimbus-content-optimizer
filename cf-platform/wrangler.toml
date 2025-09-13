@@ -49,6 +49,11 @@ binding = "NIMBUS_DB"
 database_name = "nimbus-production"
 database_id = "6f6dae5e-2aac-40f2-bcde-d58c1b58fe4c"
 
+# Analytics Engine dataset binding
+[[analytics_engine_datasets]]
+binding = "NIMBUS_ANALYTICS_ENGINE"
+dataset = "Nimbus_analytics_engine"
+
 # Environment variables
 [vars]
 ENVIRONMENT = "development"

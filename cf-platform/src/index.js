@@ -14,6 +14,7 @@ import { ProjectModel } from './models/project.js';
 import { PageModel } from './models/page.js';
 import { LogModel } from './models/log.js';
 import { NotificationModel } from './models/notification.js';
+import { WebhookConfigModel } from './models/webhook-config.js';
 
 // Auth routes
 import { login } from './routes/auth/login.js';
@@ -44,6 +45,7 @@ DataModel.registerModel(ProjectModel);
 DataModel.registerModel(PageModel);
 DataModel.registerModel(LogModel);
 DataModel.registerModel(NotificationModel);
+DataModel.registerModel(WebhookConfigModel);
 
 // Health check
 router.get('/health', (request, env) => {
@@ -452,8 +454,9 @@ router.post('/api/function', async (request, env) => {
       cloudFunction.define('email.test', sendTestEmail, sendTestEmailConfig);
       
       // Register webhook functions
-      const { testWebhook, testWebhookConfig } = await import('./modules/webhooks/functions/index.js');
+      const { testWebhook, testWebhookConfig, webhookConfigCreate, webhookConfigCreateConfig } = await import('./modules/webhooks/functions/index.js');
       cloudFunction.define('webhook.test', testWebhook, testWebhookConfig);
+      cloudFunction.define('webhook.config.create', webhookConfigCreate, webhookConfigCreateConfig);
       
       // Register session debug function
       cloudFunction.define('debug.session', async (requestContext) => {

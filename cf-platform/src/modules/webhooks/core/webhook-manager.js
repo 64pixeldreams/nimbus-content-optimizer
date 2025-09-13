@@ -20,6 +20,7 @@ export class WebhookManager {
    */
   async send(url, payload, options = {}) {
     const timer = this.logger?.timer('webhook.send');
+    const startTime = Date.now();
     
     try {
       // Validate URL
@@ -69,10 +70,12 @@ export class WebhookManager {
           responseSize: responseData ? JSON.stringify(responseData).length : 0
         });
 
+        const duration = Date.now() - startTime;
         timer?.end({ success: true, status: response.status });
 
         return {
           success: true,
+          duration,
           response: {
             status: response.status,
             headers: Object.fromEntries(response.headers.entries()),
@@ -96,10 +99,12 @@ export class WebhookManager {
         status: err.status || 'network_error'
       });
 
+      const duration = Date.now() - startTime;
       timer?.end({ error: true, status: err.status || 'network_error' });
 
       return {
         success: false,
+        duration,
         error: {
           type: err.name || 'WebhookError',
           message: err.message,

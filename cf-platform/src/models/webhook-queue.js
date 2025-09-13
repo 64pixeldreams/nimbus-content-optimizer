@@ -4,16 +4,22 @@
  */
 
 export const WebhookQueueModel = {
-  name: 'webhook-queue',
+  name: 'WEBHOOK_QUEUE',
   options: {
-    primaryKey: 'webhook_id',
-    timestamps: true
+    primaryKey: 'queue_id',
+    timestamps: true,
+    userTracking: true,
+    auth: true
   },
   fields: {
+    queue_id: {
+      type: 'string',
+      primary: true,
+      required: true
+    },
     webhook_id: {
       type: 'string',
-      required: true,
-      unique: true
+      required: true
     },
     event_type: {
       type: 'string',
@@ -69,17 +75,33 @@ export const WebhookQueueModel = {
     }
   },
   kv: {
-    namespace: 'NIMBUS_QUEUE',
-    ttl: 7 * 24 * 60 * 60 // 7 days
+    namespace: 'WEBHOOK_QUEUE',
+    keyPattern: 'queue:{id}'
   },
   d1: {
-    table: 'webhook_queue'
+    table: 'webhook_queue',
+    syncFields: [
+      'queue_id',
+      'webhook_id',
+      'event_type',
+      'target_url',
+      'retry_count',
+      'max_retries',
+      'next_retry_at',
+      'status',
+      'last_error',
+      'user_id',
+      'entity_id',
+      'entity_type',
+      'created_at',
+      'updated_at'
+    ]
   },
   hooks: {
     beforeCreate: async function(data, context) {
-      // Generate webhook ID if not provided
-      if (!data.webhook_id) {
-        data.webhook_id = `wh_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      // Generate queue ID if not provided
+      if (!data.queue_id) {
+        data.queue_id = `wq_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
       }
       
       // Set next retry time (exponential backoff)

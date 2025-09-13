@@ -218,6 +218,36 @@ export class AuditLogger {
   }
 
   /**
+   * Log webhook activity (deliveries, failures, retries)
+   * @param {string} userId - User ID who triggered the webhook
+   * @param {string} webhookId - Webhook configuration ID
+   * @param {string} action - Action type (webhook_delivered, webhook_failed, webhook_retry)
+   * @param {string} message - Human-readable message
+   * @param {object} details - Additional details
+   * @returns {Promise<object>} Log creation result
+   */
+  async logWebhookActivity(userId, webhookId, action, message, details = {}) {
+    // Normalize action names to consistent format
+    const normalizedAction = this.normalizeAction(action);
+    const cleanMessage = this.formatMessage(message, details);
+    
+    return this.createLog({
+      user_id: userId,
+      entity_type: 'webhook',
+      entity_id: webhookId,
+      action: normalizedAction,
+      message: cleanMessage,
+      level: 'api.wh', // Webhook-specific level for filtering
+      details,
+      entity_ids: [
+        webhookId, 
+        userId,
+        details.entity_id // Include the entity that triggered the webhook
+      ].filter(Boolean) // Remove nulls
+    });
+  }
+
+  /**
    * Create a page activity log with improved action naming
    */
   async logPageActivity(userId, pageId, projectId, action, message, details = {}) {

@@ -270,6 +270,15 @@ export class DataModel {
         await executeHook(this.modelDef, 'afterUpdate', this, changes, this.datastore.env, this.logger, this._authContext);
       }
       
+      // Fire webhooks asynchronously (non-blocking)
+      await this._fireWebhooksAsync(isCreate ? 'create' : 'update', this.data, {
+        datastore: this.datastore,
+        logger: this.logger,
+        authContext: this._authContext,
+        waitUntil: this._waitUntil, // Pass waitUntil if available
+        user_id: this._authContext // Pass user context for logging
+      });
+      
       // Update state AFTER hooks are executed
       this.originalData = { ...this.data };
       this.isNewRecord = false;
@@ -491,5 +500,43 @@ export class DataModel {
    */
   static async initialize(datastore, logger) {
     return await initializeDatabase(modelRegistry, datastore, logger);
+  }
+  
+  /**
+   * Fire webhooks asynchronously for model events
+   * @param {string} action - 'create', 'update', or 'delete'
+   * @param {object} data - Model data
+   * @param {object} context - Request context
+   * @private
+   */
+  async _fireWebhooksAsync(action, data, context) {
+    try {
+      // CRITICAL: Exclude LOG model to prevent infinite loops
+      if (this.modelName === 'LOG') {
+        return;
+      }
+      
+      // Build event type: model.action (e.g., 'page.updated', 'project.created')
+      const eventType = `${this.modelName.toLowerCase()}.${action}d`; // created, updated, deleted
+      
+      // Only fire webhooks if user_id exists (no webhooks for system operations)
+      if (!data.user_id) {
+        return;
+      }
+
+      // Import WebhookTrigger dynamically to avoid circular dependencies
+      const { WebhookTrigger } = await import('../../webhooks/core/webhook-trigger.js');
+      
+      // Fire webhooks synchronously for proper audit logging (Option B)
+      await WebhookTrigger.fireWebhooks(eventType, data, context, false);
+      
+    } catch (error) {
+      // Webhook failures should not affect model operations
+      this.logger?.error('Webhook firing failed', {
+        model: this.modelName,
+        action,
+        error: error.message
+      });
+    }
   }
 }

@@ -22,7 +22,7 @@ export async function pageLogs(requestContext) {
     const { Datastore } = await import('../../datastore/index.js');
     const datastore = new Datastore(env, logger).auth(auth.user_id);
     
-    const { type, entity_id, limit = 50, offset = 0 } = payload;
+    const { type, entity_id, limit = 50, offset = 0, level = 'info' } = payload;
     
     // Build query based on type using correct datastore methods
     let logs = [];
@@ -33,9 +33,9 @@ export async function pageLogs(requestContext) {
         const { Datastore } = await import('../../datastore/index.js');
         const datastore = new Datastore(env, logger);
         
-        // Use direct D1 query instead of LogManager
-        let query = 'SELECT * FROM audit_logs WHERE user_id = ?';
-        const bindings = [auth.user_id];
+        // Use direct D1 query with level filtering
+        let query = 'SELECT * FROM audit_logs WHERE user_id = ? AND level = ?';
+        const bindings = [auth.user_id, level];
         
         if (payload.project_id) {
           // Check if project_id is in the entity_ids JSON array using simple LIKE
@@ -102,9 +102,9 @@ export async function pageLogs(requestContext) {
         const { Datastore } = await import('../../datastore/index.js');
         const datastore = new Datastore(env, logger);
         
-        // Query audit logs for this specific project
-        let query = 'SELECT * FROM audit_logs WHERE entity_id = ? OR entity_ids LIKE ? ORDER BY created_at DESC LIMIT ?';
-        const bindings = [entity_id, `%${entity_id}%`, limit];
+        // Query audit logs for this specific project with level filtering
+        let query = 'SELECT * FROM audit_logs WHERE (entity_id = ? OR entity_ids LIKE ?) AND level = ? ORDER BY created_at DESC LIMIT ?';
+        const bindings = [entity_id, `%${entity_id}%`, level, limit];
         
         const result = await datastore.D1.execute(query, bindings);
         const rawLogs = result.results || [];
@@ -133,9 +133,9 @@ export async function pageLogs(requestContext) {
         const { Datastore } = await import('../../datastore/index.js');
         const datastore = new Datastore(env, logger);
         
-        // Query audit logs for this specific page
-        let query = 'SELECT * FROM audit_logs WHERE entity_id = ? ORDER BY created_at DESC LIMIT ?';
-        const bindings = [entity_id, limit];
+        // Query audit logs for this specific page with level filtering
+        let query = 'SELECT * FROM audit_logs WHERE entity_id = ? AND level = ? ORDER BY created_at DESC LIMIT ?';
+        const bindings = [entity_id, level, limit];
         
         const result = await datastore.D1.execute(query, bindings);
         const rawLogs = result.results || [];
@@ -215,6 +215,7 @@ export const pageLogsConfig = {
     type: { type: 'string', required: true, validation: ['user', 'project', 'page'] },
     entity_id: { type: 'string' }, // Required for project/page, optional for user
     limit: { type: 'number', default: 50 },
-    offset: { type: 'number', default: 0 }
+    offset: { type: 'number', default: 0 },
+    level: { type: 'string', default: 'info' } // Filter by log level
   }
 };
