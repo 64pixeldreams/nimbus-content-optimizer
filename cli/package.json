@@ -1,0 +1,19 @@
+{
+  "name": "nimbus-cli",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "nimbus": "./bin/nimbus.js"
+  },
+  "scripts": {
+    "start": "node ./bin/nimbus.js",
+    "test:help": "node ./bin/nimbus.js --help"
+  },
+  "dependencies": {
+    "commander": "^12.1.0",
+    "dotenv": "^16.4.5",
+    "p-limit": "^5.0.0"
+  }
+}
+

@@ -434,12 +434,13 @@ router.post('/api/function', async (request, env) => {
       cloudFunction.define('project.update', projectUpdate, projectUpdateConfig);
       
       // Register pages CloudFunctions
-      const { pageCreate, pageCreateConfig, pageList, pageListConfig, pageGet, pageGetConfig, pageUpdate, pageUpdateConfig, pageLogs, pageLogsConfig } = await import('./modules/pages/functions/index.js');
+      const { pageCreate, pageCreateConfig, pageList, pageListConfig, pageGet, pageGetConfig, pageUpdate, pageUpdateConfig, pageLogs, pageLogsConfig, upsert, upsertConfig } = await import('./modules/pages/functions/index.js');
       
       cloudFunction.define('page.create', pageCreate, pageCreateConfig);
       cloudFunction.define('page.list', pageList, pageListConfig);
       cloudFunction.define('page.get', pageGet, pageGetConfig);
       cloudFunction.define('page.update', pageUpdate, pageUpdateConfig);
+      cloudFunction.define('page.upsert', upsert, upsertConfig);
       cloudFunction.define('page.logs', pageLogs, pageLogsConfig);
       
       // Register notification CloudFunctions
