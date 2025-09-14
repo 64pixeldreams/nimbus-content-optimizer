@@ -16,6 +16,25 @@
 	<link href="/assets/css/app.css" rel="stylesheet">
 	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
 	
+	<!-- uPlot for clean sparklines -->
+	<script src="https://unpkg.com/uplot/dist/uPlot.iife.min.js"></script>
+	<link rel="stylesheet" href="https://unpkg.com/uplot/dist/uPlot.min.css" />
+	
+	<!-- uPlot Sparkline Styles -->
+	<style>
+		.sparkline-container {
+			height: 70px;
+			margin-top: 10px;
+			position: relative;
+			width: 100%;
+			overflow: visible;
+		}
+		
+		.sparkline-container .u-plot {
+			width: 100% !important;
+		}
+	</style>
+	
 	<!-- Bootstrap 5 Breadcrumb Styles -->
 	<style>
 		.breadcrumb {
@@ -216,11 +235,11 @@
 						</div>
 					</div>
 
-					<!-- Stats Row (Simple) -->
+					<!-- Stats Row with Mini Charts -->
 					<div class="row mb-4">
 						<div class="col-md-4">
 							<div class="card">
-								<div class="card-body">
+								<div class="card-body text-center">
 									<div class="row">
 										<div class="col mt-0">
 											<h5 class="card-title">Pages</h5>
@@ -231,13 +250,15 @@
 											</div>
 										</div>
 									</div>
-									<h1 class="mt-1 mb-3" id="total-pages-count">-</h1>
+									<h1 class="mt-1 mb-2" id="total-pages-count">-</h1>
+									<!-- Mini Sparkline Chart -->
+									<div id="pages-chart" class="sparkline-container"></div>
 								</div>
 							</div>
 						</div>
 						<div class="col-md-4">
 							<div class="card">
-								<div class="card-body">
+								<div class="card-body text-center">
 									<div class="row">
 										<div class="col mt-0">
 											<h5 class="card-title">Complete</h5>
@@ -248,13 +269,15 @@
 											</div>
 										</div>
 									</div>
-									<h1 class="mt-1 mb-3" id="complete-pages-count">-</h1>
+									<h1 class="mt-1 mb-2" id="complete-pages-count">-</h1>
+									<!-- Mini Sparkline Chart -->
+									<div id="complete-chart" class="sparkline-container"></div>
 								</div>
 							</div>
 						</div>
 						<div class="col-md-4">
 							<div class="card">
-								<div class="card-body">
+								<div class="card-body text-center">
 									<div class="row">
 										<div class="col mt-0">
 											<h5 class="card-title">Processing</h5>
@@ -265,7 +288,9 @@
 											</div>
 										</div>
 									</div>
-									<h1 class="mt-1 mb-3" id="processing-count">-</h1>
+									<h1 class="mt-1 mb-2" id="processing-count">-</h1>
+									<!-- Mini Sparkline Chart -->
+									<div id="processing-chart" class="sparkline-container"></div>
 								</div>
 							</div>
 						</div>
@@ -302,6 +327,7 @@
 	
 	<!-- Your Custom Framework (UNCHANGED) -->
 	<script src="/assets/js/cframework.js"></script>
+	<script src="/assets/js/chart-framework.js"></script>
 	<script src="/assets/js/nimbus.js"></script>
 	<script>
 		// Universal setup (same for all pages)
@@ -372,6 +398,9 @@
 				document.getElementById('total-pages-count').textContent = stats.total_pages;
 				document.getElementById('complete-pages-count').textContent = stats.completed_pages;
 				document.getElementById('processing-count').textContent = stats.processing_pages;
+				
+				// Load analytics charts
+				await loadProjectCharts(projectId);
 				
 				// Load pages for the table (only if we have pages)
 				if (stats.total_pages > 0) {
@@ -473,6 +502,154 @@
 			}
 		}
 		
+		// Load analytics charts for project dashboard using CloudFunctions
+		async function loadProjectCharts(projectId) {
+			try {
+				console.log('📊 Loading project analytics charts via CloudFunctions...');
+				
+				let baseActivity, completeActivity, processingActivity;
+				
+				// Use proper CloudFunction approach - no direct SQL calls
+				console.log('📊 Using analytics.metrics CloudFunction...');
+				
+				// Get metrics using NEW CLEAN ANALYTICS STRUCTURE
+				// blob1=entity, blob2=action, blob3=project_id, blob4=status
+				const [allPagesResult, completedResult, processingResult] = await Promise.all([
+					cf.run('analytics.metrics', {
+						category: 'page',           // blob1: entity type
+						project_id: projectId,     // blob3: clean project_id
+						timeRange: '24h',
+						action: 'uploaded'         // Pages sparkline should reflect new pages added only
+					}),
+					cf.run('analytics.metrics', {
+						category: 'page', 
+						project_id: projectId,
+						timeRange: '24h',
+						action: 'completed'         // blob2: only completed actions
+					}),
+					cf.run('analytics.metrics', {
+						category: 'page',
+						project_id: projectId, 
+						timeRange: '24h',
+						status: 'processing'        // blob4: only processing status
+					})
+				]);
+				
+				console.log('📊 CloudFunction results (RAW):', {
+					pages: allPagesResult,
+					completed: completedResult,
+					processing: processingResult
+				});
+				
+				// Extract chart data from CloudFunction responses (result.data.data.datasets[0].data)
+				const extractSeries = (res) => Array.isArray(res?.data?.data?.datasets?.[0]?.data)
+					? res.data.data.datasets[0].data
+					: Array(24).fill(0);
+				
+				baseActivity = extractSeries(allPagesResult);
+				completeActivity = extractSeries(completedResult);
+				processingActivity = extractSeries(processingResult);
+				
+				console.log('📊 Extracted chart arrays:', {
+					baseActivity,
+					completeActivity, 
+					processingActivity
+				});
+				
+				// Debug: Show actual values
+				console.log('🔍 Data inspection:');
+				console.log('  Pages data:', baseActivity.slice(0, 5), '...', baseActivity.slice(-3));
+				console.log('  Complete data:', completeActivity.slice(0, 5), '...', completeActivity.slice(-3));
+				console.log('  Processing data:', processingActivity.slice(0, 5), '...', processingActivity.slice(-3));
+				
+				// Create sparklines using uPlot (your exact working configuration)
+				const createuPlotSparkline = (containerId, data, color, yMax) => {
+					const container = document.getElementById(containerId);
+					if (!container) return;
+					
+					console.log(`🎨 Creating uPlot sparkline for ${containerId} with data:`, data);
+					
+					// Clear container
+					container.innerHTML = '';
+					
+					// Prepare data for uPlot [x, y] format
+					const plotData = [
+						data.map((_, i) => i), // x values: [0,1,2,3,4,...]
+						data // y values: our activity data
+					];
+					
+					new uPlot({
+						width: Math.max(container.offsetWidth - 10, 250),
+						height: 50,
+						padding: [8, 8, 8, 8], // top, right, bottom, left padding
+						scales: {
+							x: { time: false },
+							y: {
+								range: [0, Math.max(1, yMax || 1)]
+							}
+						},
+						series: [
+							{}, // x values
+							{ stroke: color, width: 1.5, fill: false }
+						],
+						axes: [
+							{ show: false }, // x axis hidden
+							{ show: false }  // y axis hidden
+						],
+						legend: { show: false },
+						cursor: { show: false },
+						select: { show: false }
+					}, plotData, container);
+					
+					console.log(`✅ uPlot sparkline created: ${containerId}`);
+				};
+				
+				// "No data" UI helper
+				const showNoData = (containerId) => {
+					const container = document.getElementById(containerId);
+					if (!container) return;
+					container.innerHTML = `
+						<div class="text-center text-muted p-2">
+							<small>No data</small>
+						</div>
+					`;
+				};
+				
+				// Compute shared Y max across series for proportional scaling
+				const sharedMax = Math.max(
+					...(baseActivity || [0]),
+					...(completeActivity || [0]),
+					...(processingActivity || [0])
+				);
+				const yMax = Math.max(1, sharedMax);
+				
+				// Render or show no-data per series
+				const isAllZero = (arr) => Array.isArray(arr) && arr.every(v => (Number(v) || 0) === 0);
+				
+				createuPlotSparkline('pages-chart', baseActivity, '#007bff', yMax);
+				createuPlotSparkline('complete-chart', completeActivity, '#28a745', yMax);
+				createuPlotSparkline('processing-chart', processingActivity, '#ffc107', yMax);
+				
+				console.log('✅ Project charts loaded with custom SVG sparklines');
+				
+			} catch (error) {
+				console.error('Failed to load project charts:', error);
+				// Show no data on all charts if request fails
+				const showNoData = (containerId) => {
+					const container = document.getElementById(containerId);
+					if (!container) return;
+					container.innerHTML = `
+						<div class="text-center text-muted p-2">
+							<small>No data</small>
+						</div>
+					`;
+				};
+				showNoData('pages-chart');
+				showNoData('complete-chart');
+				showNoData('processing-chart');
+			}
+		}
+
 		function uploadPages() { alert('Upload pages coming soon!'); }
 		function viewPage(pageId) { 
 			// Navigate to page view using hash (works with any server)

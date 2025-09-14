@@ -51,8 +51,8 @@ database_id = "6f6dae5e-2aac-40f2-bcde-d58c1b58fe4c"
 
 # Analytics Engine dataset binding
 [[analytics_engine_datasets]]
-binding = "NIMBUS_ANALYTICS_ENGINE"
-dataset = "Nimbus_analytics_engine"
+binding = "ANALYTICS_DATA"
+dataset = "nimbus_events_tracking"
 
 # Environment variables
 [vars]
@@ -63,6 +63,8 @@ MAILERSEND_API_KEY = "mlsn.7b94dac93202ee776bd02479af158d6fc17adacdfa3aa8ff86def
 DEFAULT_FROM_EMAIL = "martin@nimbus360.io"
 DEFAULT_FROM_NAME = "Martin Webb"
 APP_NAME = "NimbusHQ"
+ACCOUNT_ID = "55987b6602e8ac9db46e14dcc7ad2c79"
+CLOUDFLARE_API_TOKEN = "S-Qrxy30fGTBSgDbJxcRQsl7vuCmq22EH3jgtrUd"
 
 # Production environment variables
 [env.production.vars]

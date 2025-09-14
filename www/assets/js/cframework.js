@@ -250,6 +250,93 @@ class CFramework {
    * Smart Notification System with Caching
    */
   
+  /**
+   * Analytics API - Universal chart rendering and metrics
+   */
+  renderAnalyticsChart = async (containerId, functionName, params = {}, chartOptions = {}) => {
+    try {
+      console.log(`📊 Loading chart data: ${functionName}`, params);
+      
+      // Call CloudFunction to get data
+      const response = await cf.call(functionName, params);
+      
+      if (!response.success) {
+        throw new Error(response.error || 'Failed to load chart data');
+      }
+
+      // Render chart using ChartFramework
+      if (window.ChartFramework) {
+        const chart = await window.ChartFramework.renderChart(
+          containerId, 
+          response.data, 
+          chartOptions
+        );
+        
+        console.log(`✅ Chart rendered: ${containerId}`);
+        return chart;
+      } else {
+        console.error('ChartFramework not loaded');
+        return null;
+      }
+      
+    } catch (error) {
+      console.error(`❌ Chart render failed: ${containerId}`, error);
+      
+      // Show error in container
+      const container = document.getElementById(containerId);
+      if (container) {
+        container.innerHTML = `
+          <div class="text-center text-muted p-2">
+            <i class="fas fa-exclamation-triangle"></i>
+            <br><small>Chart failed to load</small>
+          </div>
+        `;
+      }
+      return null;
+    }
+  };
+
+  renderAnalyticsSparkline = async (containerId, functionName, params = {}, color = '#007bff') => {
+    try {
+      console.log(`✨ Loading sparkline data: ${functionName}`, params);
+      
+      const response = await cf.call(functionName, params);
+      
+      if (!response.success) {
+        throw new Error(response.error || 'Failed to load sparkline data');
+      }
+
+      // Extract simple data array from chart data
+      const data = response.data?.datasets?.[0]?.data || [];
+      
+      if (window.ChartFramework) {
+        return await window.ChartFramework.renderSparkline(containerId, data, color);
+      } else {
+        console.error('ChartFramework not loaded');
+        return null;
+      }
+      
+    } catch (error) {
+      console.error(`❌ Sparkline render failed: ${containerId}`, error);
+      return null;
+    }
+  };
+
+  getAnalyticsSummary = async (category, filters = {}, timeRange = '24h') => {
+    try {
+      const response = await cf.call('analytics.summary', {
+        category,
+        ...filters,
+        timeRange
+      });
+      
+      return response.success ? response.data : { total: 0, by_status: {} };
+    } catch (error) {
+      console.error('Analytics summary failed', error);
+      return { total: 0, by_status: {} };
+    }
+  };
+
   // Smart Notification Cache with Intent System
   _notificationCache = {
     data: null,

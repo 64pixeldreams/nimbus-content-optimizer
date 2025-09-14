@@ -158,6 +158,42 @@ export const PageModel = {
           pageId: instance.get('page_id'),
           projectId: instance.get('project_id')
         });
+
+        // Track analytics event - NEW CLEAN STRUCTURE
+        try {
+          if (env.ANALYTICS_DATA?.writeDataPoint) {
+            // Extract clean project ID (remove 'project:' prefix if present)
+            const rawProjectId = instance.get('project_id');
+            const cleanProjectId = rawProjectId?.startsWith('project:') 
+              ? rawProjectId.substring(8) 
+              : rawProjectId;
+
+            env.ANALYTICS_DATA.writeDataPoint({
+              blobs: [
+                'page',                         // blob1: entity type
+                'uploaded',                     // blob2: action
+                cleanProjectId,                 // blob3: clean project_id  
+                instance.get('status')          // blob4: status
+              ],
+              doubles: [
+                1,                              // count (always 1 per event)
+                JSON.stringify(data).length    // size in bytes
+              ],
+              indexes: [instance.get('page_id')]
+            });
+            
+            logger?.log('📊 Analytics event written: page.uploaded', {
+              pageId: instance.get('page_id'),
+              status: instance.get('status'),
+              projectId: cleanProjectId,
+              action: 'uploaded'
+            });
+          } else {
+            logger?.warn('Analytics Engine binding not available');
+          }
+        } catch (error) {
+          logger?.error('❌ Analytics tracking failed', error);
+        }
         
         // Update project stats atomically
         await updateProjectStats(instance.get('project_id'), {
@@ -243,6 +279,55 @@ export const PageModel = {
           }, env, logger);
         } catch (error) {
           logger?.warn('Failed to update project stats in afterUpdate hook', error);
+        }
+        
+        // Track analytics event for page updates - NEW CLEAN STRUCTURE
+        try {
+          if (env.ANALYTICS_DATA?.writeDataPoint) {
+            // Extract clean project ID (remove 'project:' prefix if present)
+            const rawProjectId = instance.get('project_id');
+            const cleanProjectId = rawProjectId?.startsWith('project:') 
+              ? rawProjectId.substring(8) 
+              : rawProjectId;
+
+            // Determine action based on status change
+            const statusChanged = changes.status !== undefined;
+            const currentStatus = instance.get('status');
+            
+            // Use specific action based on what happened
+            let action = 'updated';
+            if (statusChanged && currentStatus === 'completed') {
+              action = 'completed';
+            } else if (statusChanged && currentStatus === 'failed') {
+              action = 'failed';
+            }
+
+            env.ANALYTICS_DATA.writeDataPoint({
+              blobs: [
+                'page',                         // blob1: entity type
+                action,                         // blob2: action (updated/completed/failed)
+                cleanProjectId,                 // blob3: clean project_id
+                currentStatus                   // blob4: current status
+              ],
+              doubles: [
+                1,                              // count (always 1 per event)
+                Object.keys(changes).length    // number of fields changed
+              ],
+              indexes: [instance.get('page_id')]
+            });
+            
+            logger?.log(`📊 Analytics event written: page.${action}`, {
+              pageId: instance.get('page_id'),
+              status: currentStatus,
+              projectId: cleanProjectId,
+              action: action,
+              changedFields: Object.keys(changes)
+            });
+          } else {
+            logger?.warn('Analytics Engine binding not available in afterUpdate');
+          }
+        } catch (error) {
+          logger?.error('❌ Analytics tracking failed in afterUpdate', error);
         }
       }
     }

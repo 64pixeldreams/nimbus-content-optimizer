@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Direct Analytics Engine API Test</title>
+</head>
+<body>
+    <h1>Analytics Engine Direct API Test</h1>
+    <button onclick="testAnalyticsAPI()">Test Analytics API</button>
+    <button onclick="testShowTables()">Show Tables</button>
+    <button onclick="testSimpleQuery()">Simple Query</button>
+    <pre id="results"></pre>
+
+    <script>
+        const ACCOUNT_ID = "55987b6602e8ac9db46e14dcc7ad2c79";
+        const API_TOKEN = "u5jGlJWX-8F6hyb8ft30KXtdryfyOzkKHIM7d-IZ";
+        const API_URL = `https://api.cloudflare.com/client/v4/accounts/${ACCOUNT_ID}/analytics_engine/sql`;
+        
+        function log(message) {
+            document.getElementById('results').textContent += message + '\n';
+            console.log(message);
+        }
+        
+        function clearLog() {
+            document.getElementById('results').textContent = '';
+        }
+        
+        async function testAnalyticsAPI() {
+            clearLog();
+            log('🔍 Testing Analytics Engine API directly...');
+            
+            try {
+                // Test 1: SHOW TABLES
+                log('\n1. Testing SHOW TABLES...');
+                
+                const showTablesResponse = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${API_TOKEN}`,
+                        'Content-Type': 'application/text'
+                    },
+                    body: 'SHOW TABLES'
+                });
+                
+                log(`Response status: ${showTablesResponse.status}`);
+                const showTablesText = await showTablesResponse.text();
+                log(`Raw response: ${showTablesText}`);
+                
+                if (showTablesResponse.ok) {
+                    try {
+                        const showTablesResult = JSON.parse(showTablesText);
+                        log(`✅ SHOW TABLES success:`);
+                        log(JSON.stringify(showTablesResult, null, 2));
+                    } catch (e) {
+                        log(`❌ JSON parse failed: ${e.message}`);
+                    }
+                } else {
+                    log(`❌ HTTP error: ${showTablesResponse.status}`);
+                }
+                
+            } catch (error) {
+                log(`❌ Error: ${error.message}`);
+            }
+        }
+        
+        async function testShowTables() {
+            clearLog();
+            log('📋 Testing SHOW TABLES...');
+            
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${API_TOKEN}`,
+                        'Content-Type': 'application/text'
+                    },
+                    body: 'SHOW TABLES'
+                });
+                
+                const result = await response.text();
+                log(`Status: ${response.status}`);
+                log(`Response: ${result}`);
+                
+                if (response.ok) {
+                    const parsed = JSON.parse(result);
+                    log('✅ Tables found:');
+                    log(JSON.stringify(parsed, null, 2));
+                }
+                
+            } catch (error) {
+                log(`❌ Error: ${error.message}`);
+            }
+        }
+        
+        async function testSimpleQuery() {
+            clearLog();
+            log('📊 Testing simple query...');
+            
+            try {
+                const query = 'SELECT * FROM nimbus_events LIMIT 5';
+                
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${API_TOKEN}`,
+                        'Content-Type': 'application/text'
+                    },
+                    body: query
+                });
+                
+                const result = await response.text();
+                log(`Status: ${response.status}`);
+                log(`Query: ${query}`);
+                log(`Response: ${result}`);
+                
+                if (response.ok) {
+                    const parsed = JSON.parse(result);
+                    log('✅ Query result:');
+                    log(JSON.stringify(parsed, null, 2));
+                }
+                
+            } catch (error) {
+                log(`❌ Error: ${error.message}`);
+            }
+        }
+    </script>
+</body>
+</html>

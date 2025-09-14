@@ -453,6 +453,14 @@ router.post('/api/function', async (request, env) => {
       const { sendTestEmail, sendTestEmailConfig } = await import('./modules/messaging/functions/index.js');
       cloudFunction.define('email.test', sendTestEmail, sendTestEmailConfig);
       
+      // Register analytics functions
+      const { getMetrics, getMetricsConfig, getSummary, getSummaryConfig, querySql, querySqlConfig, testWrite, testWriteConfig, testQuery, testQueryConfig } = await import('./modules/analytics/functions/index.js');
+      cloudFunction.define('analytics.metrics', getMetrics, getMetricsConfig);
+      cloudFunction.define('analytics.summary', getSummary, getSummaryConfig);
+      cloudFunction.define('analytics.sql', querySql, querySqlConfig);
+      cloudFunction.define('analytics.write.test', testWrite, testWriteConfig);
+      cloudFunction.define('analytics.test.query', testQuery, testQueryConfig);
+      
       // Register webhook functions
       const { testWebhook, testWebhookConfig, webhookConfigCreate, webhookConfigCreateConfig } = await import('./modules/webhooks/functions/index.js');
       cloudFunction.define('webhook.test', testWebhook, testWebhookConfig);
@@ -517,6 +525,49 @@ router.post('/api/function', async (request, env) => {
           timestamp: new Date().toISOString(),
           user: requestContext.auth?.user_id || 'anonymous'
         };
+      }, {
+        auth: true,
+        validation: {}
+      });
+      
+      // Register Analytics Engine test function
+      cloudFunction.define('analytics.test', async (requestContext) => {
+        const { env, logger, payload, auth } = requestContext;
+        
+        try {
+          logger.log('Analytics Engine test started');
+          
+          // Test write
+          const writeResult = env.NIMBUS_ANALYTICS.writeDataPoint({
+            blobs: ['test_event', payload.project_id || 'test_project', auth.user_id, 'created'],
+            doubles: [1, Date.now(), 1000],
+            indexes: [`test_${Date.now()}`]
+          });
+          
+          logger.log('Analytics Engine write completed', { writeResult });
+          
+          // Test if binding exists
+          const bindingExists = !!env.NIMBUS_ANALYTICS;
+          const hasWriteMethod = typeof env.NIMBUS_ANALYTICS?.writeDataPoint === 'function';
+          const hasSqlMethod = typeof env.NIMBUS_ANALYTICS?.sql === 'function';
+          
+          return {
+            success: true,
+            binding_exists: bindingExists,
+            has_write_method: hasWriteMethod,
+            has_sql_method: hasSqlMethod,
+            write_result: writeResult,
+            timestamp: new Date().toISOString()
+          };
+          
+        } catch (error) {
+          logger.error('Analytics Engine test failed', error);
+          return {
+            success: false,
+            error: error.message,
+            binding_exists: !!env.NIMBUS_ANALYTICS
+          };
+        }
       }, {
         auth: true,
         validation: {}
