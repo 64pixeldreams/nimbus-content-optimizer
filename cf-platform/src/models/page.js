@@ -96,6 +96,9 @@ export const PageModel = {
     title: { type: 'string' },
     status: { type: 'string', default: 'pending' },
     
+    // Page classification
+    page_type: { type: 'string', default: 'page' },
+    
     // Large content fields (KV only)
     content: { type: 'text' },
     extracted_data: { type: 'json' },
@@ -122,6 +125,7 @@ export const PageModel = {
       'url',
       'title',
       'status',
+      'page_type',
       'created_at',
       'updated_at',
       'deleted_at',
@@ -195,11 +199,14 @@ export const PageModel = {
           logger?.error('❌ Analytics tracking failed', error);
         }
         
-        // Update project stats atomically
-        await updateProjectStats(instance.get('project_id'), {
-          type: 'create',
-          status: instance.get('status')
-        }, env, logger);
+        // Atomic stats: increment via D1 JSON ops, then mirror to KV
+        try {
+          const { ProjectStats } = await import('../modules/stats/project-stats.js');
+          const stats = new ProjectStats(env, logger);
+          await stats.applyCreate(instance.get('project_id'), instance.get('status'));
+        } catch (statsErr) {
+          logger?.warn('ProjectStats applyCreate failed', { error: statsErr.message });
+        }
         
       } catch (error) {
         logger?.error('Audit logging failed in afterCreate hook', error);
@@ -208,43 +215,54 @@ export const PageModel = {
     },
     
     afterUpdate: async (instance, changes, env, logger, context) => {
-      // Create audit log for status changes
-      if (changes.status) {
-        try {
-          
-          const { Datastore } = await import('../modules/datastore/index.js');
-          const { AuditLogger } = await import('../modules/logs/core/audit-logger.js');
-          
-          const datastore = new Datastore(env, logger);
-          const auditLogger = new AuditLogger(datastore, logger);
-          
-          // Get the authenticated user ID from context or instance
-          const userId = context?.user_id || 
-                        instance.get('user_id') || 
-                        instance.get('created_by') ||
-                        'system';
-          
-          // Get old and new status values - use the changes object properly
+      // Always log page updates
+      try {
+        const { Datastore } = await import('../modules/datastore/index.js');
+        const { AuditLogger } = await import('../modules/logs/core/audit-logger.js');
+        
+        const datastore = new Datastore(env, logger);
+        const auditLogger = new AuditLogger(datastore, logger);
+        
+        // Get the authenticated user ID from context or instance
+        const userId = context?.user_id || 
+                      instance.get('user_id') || 
+                      instance.get('created_by') ||
+                      'system';
+        
+        logger?.log('🔧 PAGE HOOK: afterUpdate triggered', {
+          pageId: instance.get('page_id'),
+          changes: Object.keys(changes),
+          userId: userId
+        });
+        
+        // Log general page update
+        await auditLogger.logPageActivity(
+          userId,
+          instance.get('page_id'),
+          instance.get('project_id'),
+          'page_updated',
+          'Page updated',
+          {
+            url: instance.get('url'),
+            title: instance.get('title'),
+            changed_fields: Object.keys(changes),
+            field_count: Object.keys(changes).length
+          }
+        );
+        
+        // Additional status-specific logging if status changed
+        if (changes.status) {
           const oldStatus = instance.originalData?.status || 'pending';
           const newStatus = changes.status;
           
-          logger?.log('🔧 PAGE HOOK: Status values', {
-            oldStatus,
-            newStatus,
-            userId,
-            willLog: oldStatus !== newStatus
-          });
-          
-          // Only log if status actually changed
+          // Only log status change if it actually changed
           if (oldStatus !== newStatus) {
-            logger?.log('🔧 PAGE HOOK: Creating audit log...');
-            // Use the new improved logging method with proper formatting
             await auditLogger.logPageActivity(
               userId,
               instance.get('page_id'),
               instance.get('project_id'),
               'page_status_updated',
-              `Page status updated: ${oldStatus} → ${newStatus}`,
+              `Status changed from ${oldStatus} to ${newStatus}`,
               {
                 url: instance.get('url'),
                 title: instance.get('title'),
@@ -253,13 +271,13 @@ export const PageModel = {
                 status_change: `${oldStatus} → ${newStatus}`
               }
             );
-            logger?.log('🔧 PAGE HOOK: Audit log created successfully');
-          } else {
-            logger?.log('🔧 PAGE HOOK: Status unchanged, skipping audit log');
           }
-        } catch (auditError) {
-          logger?.error('🔧 PAGE HOOK: Failed to create page status audit log', auditError);
         }
+        
+        logger?.log('🔧 PAGE HOOK: Update audit logs created successfully');
+        
+      } catch (auditError) {
+        logger?.error('🔧 PAGE HOOK: Failed to create page update audit log', auditError);
       }
       
       if (changes.status === 'completed') {
@@ -272,13 +290,11 @@ export const PageModel = {
       // Update project stats if status changed
       if (changes.status) {
         try {
-          await updateProjectStats(instance.get('project_id'), {
-            type: 'update',
-            oldStatus: instance.originalData?.status,
-            newStatus: changes.status
-          }, env, logger);
-        } catch (error) {
-          logger?.warn('Failed to update project stats in afterUpdate hook', error);
+          const { ProjectStats } = await import('../modules/stats/project-stats.js');
+          const stats = new ProjectStats(env, logger);
+          await stats.applyStatusChange(instance.get('project_id'), instance.originalData?.status, changes.status);
+        } catch (statsErr) {
+          logger?.warn('ProjectStats applyStatusChange failed', { error: statsErr.message });
         }
         
         // Track analytics event for page updates - NEW CLEAN STRUCTURE

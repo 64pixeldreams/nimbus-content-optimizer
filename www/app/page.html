@@ -200,12 +200,16 @@
 					<!-- Page Header -->
 					<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-2 pb-2 mb-3">
 						<div>
-							<div style="font-size: 16px; line-height: 1.5; color: black; font-weight: 600; margin-bottom: 8px;">Page view</div>
-							<h1 class="h2" id="page-title">Loading...</h1>
+							<div style="font-size: 14px; line-height: 1.5; margin-bottom: 8px; color: #6c757d; display: flex; align-items: center;">
+								<i id="page-type-icon" data-feather="file" style="width: 16px; height: 16px; margin-right: 8px;"></i>
+								<span id="page-type-text" style="font-weight: 600;">Loading...</span>
+							</div>
+							<h1 class="h2 fw-bold mb-1" id="page-title" style="color: #212529;">Loading...</h1>
+							<div class="small" id="page-url-header" style="color: #0066cc; font-size: 13px;">Loading...</div>
 						</div>
 						<div class="btn-toolbar mb-2 mb-md-0">
-							<button type="button" class="btn btn-primary" onclick="editPage()">
-								<i data-feather="edit"></i> Edit Page
+							<button type="button" class="btn btn-primary" onclick="viewLive()" id="view-live-btn">
+								<i data-feather="external-link"></i> View Live Version
 							</button>
 						</div>
 					</div>
@@ -224,6 +228,11 @@
 											</a>
 										</li>
 										<li class="nav-item" role="presentation">
+											<a class="nav-link" data-bs-toggle="tab" href="#metadata" role="tab">
+												<i class="align-middle me-1" data-feather="tag"></i> Metadata
+											</a>
+										</li>
+										<li class="nav-item" role="presentation">
 											<a class="nav-link" data-bs-toggle="tab" href="#content" role="tab">
 												<i class="align-middle me-1" data-feather="file-text"></i> Content
 											</a>
@@ -236,6 +245,11 @@
 										<li class="nav-item" role="presentation">
 											<a class="nav-link" data-bs-toggle="tab" href="#actions" role="tab">
 												<i class="align-middle me-1" data-feather="zap"></i> Actions
+											</a>
+										</li>
+										<li class="nav-item" role="presentation">
+											<a class="nav-link" data-bs-toggle="tab" href="#json" role="tab">
+												<i class="align-middle me-1" data-feather="code"></i> JSON
 											</a>
 										</li>
 									</ul>
@@ -257,18 +271,27 @@
 																<i class="align-middle me-1" data-feather="search" style="width: 14px; height: 14px;"></i>
 																Search Engine Preview
 															</div>
-															<div class="d-flex align-items-center mb-2">
-																<div class="bg-white rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 20px; height: 20px;">
-																	<i class="align-middle text-muted" data-feather="globe" style="width: 12px; height: 12px;"></i>
+															<div class="d-flex">
+																<!-- Left side - SERP content (Google style) -->
+																<div class="flex-grow-1 me-3">
+																	<div class="d-flex align-items-center mb-1">
+																		<div class="bg-white rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 16px; height: 16px;">
+																			<i class="align-middle text-muted" data-feather="globe" style="width: 10px; height: 10px;"></i>
+																		</div>
+																		<span class="small text-muted">Repairs By Post</span>
+																	</div>
+																	<div class="text-success small mb-1" id="serp-url" style="font-family: arial, sans-serif; font-size: 14px;">Loading...</div>
+																	<h6 class="mb-1" id="serp-title" style="color: #1a0dab; font-family: arial, sans-serif; font-size: 20px; line-height: 1.3; font-weight: 400;">Loading...</h6>
+																	<p class="text-muted mb-2 small" id="serp-description" style="font-family: arial, sans-serif; color: #4d5156; line-height: 1.58; font-size: 14px;">Loading...</p>
+																	<div class="small text-muted d-flex align-items-center" id="serp-meta" style="font-size: 12px;">
+																		<i class="align-middle me-1" data-feather="clock" style="width: 12px; height: 12px;"></i>
+																		<span id="serp-status">Extracted</span> • <span id="serp-blocks">- blocks</span> • Ready for AI
+																	</div>
 																</div>
-																<span class="small text-muted fw-medium">Repairs By Post</span>
-															</div>
-															<div class="text-success small mb-1 fw-medium" id="serp-url" style="font-family: arial, sans-serif;">Loading...</div>
-															<h6 class="mb-2 fw-bold" id="serp-title" style="color: #1a0dab; font-family: arial, sans-serif; font-size: 18px; line-height: 1.3;">Loading...</h6>
-															<p class="text-muted mb-3 small" id="serp-description" style="font-family: arial, sans-serif; color: #4d5156; line-height: 1.58;">Loading...</p>
-															<div class="small text-muted d-flex align-items-center" id="serp-meta">
-																<i class="align-middle me-1" data-feather="clock" style="width: 12px; height: 12px;"></i>
-																<span id="serp-status">Extracted</span> • <span id="serp-blocks">- blocks</span> • Ready for AI
+																<!-- Right side - Header image (Google SERP style) -->
+																<div class="flex-shrink-0 ms-3" id="serp-image-container" style="display: none;">
+																	<img id="serp-image" style="width: 140px; height: 105px; object-fit: cover; border-radius: 8px; border: 1px solid #dadce0;" alt="Page preview">
+																</div>
 															</div>
 														</div>
 													</div>
@@ -308,8 +331,8 @@
 													<div class="card text-center border-0 h-100" style="background: #fff; border: 1px solid #dee2e6 !important;">
 														<div class="card-body py-4">
 															<i class="align-middle text-info mb-3" data-feather="cpu" style="width: 28px; height: 28px;"></i>
-															<h4 class="mb-1 fw-bold text-dark" id="ai-status">Ready</h4>
-															<p class="text-muted mb-0 small fw-medium">AI Status</p>
+															<h4 class="mb-2 fw-bold text-dark" id="page-priority">Loading...</h4>
+															<small class="text-muted" id="page-type-small">Loading...</small>
 														</div>
 													</div>
 												</div>
@@ -336,14 +359,43 @@
 													</div>
 												</div>
 												<div class="col-md-3 mb-3">
-													<div class="p-3 rounded" style="background: #f8f9fa; border: 1px solid #dee2e6;">
+													<div class="p-3 rounded" style="background: #f8f9fa; border: 1px solid #dee2e6; cursor: pointer;" onclick="viewLive()" title="Click to view live page">
 														<h6 class="text-muted text-uppercase small mb-2 fw-bold">URL</h6>
-														<h5 class="mb-0 fw-bold text-dark" id="page-url">-</h5>
+														<h5 class="mb-0 fw-bold text-primary" id="page-url" style="text-decoration: underline;">-</h5>
 													</div>
 												</div>
 											</div>
 											
 										</div>
+								
+								<!-- Metadata Tab -->
+								<div class="tab-pane fade" id="metadata" role="tabpanel">
+									
+									<!-- Metadata Blocks -->
+									<div class="row mb-4">
+										<div class="col-12">
+											<div class="card border-0" style="background: #f8f9fa;">
+												<div class="card-header bg-transparent border-0 pb-0">
+													<h6 class="mb-0 fw-bold text-dark">
+														<i class="align-middle text-primary me-2" data-feather="tag"></i>
+														Page Metadata
+													</h6>
+												</div>
+												<div class="card-body">
+													<div class="p-4 rounded border" style="background: #ffffff;" id="metadata-preview">
+														<div class="text-center py-4">
+															<div class="spinner-border text-primary" role="status">
+																<span class="visually-hidden">Loading...</span>
+															</div>
+															<p class="text-muted mt-2 mb-0">Loading metadata...</p>
+														</div>
+													</div>
+												</div>
+											</div>
+										</div>
+									</div>
+									
+								</div>
 								
 								<!-- Content Tab -->
 								<div class="tab-pane fade" id="content" role="tabpanel">
@@ -353,10 +405,20 @@
 										<div class="col-12">
 											<div class="card border-0" style="border: 1px solid #dee2e6 !important;">
 												<div class="card-header bg-white border-bottom">
-													<h6 class="card-title mb-0 fw-bold">
-														<i class="align-middle text-warning me-2" data-feather="star"></i>
-														Above-fold Content (Hero Section)
-													</h6>
+													<div class="d-flex justify-content-between align-items-center">
+														<h6 class="card-title mb-0 fw-bold">
+															<i class="align-middle text-warning me-2" data-feather="star"></i>
+															Above-fold Content <span id="above-fold-count" class="text-muted small">(0)</span>
+														</h6>
+														<div class="d-flex align-items-center">
+															<div class="input-group input-group-sm" style="width: 200px;">
+																<span class="input-group-text">
+																	<i data-feather="search" class="text-muted" style="width: 14px; height: 14px;"></i>
+																</span>
+																<input type="search" class="form-control" id="above-fold-search" placeholder="Search above-fold...">
+															</div>
+														</div>
+													</div>
 												</div>
 												<div class="card-body">
 													<div class="p-4 rounded border" style="background: #f8f9fa;" id="above-fold-preview">
@@ -379,18 +441,28 @@
 												<div class="card-header bg-white border-bottom d-flex justify-content-between align-items-center flex-wrap">
 													<h6 class="card-title mb-0 fw-bold">
 														<i class="align-middle text-primary me-2" data-feather="file-text"></i>
-														Content Blocks
+														Content Blocks <span id="content-blocks-count" class="text-muted small">(0)</span>
 													</h6>
 													<div class="d-flex gap-2 mt-2 mt-md-0">
-														<select class="form-select form-select-sm" id="block-filter" style="width: auto;">
-															<option value="">All Types</option>
-															<option value="h1">Headlines</option>
-															<option value="h2">Subheadings</option>
-															<option value="p">Paragraphs</option>
-															<option value="a">Links</option>
-															<option value="button">Buttons</option>
-														</select>
-														<input type="search" class="form-control form-control-sm" id="block-search" placeholder="Search blocks..." style="width: 200px;">
+														<div class="input-group input-group-sm" style="width: auto;">
+															<span class="input-group-text">
+																<i data-feather="filter" class="text-muted" style="width: 14px; height: 14px;"></i>
+															</span>
+															<select class="form-select" id="block-filter" style="width: 120px;">
+																<option value="">All Types</option>
+																<option value="h1">Headlines</option>
+																<option value="h2">Subheadings</option>
+																<option value="p">Paragraphs</option>
+																<option value="a">Links</option>
+																<option value="button">Buttons</option>
+															</select>
+														</div>
+														<div class="input-group input-group-sm" style="width: 200px;">
+															<span class="input-group-text">
+																<i data-feather="search" class="text-muted" style="width: 14px; height: 14px;"></i>
+															</span>
+															<input type="search" class="form-control" id="block-search" placeholder="Search blocks...">
+														</div>
 													</div>
 												</div>
 												<div class="card-body p-0">
@@ -402,12 +474,11 @@
 																	<th class="border-0 text-muted small text-uppercase fw-bold">Type</th>
 																	<th class="border-0 text-muted small text-uppercase fw-bold">Content</th>
 																	<th class="border-0 text-muted small text-uppercase fw-bold">Priority</th>
-																	<th class="border-0 text-muted small text-uppercase fw-bold">Actions</th>
 																</tr>
 															</thead>
 															<tbody id="content-blocks-table">
 																<tr>
-																	<td colspan="5" class="text-center py-5">
+																	<td colspan="4" class="text-center py-5">
 																		<div class="spinner-border text-primary" role="status">
 																			<span class="visually-hidden">Loading...</span>
 																		</div>
@@ -430,6 +501,25 @@
 										<i class="align-middle text-muted mb-3" data-feather="search" style="width: 48px; height: 48px;"></i>
 										<h5 class="text-muted">SEO Analysis</h5>
 										<p class="text-muted">Coming soon - Technical SEO analysis and recommendations</p>
+									</div>
+								</div>
+								
+								<!-- JSON Tab -->
+								<div class="tab-pane fade" id="json" role="tabpanel">
+									<div class="row mb-4">
+										<div class="col-12">
+											<div class="card border-0" style="border: 1px solid #dee2e6 !important;">
+												<div class="card-header bg-white border-bottom">
+													<h6 class="card-title mb-0 fw-bold">
+														<i class="align-middle text-primary me-2" data-feather="code"></i>
+														Raw JSON Data
+													</h6>
+												</div>
+												<div class="card-body">
+													<pre id="json-preview" style="background: #f8f9fa; padding: 15px; border-radius: 5px; font-size: 12px; max-height: 600px; overflow-y: auto;">Loading...</pre>
+												</div>
+											</div>
+										</div>
 									</div>
 								</div>
 								
@@ -580,12 +670,31 @@
 				console.log('✅ Page data loaded:', page);
 				
 				// Update UI
-				document.getElementById('page-title').textContent = `${page.title || 'Untitled'} page:`;
+				document.getElementById('page-title').textContent = page.title || 'Untitled';
 				
-				// Truncate sidebar page name to keep it on one line
-				const sidebarTitle = page.title || 'Page';
-				const truncatedTitle = sidebarTitle.length > 25 ? sidebarTitle.substring(0, 25) + '...' : sidebarTitle;
-				document.getElementById('sidebar-page-name').textContent = truncatedTitle;
+				// Update page type display with icon and text
+				const pageType = page.page_type || 'page';
+				const priority = getPageTypePriority(pageType);
+				const { label, icon } = getPageTypeDisplay(pageType);
+				
+				// Header display
+				document.getElementById('page-type-text').textContent = label;
+				document.getElementById('page-type-icon').setAttribute('data-feather', icon);
+				
+				// Card display
+				document.getElementById('page-priority').textContent = priority.toUpperCase();
+				document.getElementById('page-type-small').textContent = label;
+				
+				// Refresh feather icons after updating data-feather attributes
+				feather.replace();
+				
+				// Update header URL
+				const baseUrl = 'https://www.repairsbypost.com';
+				const liveUrl = page.live_url || `${baseUrl}${page.url}`;
+				document.getElementById('page-url-header').textContent = liveUrl;
+				
+				// Always show "Page" in sidebar to avoid long titles
+				document.getElementById('sidebar-page-name').textContent = 'Page';
 				
 				// Set up breadcrumb navigation
 				setupBreadcrumb(page.project_id);
@@ -613,8 +722,9 @@
 			const extracted = page.extracted_data || {};
 			const head = extracted.head || {};
 			const blocks = extracted.blocks || [];
-			const aboveFold = extracted.above_fold_blocks || [];
-			const dimensions = extracted.content_dimensions || {};
+			const aboveFold = extracted.above_fold || extracted.above_fold_blocks || [];
+			const restOfPage = extracted.rest_of_page || extracted.rest_of_page_blocks || [];
+			const dimensions = extracted.dimensions || extracted.content_dimensions || {};
 			
 			console.log('📋 Extracted data:', {
 				hasHead: !!head,
@@ -634,11 +744,17 @@
 			// Update content dimensions
 			updateContentDimensions(dimensions);
 			
-			// Render above-fold content
-			renderAboveFoldPreview(aboveFold);
+			// Render above-fold content (conditional based on page type)
+			renderAboveFoldPreview(aboveFold, page.page_type || 'page');
 			
-			// Render content blocks table
-			renderContentBlocksTable(blocks);
+			// Render metadata blocks
+			renderMetadataPreview(head);
+			
+			// Render content blocks table (rest of page only)
+			renderContentBlocksTable(restOfPage);
+			
+			// Render JSON debug view
+			renderJSONPreview(page);
 			
 			console.log('✅ Enhanced UI populated');
 		}
@@ -657,6 +773,34 @@
 			if (titleEl) titleEl.textContent = head.title || page.title || 'Untitled';
 			if (descEl) descEl.textContent = head.metaDescription || head.meta_description || 'No description available';
 			if (blocksEl) blocksEl.textContent = `${(page.extracted_data?.blocks || []).length} blocks`;
+			
+			// Show header image if available (Google SERP style)
+			const imageContainer = document.getElementById('serp-image-container');
+			const imageEl = document.getElementById('serp-image');
+			
+			// Priority order: metadata images > above-fold images > any content images
+			let headerImage = head.ogImage || head.twitterImage;
+			
+			// If no metadata image, prioritize above-fold images first
+			if (!headerImage || !headerImage.trim()) {
+				const aboveFoldBlocks = page.extracted_data?.above_fold_blocks || page.extracted_data?.above_fold || [];
+				const aboveFoldImage = aboveFoldBlocks.find(block => block.type === 'img' && block.src);
+				headerImage = aboveFoldImage?.src;
+			}
+			
+			// Final fallback: any image from content blocks
+			if (!headerImage || !headerImage.trim()) {
+				const allBlocks = page.extracted_data?.blocks || [];
+				const anyImage = allBlocks.find(block => block.type === 'img' && block.src);
+				headerImage = anyImage?.src;
+			}
+			
+			if (headerImage && headerImage.trim()) {
+				imageEl.src = headerImage;
+				imageContainer.style.display = 'block';
+			} else {
+				imageContainer.style.display = 'none';
+			}
 		}
 		
 		function updateContentStats(blocks, aboveFold) {
@@ -689,8 +833,15 @@
 			if (serviceEl) serviceEl.textContent = dimensions.service || 'Not detected';
 		}
 		
-		function renderAboveFoldPreview(aboveFold) {
+		// Store above-fold blocks globally for filtering
+		let globalAboveFoldBlocks = [];
+		
+		function renderAboveFoldPreview(aboveFold, pageType = 'page') {
+			globalAboveFoldBlocks = aboveFold; // Store for filtering
 			const container = document.getElementById('above-fold-preview');
+			
+			// Check if this is a landing page that should get hero treatment
+			const isLandingPage = ['home', 'local_landing', 'brand_landing', 'service_landing', 'product_landing'].includes(pageType);
 			
 			if (aboveFold.length === 0) {
 				container.innerHTML = `
@@ -703,18 +854,269 @@
 				return;
 			}
 			
-			// Render above-fold blocks as a preview
-			const preview = aboveFold.slice(0, 5).map(block => {
-				const content = block.text || block.anchor || block.alt || 'No content';
-				const truncated = content.length > 80 ? content.substring(0, 80) + '...' : content;
+			// Render differently based on page type
+			if (isLandingPage) {
+				renderAboveFoldAsHeroCards(aboveFold, container);
+			} else {
+				renderAboveFoldAsTable(aboveFold, container);
+			}
+			
+			// Update count
+			document.getElementById('above-fold-count').textContent = `(${aboveFold.length})`;
+			
+			// Set up search listener
+			const searchInput = document.getElementById('above-fold-search');
+			if (searchInput && !searchInput.hasAttribute('data-listener-added')) {
+				searchInput.addEventListener('input', (e) => filterAboveFoldBlocks(e.target.value));
+				searchInput.setAttribute('data-listener-added', 'true');
+			}
+			
+			// Initial render
+			filterAboveFoldBlocks('');
+		}
+		
+		// Hero card rendering for landing pages
+		function renderAboveFoldAsHeroCards(aboveFold, container) {
+			const cardsHtml = aboveFold.map(block => {
+				const { type, text, anchor, src, alt, href } = block;
+				
+				let content = '';
+				let icon = 'square';
+				let badgeColor = 'secondary';
+				
+				// Determine content and styling based on block type
+				if (type === 'h1' || type === 'h2') {
+					content = text || 'Untitled';
+					icon = 'type';
+					badgeColor = 'primary';
+				} else if (type === 'p') {
+					content = (text || '').substring(0, 120) + (text && text.length > 120 ? '...' : '');
+					icon = 'file-text';
+					badgeColor = 'info';
+				} else if (type === 'img') {
+					content = alt || src || 'Image';
+					icon = 'image';
+					badgeColor = 'success';
+				} else if (type === 'a') {
+					content = anchor || href || 'Link';
+					icon = 'link';
+					badgeColor = 'warning';
+				} else {
+					content = text || anchor || 'Content';
+				}
 				
 				return `
-					<div class="mb-3 p-3 bg-white rounded border">
+					<div class="col-md-6 col-lg-4 mb-3">
+						<div class="card h-100 border-0 shadow-sm">
+							<div class="card-body d-flex flex-column">
+								<div class="d-flex align-items-center mb-2">
+									<span class="badge bg-${badgeColor} me-2">${type.toUpperCase()}</span>
+									<i data-feather="${icon}" class="text-muted" style="width: 16px; height: 16px;"></i>
+								</div>
+								<p class="card-text flex-grow-1">${content}</p>
+								${src ? `<small class="text-muted"><i data-feather="link" style="width: 12px; height: 12px;"></i> ${src}</small>` : ''}
+								${href ? `<small class="text-warning"><i data-feather="external-link" style="width: 12px; height: 12px;"></i> ${href}</small>` : ''}
+							</div>
+						</div>
+					</div>
+				`;
+			}).join('');
+			
+			container.innerHTML = `<div class="row">${cardsHtml}</div>`;
+		}
+		
+		// Table rendering for content pages  
+		function renderAboveFoldAsTable(aboveFold, container) {
+			const tableRows = aboveFold.map(block => {
+				const { type, text, anchor, src, alt, href } = block;
+				let content = text || anchor || alt || 'No content';
+				let enhancedContent = content;
+				
+				// Show additional attributes
+				if (src) enhancedContent += `<br><small class="text-muted"><i data-feather="link" style="width: 12px; height: 12px;"></i> ${src}</small>`;
+				if (href) enhancedContent += `<br><small class="text-warning"><i data-feather="external-link" style="width: 12px; height: 12px;"></i> ${href}</small>`;
+				if (alt && type === 'img') enhancedContent += `<br><small class="text-info"><i data-feather="image" style="width: 12px; height: 12px;"></i> Alt: ${alt}</small>`;
+				
+				// Show inline elements (V2 enhancement)
+				if (block.inline_elements && block.inline_elements.length > 0) {
+					block.inline_elements.forEach(inline => {
+						if (inline.href) {
+							enhancedContent += `<br><small class="text-warning"><i data-feather="link-2" style="width: 12px; height: 12px;"></i> Inline: ${inline.href}</small>`;
+						}
+					});
+				}
+				
+				return `
+					<tr>
+						<td><span class="badge bg-secondary badge-sm">${type}</span></td>
+						<td class="text-wrap" style="max-width: 300px;">${enhancedContent}</td>
+						<td><span class="badge bg-primary badge-sm">HIGH</span></td>
+					</tr>
+				`;
+			}).join('');
+			
+			container.innerHTML = `
+				<div class="table-responsive">
+					<table class="table table-sm table-hover">
+						<thead>
+							<tr>
+								<th style="width: 80px;">Type</th>
+								<th>Content</th>
+								<th style="width: 80px;">Priority</th>
+							</tr>
+						</thead>
+						<tbody>${tableRows}</tbody>
+					</table>
+				</div>
+			`;
+		}
+		
+		function filterAboveFoldBlocks(searchTerm) {
+			const container = document.getElementById('above-fold-preview');
+			const filteredBlocks = globalAboveFoldBlocks.filter(block => {
+				const content = (block.text || block.anchor || block.alt || '').toLowerCase();
+				const type = (block.type || '').toLowerCase();
+				const search = searchTerm.toLowerCase();
+				return content.includes(search) || type.includes(search);
+			});
+			
+			if (filteredBlocks.length === 0 && searchTerm) {
+				container.innerHTML = `
+					<div class="text-center py-4">
+						<i class="align-middle text-muted mb-3" data-feather="search" style="width: 32px; height: 32px;"></i>
+						<h6 class="text-muted">No matches found</h6>
+						<p class="text-muted mb-0">Try a different search term</p>
+					</div>
+				`;
+				document.getElementById('above-fold-count').textContent = `(0 of ${globalAboveFoldBlocks.length})`;
+				return;
+			}
+			
+			// Highlight function
+			function highlightText(text, searchTerm) {
+				if (!searchTerm) return text;
+				const regex = new RegExp(`(${searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+				return text.replace(regex, '<mark style="background: yellow; padding: 1px 2px;">$1</mark>');
+			}
+			
+			// Render filtered blocks with highlighting
+			const preview = filteredBlocks.map(block => {
+				const content = block.text || block.anchor || block.alt || 'No content';
+				const highlightedContent = highlightText(content, searchTerm);
+				
+				// Enhanced content display with URLs and attributes
+				let enhancedContent = highlightedContent;
+				
+				// Show img src URLs
+				if (block.type === 'img' && block.src) {
+					enhancedContent += `<br><small class="text-info"><i data-feather="link" style="width: 12px; height: 12px;"></i> ${block.src}</small>`;
+				}
+				
+				// Show link destinations for a tags
+				if (block.type === 'a' && block.href) {
+					enhancedContent += `<br><small class="text-success"><i data-feather="external-link" style="width: 12px; height: 12px;"></i> ${block.href}</small>`;
+				}
+				
+				// Show alt text for images
+				if (block.alt && block.alt.trim()) {
+					enhancedContent += `<br><small class="text-muted"><i data-feather="image" style="width: 12px; height: 12px;"></i> Alt: ${block.alt}</small>`;
+				}
+				
+				// Show title attribute if present
+				if (block.title && block.title.trim()) {
+					enhancedContent += `<br><small class="text-muted"><i data-feather="info" style="width: 12px; height: 12px;"></i> Title: ${block.title}</small>`;
+				}
+				
+				// Show inline elements (V2 enhancement)
+				if (block.inline_elements && block.inline_elements.length > 0) {
+					block.inline_elements.forEach(inline => {
+						if (inline.href) {
+							enhancedContent += `<br><small class="text-warning"><i data-feather="link-2" style="width: 12px; height: 12px;"></i> Inline: ${inline.href}</small>`;
+						}
+					});
+				}
+				
+				return `
+					<div class="mb-3 p-3 bg-white rounded border above-fold-block">
 						<div class="d-flex align-items-center mb-2">
 							<span class="badge bg-primary me-2">${block.type.toUpperCase()}</span>
 							<code class="small text-muted">${block.id}</code>
 						</div>
-						<div class="fw-medium">${truncated}</div>
+						<div class="fw-medium">${enhancedContent}</div>
+					</div>
+				`;
+			}).join('');
+			
+			container.innerHTML = `
+				<div class="mb-3">
+					${preview}
+				</div>
+			`;
+			
+			// Update count
+			const countText = searchTerm ? 
+				`(${filteredBlocks.length} of ${globalAboveFoldBlocks.length})` : 
+				`(${globalAboveFoldBlocks.length})`;
+			document.getElementById('above-fold-count').textContent = countText;
+		}
+		
+		function renderMetadataPreview(head) {
+			const container = document.getElementById('metadata-preview');
+			
+			if (!head || Object.keys(head).length === 0) {
+				container.innerHTML = `
+					<div class="text-center py-4">
+						<i class="align-middle text-muted mb-3" data-feather="tag" style="width: 32px; height: 32px;"></i>
+						<h6 class="text-muted">No metadata found</h6>
+						<p class="text-muted mb-0">No head metadata was extracted from this page</p>
+					</div>
+				`;
+				return;
+			}
+			
+			// Define metadata blocks to display
+			const metadataBlocks = [
+				{ key: 'title', label: 'Page Title', icon: 'type', color: 'primary' },
+				{ key: 'metaDescription', label: 'Meta Description', icon: 'file-text', color: 'info' },
+				{ key: 'canonical', label: 'Canonical URL', icon: 'link', color: 'success' },
+				{ key: 'ogTitle', label: 'Open Graph Title', icon: 'share-2', color: 'warning' },
+				{ key: 'ogDescription', label: 'Open Graph Description', icon: 'share-2', color: 'warning' },
+				{ key: 'ogImage', label: 'Open Graph Image', icon: 'image', color: 'warning' },
+				{ key: 'twitterTitle', label: 'Twitter Title', icon: 'twitter', color: 'info' },
+				{ key: 'twitterDescription', label: 'Twitter Description', icon: 'twitter', color: 'info' },
+				{ key: 'twitterImage', label: 'Twitter Image', icon: 'image', color: 'info' },
+				{ key: 'favicon', label: 'Favicon', icon: 'star', color: 'secondary' }
+			];
+			
+			// Filter to only show blocks with values
+			const activeBlocks = metadataBlocks.filter(block => head[block.key] && head[block.key].trim());
+			
+			if (activeBlocks.length === 0) {
+				container.innerHTML = `
+					<div class="text-center py-4">
+						<i class="align-middle text-muted mb-3" data-feather="tag" style="width: 32px; height: 32px;"></i>
+						<h6 class="text-muted">No metadata content</h6>
+						<p class="text-muted mb-0">All metadata fields are empty</p>
+					</div>
+				`;
+				return;
+			}
+			
+			// Render metadata blocks
+			const blocksHtml = activeBlocks.map(block => {
+				const value = head[block.key];
+				
+				return `
+					<div class="metadata-block mb-3 p-3 border rounded" style="background: #f8f9fa;">
+						<div class="d-flex align-items-start">
+							<div class="me-3">
+								<i class="align-middle text-${block.color}" data-feather="${block.icon}" style="width: 20px; height: 20px;"></i>
+							</div>
+							<div class="flex-grow-1">
+								<h6 class="mb-1 fw-bold text-dark">${block.label}</h6>
+								<p class="mb-0 text-muted small">${value}</p>
+							</div>
+						</div>
 					</div>
 				`;
 			}).join('');
@@ -723,20 +1125,24 @@
 				<div class="mb-3">
 					<h6 class="text-muted mb-3">
 						<i class="align-middle me-1" data-feather="info" style="width: 16px; height: 16px;"></i>
-						Showing first 5 of ${aboveFold.length} above-fold blocks
+						Showing ${activeBlocks.length} metadata elements
 					</h6>
-					${preview}
+					${blocksHtml}
 				</div>
 			`;
 		}
 		
+		// Store content blocks globally for filtering
+		let globalContentBlocks = [];
+		
 		function renderContentBlocksTable(blocks) {
+			globalContentBlocks = blocks; // Store for filtering
 			const tableBody = document.getElementById('content-blocks-table');
 			
 			if (blocks.length === 0) {
 				tableBody.innerHTML = `
 					<tr>
-						<td colspan="5" class="text-center py-5">
+						<td colspan="4" class="text-center py-5">
 							<i class="align-middle text-muted mb-3" data-feather="file-text" style="width: 32px; height: 32px;"></i>
 							<h6 class="text-muted">No content blocks found</h6>
 							<p class="text-muted mb-0">Page may not have been extracted properly</p>
@@ -746,46 +1152,68 @@
 				return;
 			}
 			
-			// Render blocks table (show first 20 for performance)
-			const displayBlocks = blocks.slice(0, 20);
-			const tableHTML = displayBlocks.map(block => {
-				const content = block.text || block.anchor || block.alt || 'No content';
-				const truncated = content.length > 60 ? content.substring(0, 60) + '...' : content;
-				
-				return `
-					<tr>
-						<td><code class="small">${block.id}</code></td>
-						<td><span class="badge bg-primary">${block.type}</span></td>
-						<td class="text-truncate" style="max-width: 300px;" title="${content}">${truncated}</td>
-						<td><span class="badge bg-secondary">${block.nimbus_priority || 'normal'}</span></td>
-						<td>
-							<button class="btn btn-sm btn-outline-primary" onclick="editBlock('${block.id}')" title="Edit block">
-								<i data-feather="edit-2" style="width: 14px; height: 14px;"></i>
-							</button>
-							<button class="btn btn-sm btn-outline-success ms-1" onclick="aiOptimizeBlock('${block.id}')" title="AI optimize">
-								<i data-feather="cpu" style="width: 14px; height: 14px;"></i>
-							</button>
-						</td>
-					</tr>
-				`;
-			}).join('');
+			// Update count and set up filters
+			document.getElementById('content-blocks-count').textContent = `(${blocks.length})`;
 			
-			// Add "show more" row if there are more blocks
-			const showMoreRow = blocks.length > 20 ? `
-				<tr>
-					<td colspan="5" class="text-center py-3 bg-light">
-						<button class="btn btn-outline-primary btn-sm" onclick="showAllBlocks()">
-							<i class="align-middle me-1" data-feather="more-horizontal" style="width: 14px; height: 14px;"></i>
-							Show ${blocks.length - 20} more blocks
-						</button>
-					</td>
-				</tr>
-			` : '';
+			// Set up filter listeners
+			const searchInput = document.getElementById('block-search');
+			const typeFilter = document.getElementById('block-filter');
 			
-			tableBody.innerHTML = tableHTML + showMoreRow;
+			if (searchInput && !searchInput.hasAttribute('data-listener-added')) {
+				searchInput.addEventListener('input', (e) => filterContentBlocks());
+				searchInput.setAttribute('data-listener-added', 'true');
+			}
+			
+			if (typeFilter && !typeFilter.hasAttribute('data-listener-added')) {
+				typeFilter.addEventListener('change', (e) => filterContentBlocks());
+				typeFilter.setAttribute('data-listener-added', 'true');
+			}
+			
+			// Initial render
+			filterContentBlocks();
 			
 			// Re-initialize feather icons
 			feather.replace();
+		}
+		
+		// Helper functions for page type display
+		function getPageTypeDisplay(pageType) {
+			const displays = {
+				'home': { label: 'Homepage', icon: 'home' },
+				'local_landing': { label: 'Local Landing Page', icon: 'map-pin' }, 
+				'brand_landing': { label: 'Brand Landing Page', icon: 'tag' },
+				'service_landing': { label: 'Service Landing Page', icon: 'tool' },
+				'product_landing': { label: 'Product Landing Page', icon: 'shopping-bag' },
+				'contact': { label: 'Contact Page', icon: 'phone' },
+				'pricing': { label: 'Pricing Page', icon: 'dollar-sign' },
+				'about': { label: 'About Page', icon: 'info' },
+				'faq': { label: 'FAQ Page', icon: 'help-circle' },
+				'legal': { label: 'Legal Page', icon: 'shield' },
+				'blog': { label: 'Blog Article', icon: 'edit-3' },
+				'index': { label: 'Index Page', icon: 'list' },
+				'page': { label: 'Content Page', icon: 'file-text' }
+			};
+			
+			return displays[pageType] || { label: 'Content Page', icon: 'file' };
+		}
+		
+		function getPageTypePriority(pageType) {
+			const priorities = {
+				'home': 'high',
+				'local_landing': 'high', 
+				'brand_landing': 'high',
+				'service_landing': 'high',
+				'product_landing': 'high',
+				'contact': 'medium',
+				'pricing': 'medium',
+				'about': 'low',
+				'faq': 'low', 
+				'legal': 'low',
+				'blog': 'low',
+				'index': 'low',
+				'page': 'normal'
+			};
+			return priorities[pageType] || 'normal';
 		}
 		
 		function showError(message) {
@@ -829,6 +1257,115 @@
 		
 		function copyJSON() {
 			alert('JSON Export - Coming soon!');
+		}
+		
+		function filterContentBlocks() {
+			const tableBody = document.getElementById('content-blocks-table');
+			const searchTerm = document.getElementById('block-search')?.value || '';
+			const typeFilter = document.getElementById('block-filter')?.value || '';
+			
+			// Filter blocks
+			const filteredBlocks = globalContentBlocks.filter(block => {
+				const content = (block.text || block.anchor || block.alt || '').toLowerCase();
+				const type = (block.type || '').toLowerCase();
+				const search = searchTerm.toLowerCase();
+				
+				// Type filter
+				const typeMatch = !typeFilter || block.type === typeFilter;
+				
+				// Search filter
+				const searchMatch = !searchTerm || content.includes(search) || type.includes(search);
+				
+				return typeMatch && searchMatch;
+			});
+			
+			if (filteredBlocks.length === 0) {
+				tableBody.innerHTML = `
+					<tr>
+						<td colspan="4" class="text-center py-4">
+							<i class="align-middle text-muted mb-3" data-feather="search" style="width: 32px; height: 32px;"></i>
+							<h6 class="text-muted">No matches found</h6>
+							<p class="text-muted mb-0">Try adjusting your filters</p>
+						</td>
+					</tr>
+				`;
+				document.getElementById('content-blocks-count').textContent = `(0 of ${globalContentBlocks.length})`;
+				return;
+			}
+			
+			// Highlight function
+			function highlightText(text, searchTerm) {
+				if (!searchTerm) return text;
+				const regex = new RegExp(`(${searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+				return text.replace(regex, '<mark style="background: yellow; padding: 1px 2px;">$1</mark>');
+			}
+			
+			// Render filtered blocks with highlighting
+			const tableHTML = filteredBlocks.map(block => {
+				const content = block.text || block.anchor || block.alt || 'No content';
+				const highlightedContent = highlightText(content, searchTerm);
+				
+				// Enhanced content display with URLs and attributes
+				let enhancedContent = highlightedContent;
+				
+				// Show img src URLs
+				if (block.type === 'img' && block.src) {
+					enhancedContent += `<br><small class="text-info"><i data-feather="link" style="width: 12px; height: 12px;"></i> ${block.src}</small>`;
+				}
+				
+				// Show link destinations for a tags
+				if (block.type === 'a' && block.href) {
+					enhancedContent += `<br><small class="text-success"><i data-feather="external-link" style="width: 12px; height: 12px;"></i> ${block.href}</small>`;
+				}
+				
+				// Show alt text for images
+				if (block.alt && block.alt.trim()) {
+					enhancedContent += `<br><small class="text-muted"><i data-feather="image" style="width: 12px; height: 12px;"></i> Alt: ${block.alt}</small>`;
+				}
+				
+				// Show title attribute if present
+				if (block.title && block.title.trim()) {
+					enhancedContent += `<br><small class="text-muted"><i data-feather="info" style="width: 12px; height: 12px;"></i> Title: ${block.title}</small>`;
+				}
+				
+				// Show inline elements (V2 enhancement)
+				if (block.inline_elements && block.inline_elements.length > 0) {
+					block.inline_elements.forEach(inline => {
+						if (inline.href) {
+							enhancedContent += `<br><small class="text-warning"><i data-feather="link-2" style="width: 12px; height: 12px;"></i> Inline: ${inline.href}</small>`;
+						}
+					});
+				}
+				
+				return `
+					<tr class="content-block-row">
+						<td><code class="small">${block.id}</code></td>
+						<td><span class="badge bg-primary">${block.type}</span></td>
+						<td style="word-wrap: break-word; white-space: normal;">${enhancedContent}</td>
+						<td><span class="badge bg-secondary">${block.nimbus_priority || 'normal'}</span></td>
+					</tr>
+				`;
+			}).join('');
+			
+			tableBody.innerHTML = tableHTML;
+			
+			// Update count
+			const countText = searchTerm || typeFilter ? 
+				`(${filteredBlocks.length} of ${globalContentBlocks.length})` : 
+				`(${globalContentBlocks.length})`;
+			document.getElementById('content-blocks-count').textContent = countText;
+		}
+		
+		function renderJSONPreview(page) {
+			const container = document.getElementById('json-preview');
+			
+			try {
+				// Format JSON with proper indentation
+				const jsonString = JSON.stringify(page, null, 2);
+				container.textContent = jsonString;
+			} catch (error) {
+				container.textContent = `Error displaying JSON: ${error.message}`;
+			}
 		}
 		
 		function exportReport() {

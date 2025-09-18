@@ -61,19 +61,51 @@ export async function upsertPagesCommand({ dir, concurrency = 5, apiUrl }) {
       limit(async () => {
         try {
           const raw = JSON.parse(fs.readFileSync(file, "utf8"));
-          const derivedUrl = raw.url || raw.route || raw.path || null;
-          if (!derivedUrl) {
-            throw new Error("Missing url/route in map file");
+          let derivedUrl = raw.url || raw.route || raw.path || null;
+          if (!derivedUrl && raw.head?.canonical) {
+            try {
+              const u = new URL(raw.head.canonical);
+              if (u && u.pathname) derivedUrl = u.pathname;
+            } catch {}
           }
+          if (!derivedUrl) {
+            const base = path.basename(file).toLowerCase();
+            if (base === "index.json") {
+              derivedUrl = "/";
+            }
+          }
+          if (!derivedUrl) throw new Error("Missing url/route in map file");
           const title = raw.title || raw.head?.title || null;
+          const extractedData = {
+            head: raw.head || null,
+            engine: raw.engine || null,
+            main_selector: raw.main_selector || null,
+            route: raw.route || derivedUrl,
+            blocks: raw.blocks || [],
+            above_fold: raw.above_fold_blocks || [],
+            rest_of_page: raw.rest_of_page_blocks || [],
+            selector_map: raw.selector_map || {},
+            dimensions: raw.dimensions || null,
+            // Mirror keys expected by UI
+            above_fold_blocks: (raw.above_fold_blocks || []),
+            content_dimensions: (raw.dimensions || {}),
+            extraction_config: raw.extraction_config || null,
+          };
           const payload = {
             project_id: project.project_id,
             url: derivedUrl,
             title,
             content: raw.content,
-            extracted_data: raw.extracted_data || { head: raw.head, blocks: raw.blocks },
+            extracted_data: extractedData, // Always use our properly constructed extractedData
             metadata: { ...raw.metadata, source: raw.metadata?.source || "gulp_map", map_path: file },
           };
+          
+          // Debug: Check if above_fold_blocks are in the payload
+          if (extractedData.above_fold_blocks && extractedData.above_fold_blocks.length > 0) {
+            console.log(`[DEBUG] ${derivedUrl}: Sending ${extractedData.above_fold_blocks.length} above_fold_blocks`);
+          } else {
+            console.log(`[DEBUG] ${derivedUrl}: NO above_fold_blocks found!`);
+          }
           const res = await withRetry(() => cfCall(paths, "page.upsert", payload, { apiUrl }));
           const page = res.data?.page;
           if (page?.page_id) {
@@ -86,7 +118,7 @@ export async function upsertPagesCommand({ dir, concurrency = 5, apiUrl }) {
             };
             byUrl.set(entry.url, entry);
             ok++;
-            console.log(`[OK] ${entry.url} → ${entry.page_id} (${res.data?.operation || ""})`);
+            console.log(`[OK] ${entry.url} -> ${entry.page_id} (${res.data?.operation || ""})`);
           } else {
             throw new Error("Missing page in response");
           }

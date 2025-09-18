@@ -23,15 +23,70 @@
 	<!-- uPlot Sparkline Styles -->
 	<style>
 		.sparkline-container {
-			height: 70px;
-			margin-top: 10px;
+			height: 90px;
+			margin-top: 0;
 			position: relative;
 			width: 100%;
-			overflow: visible;
+			overflow: hidden;
 		}
 		
 		.sparkline-container .u-plot {
 			width: 100% !important;
+		}
+		
+		.card-body {
+			padding: 0; /* Remove all padding from parent card */
+		}
+		
+		.card-content-wrapper {
+			padding: 1.25rem 1.25rem 0 1.25rem; /* Add padding back to stats wrapper */
+		}
+		
+		.sparkline-container {
+			margin-bottom: 0; /* No bottom margin */
+		}
+		
+		/* Compact table styles */
+		.table-sm td, .table-sm th {
+			padding: 0.375rem 0.5rem;
+			font-size: 0.875rem;
+		}
+		
+		.badge-sm {
+			font-size: 0.75rem;
+			padding: 0.25em 0.5em;
+		}
+		
+		/* Responsive column sizing with truncation */
+		.table-responsive .col-title {
+			min-width: 200px;
+			max-width: 250px;
+		}
+		
+		.table-responsive .col-url {
+			min-width: 150px;
+			max-width: 200px;
+		}
+		
+		.table-responsive .col-type {
+			min-width: 100px;
+			max-width: 120px;
+		}
+		
+		.table-responsive .col-status {
+			min-width: 80px;
+			max-width: 100px;
+		}
+		
+		.table-responsive .col-activity {
+			min-width: 100px;
+			max-width: 120px;
+		}
+		
+		.text-truncate {
+			overflow: hidden;
+			text-overflow: ellipsis;
+			white-space: nowrap;
 		}
 	</style>
 	
@@ -240,57 +295,63 @@
 						<div class="col-md-4">
 							<div class="card">
 								<div class="card-body text-center">
-									<div class="row">
-										<div class="col mt-0">
-											<h5 class="card-title">Pages</h5>
-										</div>
-										<div class="col-auto">
-											<div class="stat text-primary">
-												<i class="align-middle" data-feather="file-text"></i>
-											</div>
-										</div>
-									</div>
-									<h1 class="mt-1 mb-2" id="total-pages-count">-</h1>
-									<!-- Mini Sparkline Chart -->
-									<div id="pages-chart" class="sparkline-container"></div>
+					<div class="card-content-wrapper">
+						<div class="row">
+							<div class="col mt-0">
+								<h5 class="card-title">Pages</h5>
+							</div>
+							<div class="col-auto">
+								<div class="stat text-primary">
+									<i class="align-middle" data-feather="file-text"></i>
+								</div>
+							</div>
+						</div>
+						<h1 class="mt-1 mb-2" id="total-pages-count">-</h1>
+					</div>
+					<!-- Mini Sparkline Chart -->
+					<div id="pages-chart" class="sparkline-container"></div>
 								</div>
 							</div>
 						</div>
 						<div class="col-md-4">
 							<div class="card">
 								<div class="card-body text-center">
-									<div class="row">
-										<div class="col mt-0">
-											<h5 class="card-title">Complete</h5>
-										</div>
-										<div class="col-auto">
-											<div class="stat text-success">
-												<i class="align-middle" data-feather="check-circle"></i>
-											</div>
-										</div>
-									</div>
-									<h1 class="mt-1 mb-2" id="complete-pages-count">-</h1>
-									<!-- Mini Sparkline Chart -->
-									<div id="complete-chart" class="sparkline-container"></div>
+					<div class="card-content-wrapper">
+						<div class="row">
+							<div class="col mt-0">
+								<h5 class="card-title">Complete</h5>
+							</div>
+							<div class="col-auto">
+								<div class="stat text-success">
+									<i class="align-middle" data-feather="check-circle"></i>
+								</div>
+							</div>
+						</div>
+						<h1 class="mt-1 mb-2" id="complete-pages-count">-</h1>
+					</div>
+					<!-- Mini Sparkline Chart -->
+					<div id="complete-chart" class="sparkline-container"></div>
 								</div>
 							</div>
 						</div>
 						<div class="col-md-4">
 							<div class="card">
 								<div class="card-body text-center">
-									<div class="row">
-										<div class="col mt-0">
-											<h5 class="card-title">Processing</h5>
-										</div>
-										<div class="col-auto">
-											<div class="stat text-warning">
-												<i class="align-middle" data-feather="clock"></i>
-											</div>
-										</div>
-									</div>
-									<h1 class="mt-1 mb-2" id="processing-count">-</h1>
-									<!-- Mini Sparkline Chart -->
-									<div id="processing-chart" class="sparkline-container"></div>
+					<div class="card-content-wrapper">
+						<div class="row">
+							<div class="col mt-0">
+								<h5 class="card-title">Processing</h5>
+							</div>
+							<div class="col-auto">
+								<div class="stat text-warning">
+									<i class="align-middle" data-feather="clock"></i>
+								</div>
+							</div>
+						</div>
+						<h1 class="mt-1 mb-2" id="processing-count">-</h1>
+					</div>
+					<!-- Mini Sparkline Chart -->
+					<div id="processing-chart" class="sparkline-container"></div>
 								</div>
 							</div>
 						</div>
@@ -404,7 +465,7 @@
 				
 				// Load pages for the table (only if we have pages)
 				if (stats.total_pages > 0) {
-					const pages = await nimbus.pages.list(projectId);
+					const pages = await nimbus.pages.list(projectId, { limit: 200 });
 					renderPages(pages);
 				} else {
 					renderPages([]);
@@ -436,24 +497,35 @@
 				return;
 			}
 			
-			const tableRows = pages.map(page => `
-				<tr onclick="viewPage('${page.page_id}')" style="cursor: pointer;">
-					<td><strong>${page.title || 'Untitled'}</strong></td>
-					<td>${page.url || '-'}</td>
-					<td><span class="badge bg-${page.status === 'complete' ? 'success' : page.status === 'processing' ? 'warning' : 'secondary'}">${page.status}</span></td>
-					<td>${page.updated_at ? cf.formatRelativeTime(page.updated_at) : 'Never'}</td>
-				</tr>
-			`).join('');
+			const tableRows = pages.map(page => {
+				// Use actual detected page type from backend, with fallback
+				const pageType = page.page_type || 'page';
+				const priority = getPageTypePriority(pageType);
+				
+				// Get display label for page type
+				const typeLabel = getPageTypeDisplayLabel(pageType);
+				
+				return `
+					<tr onclick="viewPage('${page.page_id}')" style="cursor: pointer;">
+						<td class="col-title"><span class="text-truncate d-inline-block" style="max-width: 100%;">${page.title || 'Untitled'}</span></td>
+						<td class="col-url"><span class="text-truncate d-inline-block text-muted" style="max-width: 100%;" title="${page.url || '-'}">${page.url || '-'}</span></td>
+						<td class="col-type"><span class="badge bg-info badge-sm">${typeLabel}</span></td>
+						<td class="col-priority"><span class="badge bg-${getPriorityBadgeColor(priority)} badge-sm">${priority.toUpperCase()}</span></td>
+						<td class="col-activity text-muted">${page.updated_at ? cf.formatRelativeTime(page.updated_at) : 'Never'}</td>
+					</tr>
+				`;
+			}).join('');
 			
 			container.innerHTML = `
 				<div class="table-responsive">
-					<table class="table table-hover">
+					<table class="table table-hover table-sm">
 						<thead>
 							<tr>
-								<th>Title</th>
-								<th>URL</th>
-								<th>Status</th>
-								<th>Last Activity</th>
+								<th class="col-title">Title</th>
+								<th class="col-url">URL</th>
+								<th class="col-type">Type</th>
+								<th class="col-priority">Priority</th>
+								<th class="col-activity">Last Activity</th>
 							</tr>
 						</thead>
 						<tbody>${tableRows}</tbody>
@@ -502,6 +574,22 @@
 			}
 		}
 		
+		// Store chart instances for resize handling
+		let chartInstances = {};
+
+		// Debounce utility function
+		function debounce(func, wait) {
+			let timeout;
+			return function executedFunction(...args) {
+				const later = () => {
+					clearTimeout(timeout);
+					func(...args);
+				};
+				clearTimeout(timeout);
+				timeout = setTimeout(later, wait);
+			};
+		}
+
 		// Load analytics charts for project dashboard using CloudFunctions
 		async function loadProjectCharts(projectId) {
 			try {
@@ -569,8 +657,11 @@
 					
 					console.log(`🎨 Creating uPlot sparkline for ${containerId} with data:`, data);
 					
-					// Clear container
+					// Clear container and destroy existing chart
 					container.innerHTML = '';
+					if (chartInstances[containerId]) {
+						chartInstances[containerId].destroy();
+					}
 					
 					// Prepare data for uPlot [x, y] format
 					const plotData = [
@@ -578,10 +669,11 @@
 						data // y values: our activity data
 					];
 					
-					new uPlot({
-						width: Math.max(container.offsetWidth - 10, 250),
-						height: 50,
-						padding: [8, 8, 8, 8], // top, right, bottom, left padding
+					// Store chart instance for resize handling
+					chartInstances[containerId] = new uPlot({
+						width: container.offsetWidth, // Full width, no padding
+						height: 80,
+						padding: [8, 0, 8, 0], // top, right, bottom, left padding (no side padding)
 						scales: {
 							x: { time: false },
 							y: {
@@ -590,7 +682,13 @@
 						},
 						series: [
 							{}, // x values
-							{ stroke: color, width: 1.5, fill: false }
+							{ 
+								stroke: color, 
+								width: 1, 
+								fill: false,
+								points: { show: false }, // Remove circles
+								spline: true // Add curved lines
+							}
 						],
 						axes: [
 							{ show: false }, // x axis hidden
@@ -631,6 +729,42 @@
 				createuPlotSparkline('processing-chart', processingActivity, '#ffc107', yMax);
 				
 				console.log('✅ Project charts loaded with custom SVG sparklines');
+				
+				// Add resize event listener to redraw charts with immediate response
+				let resizeTimeout;
+				window.addEventListener('resize', () => {
+					// Immediate resize to prevent overflow
+					Object.keys(chartInstances).forEach(containerId => {
+						const chart = chartInstances[containerId];
+						if (chart) {
+							const container = document.getElementById(containerId);
+							if (container) {
+								chart.setSize({
+									width: container.offsetWidth,
+									height: 80
+								});
+							}
+						}
+					});
+					
+					// Debounced final resize for performance
+					clearTimeout(resizeTimeout);
+					resizeTimeout = setTimeout(() => {
+						console.log('📱 Final resize optimization...');
+						Object.keys(chartInstances).forEach(containerId => {
+							const chart = chartInstances[containerId];
+							if (chart) {
+								const container = document.getElementById(containerId);
+								if (container) {
+									chart.setSize({
+										width: container.offsetWidth,
+										height: 80
+									});
+								}
+							}
+						});
+					}, 100);
+				});
 				
 			} catch (error) {
 				console.error('Failed to load project charts:', error);
@@ -798,6 +932,55 @@
 				info: 'text-info'
 			};
 			return icons[type] || 'text-primary';
+		}
+		
+		// Helper functions for page type display in project table
+		function getPageTypeDisplayLabel(pageType) {
+			const labels = {
+				'home': 'Home',
+				'local_landing': 'Local',
+				'brand_landing': 'Brand',
+				'service_landing': 'Service',
+				'product_landing': 'Product',
+				'contact': 'Contact',
+				'pricing': 'Pricing',
+				'about': 'About',
+				'faq': 'FAQ',
+				'legal': 'Legal',
+				'blog': 'Article',
+				'index': 'Index',
+				'page': 'Page'
+			};
+			return labels[pageType] || 'Page';
+		}
+		
+		function getPageTypePriority(pageType) {
+			const priorities = {
+				'home': 'high',
+				'local_landing': 'high',
+				'brand_landing': 'high',
+				'service_landing': 'high',
+				'product_landing': 'high',
+				'contact': 'medium',
+				'pricing': 'medium',
+				'about': 'low',
+				'faq': 'low',
+				'legal': 'low',
+				'blog': 'low',
+				'index': 'low',
+				'page': 'normal'
+			};
+			return priorities[pageType] || 'normal';
+		}
+		
+		function getPriorityBadgeColor(priority) {
+			const colors = {
+				'high': 'danger',
+				'medium': 'warning',
+				'low': 'secondary',
+				'normal': 'secondary'
+			};
+			return colors[priority] || 'secondary';
 		}
 	</script>
 

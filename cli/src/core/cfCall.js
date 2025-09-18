@@ -58,7 +58,11 @@ export async function cfCall(paths, action, payload, options = {}) {
   // Normalize nested CloudFunction payloads: { success, data: { success, data } }
   if (result && typeof result === "object" && result.data) {
     const inner = result.data;
-    if (inner && typeof inner === "object" && Object.prototype.hasOwnProperty.call(inner, "data")) {
+    const looksLikeWrapped =
+      inner && typeof inner === "object" &&
+      Object.prototype.hasOwnProperty.call(inner, "success") &&
+      Object.prototype.hasOwnProperty.call(inner, "data");
+    if (looksLikeWrapped) {
       result = { ...result, data: inner.data };
     }
   }

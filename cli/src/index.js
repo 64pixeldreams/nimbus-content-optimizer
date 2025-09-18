@@ -27,10 +27,14 @@ export async function run() {
 
   program
     .command("sync-project")
-    .description("Create or link a project and write .nimbus/project.json")
+    .description("Create/link project, optional extract with Gulp, then upload maps")
     .option("--name <name>", "Project name when creating")
     .option("--domain <domain>", "Project domain when creating")
     .option("--link <project_id>", "Link to an existing project by ID")
+    .option("--extract", "Run existing Gulp extraction before upload")
+    .option("--folder <path>", "Folder for Gulp extraction (e.g., dist or dist/local)")
+    .option("--maps-dir <path>", "Directory with JSON maps", "gulp/.nimbus/maps")
+    .option("--concurrency <n>", "Concurrent uploads", (v) => parseInt(v, 10), 5)
     .option("--api-url <url>", "Override API base URL")
     .action(async (options) => {
       await syncProjectCommand(options);

@@ -33,6 +33,7 @@ export async function get(requestContext) {
         title: page.get('title'),
         url: page.get('url'),
         status: page.get('status'),
+        page_type: page.get('page_type'),
         content: page.get('content'),
         optimized_content: page.get('optimized_content'),
         metadata: page.get('metadata'),

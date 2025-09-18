@@ -36,7 +36,13 @@ export class PageManager {
       timer.end({ pageId: page.get('page_id') });
       return {
         success: true,
-        page: page.toJSON()
+        page: {
+          page_id: page.get('page_id'),
+          title: page.get('title'),
+          status: page.get('status'),
+          page_type: page.get('page_type'),
+          created_at: page.get('created_at')
+        }
       };
       
     } catch (error) {
@@ -104,11 +110,11 @@ export class PageManager {
       }
       
       // Add pagination
-      query.limit(Math.min(options.limit || 50, 100));
+      query.limit(Math.min(options.limit || 50, 500));
       query.offset(options.offset || 0);
       
-      // Order by created date (newest first)
-      query.orderBy('created_at', 'DESC');
+      // Order by updated date (most recently updated first)
+      query.orderBy('updated_at', 'DESC');
       
       // Execute query
       const result = await query.list();
@@ -163,6 +169,7 @@ export class PageManager {
           page_id: page.get('page_id'),
           title: page.get('title'),
           status: page.get('status'),
+          page_type: page.get('page_type'),
           updated_at: page.get('updated_at')
         }
       };
