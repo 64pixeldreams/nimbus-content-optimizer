@@ -58,7 +58,7 @@
   "extraction_rules": {
     "_note": "Leave empty to extract all common elements (current default behavior)",
     "above_fold": [
-      "h1","h2","p",".img",
+      "h1","h2","p","img","a","button",
       "a[href='/start-repair.html']"
     ],
     "rest_of_page": [

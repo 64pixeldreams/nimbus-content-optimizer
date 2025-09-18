@@ -52,8 +52,8 @@
   ],
   "inherit": true,
   "selectors": {
-    "main": "",
-    "above_fold": ""
+    "main": "main",
+    "above_fold": ".splash-home-cta .container"
   },
   "extraction_rules": {
     "_note": "Leave empty to extract all common elements (current default behavior)",

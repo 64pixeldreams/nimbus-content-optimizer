@@ -426,12 +426,13 @@ router.post('/api/function', async (request, env) => {
       });
       
       // Register project CloudFunctions
-      const { projectCreate, projectCreateConfig, projectList, projectListConfig, projectGet, projectGetConfig, projectUpdate, projectUpdateConfig } = await import('./modules/project/functions/index.js');
+      const { projectCreate, projectCreateConfig, projectList, projectListConfig, projectGet, projectGetConfig, projectUpdate, projectUpdateConfig, recomputeStats, recomputeStatsConfig } = await import('./modules/project/functions/index.js');
       
       cloudFunction.define('project.create', projectCreate, projectCreateConfig);
       cloudFunction.define('project.list', projectList, projectListConfig);
       cloudFunction.define('project.get', projectGet, projectGetConfig);
       cloudFunction.define('project.update', projectUpdate, projectUpdateConfig);
+      cloudFunction.define('project.stats.recompute', recomputeStats, recomputeStatsConfig);
       
       // Register pages CloudFunctions
       const { pageCreate, pageCreateConfig, pageList, pageListConfig, pageGet, pageGetConfig, pageUpdate, pageUpdateConfig, pageLogs, pageLogsConfig, upsert, upsertConfig } = await import('./modules/pages/functions/index.js');

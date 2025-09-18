@@ -30,8 +30,8 @@ const nimbus = {
   // ============================================================================
   
   pages: {
-    async list(projectId) {
-      const result = await cf.run('page.list', { project_id: projectId });
+    async list(projectId, options = {}) {
+      const result = await cf.run('page.list', { project_id: projectId, ...options });
       return result.data?.pages || result.pages || [];
     },
     

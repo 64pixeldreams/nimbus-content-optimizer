@@ -1,3 +1,4 @@
+export { recomputeStats, recomputeStatsConfig } from './recompute-stats.js';
 /**
  * Project CloudFunctions
  * Exports all project-related CloudFunction handlers
